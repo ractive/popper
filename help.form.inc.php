@@ -116,12 +116,16 @@ Reply to all the recipients of this mail<br>
 <img src="graphics/forward.gif" alt="Forward image" style="float: left;">
 Forward the selected message to a receiver<br>
 <br clear=all>
+<img src="graphics/print.gif" alt="Printer image" style="float: left;">
+This will open a new window with the currently selected mail in a printer friendly style. If you want to print a HTML mail,
+open the attached mail and print it from this window.<br>
+<br clear=all>
 <img src="graphics/cancel.gif" alt="Delete image" style="float: left;">
 Delete the selected mail. The mail first is put into the recycle bin.<br>
 If you want to totally delete the mail, delete it in the recycle bin<br>
 <br clear=all>
 <img src="graphics/cancelm.gif" alt="Delete image" style="float: left;">
-Delete several mail at once<br>
+Delete ALL mails in the current folder.<br>
 <br clear=all>
 <img src="graphics/sendandreceive.gif" alt="Send and receive image" style="float: left;">
 Send your mails in the outbox and receive mails from your accounts. Send only will only send the mails stored in the outbox.
@@ -129,6 +133,10 @@ Send your mails in the outbox and receive mails from your accounts. Send only wi
 all your accounts<br>
 Additionally the names of all the accounts you set up will appear. Selecting on of them only
 downloads the mails from this account.<br>
+<br clear=all>
+<img src="graphics/get_rep.gif" alt="Send and receive image" style="float: left;">
+This opens a new window. If you leave this window open, your accounts are checked for new mail every X minutes. You can set
+the interval X in the configuration.<br>
 <br clear=all>
 <img src="graphics/address.gif" alt="New mail image" style="float: left;">
 Open the addressbook<br>
@@ -214,8 +222,12 @@ Delete the selected account
 <h3><a name="config">Configuration</a></h3>
 You can configure the behaviour some parts of this mail-client. Press the configure button
 <img src="graphics/config.gif" alt=""> to enter the configuration-dialog.
-<center><p><img src="graphics/help_config.jpg" alt="Configuration dialg image"></p></center>
+<center><p><img src="graphics/help_config_en.jpg" alt="Configuration dialg image"></p></center>
 <dl>
+	<dt>Language:</dt>
+	<dd>Choose your preferred language</dd>
+	<dt>Language:</dt>
+	<dd>Choose your preferred language</dd>	
 	<dt>Keep mails on server:</dt>
 	<dd>This option decides if the mails should be delete from the server after they have been received.<br>
 	If the mails are deleted, there's no possibility to get them with another client. I'd toggle this setting on</dd>
@@ -230,6 +242,18 @@ You can configure the behaviour some parts of this mail-client. Press the config
 	<dt>Append signature to each message:</dt>
 	<dd>Only if this option is turned on, your signature that you entered above is insertet at the end of
 	every new message</dd>
+	<dt>Add e-mail addresses of incoming e-mails to the address-book:</dt>
+	<dd>If you choose this option, every new E-Mail address or incoming mails is stored in the address-book</dd>	
+	<dt>Check for new mails every X minutes:</dt>
+	<dd>If you open the auto-fetch window with <img src="graphics/get_rep.gif" alt="Send and receive image">, your account are checked for new mail ever X minutes</dd>
+	<dt>Show X Mails per page:</dt>
+	<dd>Here you can set how many mails you see in the list at once. Adapt this value to your needs</dd>
+	<dt>Show X lines at once:</dt>
+	<dd>This settings determines how big the textarea (that shows up the mail content) is. Adapting this value may help adjusting the page to your screensize</dd>
+	<dt>Show X characters of the subject:</dt>
+	<dd>If a subject line is longer than X characters, it will be truncated. This helps to minimize the table widht of the main screen.</dd>
+	<dt>Show X characters of the address:</dt>
+	<dd>The same things as above with the addresses. This also helps you to reduce the page size</dd>
 </dl>
 
 <h3><a name="problems">Problems and known bugs</a></h3>
@@ -240,15 +264,12 @@ There are a few problems that can arrive:
 		If there's an error message like "MySQL has gone away", it's indicating that a mail which is too big
 		was tried to download or an attachment that was sent is too big.<br>
 		Normally, the maximum value for attachments is about 500KB. This value depends of various setting of
-		the provider this client is running on.
+		the provider this client is running on.<br>
+		I hope finding a solution to catch this error.
 	</li>
 	<li>
-		Complicated HTML mails (namely multipart/related mails and other fancy MIME types) are not displayed correctly.
-		A future version may support more MIME types.
-	</li>
-	<li>
-		Somtimes there's indicated that a mail contains an attachment, but trying to open the attachment fails.<br>
-		This mostly happens if you get non MIME-conformant mails... A fix is planned!
+		When you open the auto-fetch window, and after that i.e. an attachment, the attachment is shown in the same window if you are using Internet Explorer.
+		To open attachments etc. surely in a new window, hold down the shift-key while you click on the link.
 	</li>
 </ul>
 

@@ -109,14 +109,14 @@ http://www.gnu.org/copyleft/gpl.html
 <h2>
 <?php
 		if (!$readonly) {
-			echo("Compose mail");
+			echo($strings["l_ComposeMail"]);
 		}
 ?>
 </h2>
 <form class="mail" action="<?php echo("$GLOBALS[PHP_SELF]")?>" method="post" enctype="multipart/form-data">
 <table style="width: 100%">
 	<tr>
-		<td style="width: 15%;"><label for="from" accesskey="F">From:<label></td>
+		<td style="width: 15%;"><label for="from" accesskey="F"><?php echo($strings["l_From"]);?>:<label></td>
 <?php
 		if ($readonly) {
 			echo("<td>".$mailer->from()."</td>");
@@ -147,7 +147,7 @@ http://www.gnu.org/copyleft/gpl.html
 			echo(htmlspecialchars(stripslashes($mailer->headers->get("To"))));
 		}
 		else {
-			echo("<td><input style=\"vertical-align: middle;\" name=\"to\" type=\"image\" src=\"graphics/small_address.gif\" alt=\"TO:\" value=\"to\"> <label for=\"tos\" accesskey=\"T\">TO:</label></td>");						
+			echo("<td><input style=\"vertical-align: middle;\" name=\"to\" type=\"image\" src=\"graphics/small_address.gif\" alt=\"$strings[l_To]:\" value=\"to\"> <label for=\"tos\" accesskey=\"T\">$strings[l_To]:</label></td>");						
 			// When the user clicked on an address in the addressbook, the $to_row is set (from above)
 			if ($to_row) {
 ?>
@@ -187,7 +187,7 @@ http://www.gnu.org/copyleft/gpl.html
 ?>
 	</tr>
 	<tr>
-		<td><label for="subject" accesskey="S">Subject:</label></td>
+		<td><label for="subject" accesskey="S"><?php echo($strings["l_Subject"]); ?>:</label></td>
 <?php
 		if ($readonly) {
 			echo("<td>".htmlspecialchars($mailer->subject())."</td>\n");
@@ -238,9 +238,9 @@ http://www.gnu.org/copyleft/gpl.html
 <p>
 <hr><br>
 <center>
-<input class="button" type="submit" value="Send" name="submit" style="margin-right: 15px;">
-<input class="button" type="submit" value="Save" name="submit" style="margin-right: 15px;">
-<input class="button" type="reset" value="Reset"></p>
+<input class="button" type="submit" value="<?php echo($strings["l_Send"]);?>" name="submit" style="margin-right: 15px;">
+<input class="button" type="submit" value="<?php echo($strings["l_Store"]);?>" name="submit" style="margin-right: 15px;">
+<input class="button" type="reset" value="<?php echo($strings["l_Reset"]);?>"></p>
 <input type="hidden" name="action" value="storemail">
 <input type="hidden" name="update" value="<?php if ($GLOBALS[action] == "showmail") echo("1"); else echo("0");?>">
 <?php

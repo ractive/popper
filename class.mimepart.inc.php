@@ -147,11 +147,12 @@ class mimepart {
 	
 	function get_address($address) {
 		$address = $this->strip_comment($address);
-		preg_match("/([\"\'](.*?)[\"\']\s*)*<(.*?)>/", $address, $matches);
+		preg_match("/([\"\'])?(.*?)([\"\'])?\s*<(.*?)>/", $address, $matches);
 		//$this->print_array($matches);
+		
 		$ret["name"] = $matches[2];
-		if (!empty($matches[3])) {
-			$ret["address"] = $matches[3];
+		if (!empty($matches[4])) {
+			$ret["address"] = $matches[4];
 		}
 		else {
 			$ret["address"] = $address;		

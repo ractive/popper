@@ -33,6 +33,8 @@ http://www.gnu.org/copyleft/gpl.html
 <META NAME="keywords" CONTENT="php, pop3, pop, client, pop client, popclient, free, freeware, asp">
 <META NAME="description" CONTENT="">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
 <?php
 // Don't use the style shee for Netsape. It looks crappy...
 if ($isNS == 0) {
@@ -55,9 +57,5 @@ else {
 <body>
 <?php
 }
-
 	// From here you can enter what you want.....
 ?>
-<!--<center>
-<h3>PHP POP3 mailclient</h3>
-</center>-->

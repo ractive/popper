@@ -15,7 +15,7 @@
 								}
 ?>
 							</td>
-							<td><a href="<?php echo("$GLOBALS[PHP_SELF]?action=cancel");?>"><img src="graphics/logoff.gif" alt="Cancel" title="Cancel" align="right" border="0"></a></td>
+							<td><a href="<?php echo("$GLOBALS[PHP_SELF]?action=cancel");?>"><img src="graphics/logoff.gif" alt="<?php echo($strings["l_Cancel"]);?>" title="<?php echo($strings["l_Cancel"]);?>" align="right" border="0"></a></td>
 						</tr>
 					</table>
 				</td>

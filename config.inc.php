@@ -30,4 +30,7 @@ http://www.gnu.org/copyleft/gpl.html
 	// i.e. $allowed_server = array("pop.domain.com", "pop.otherdomain.com", "pop.thirddomain.com");
 	// Leave it empty to access ALL mail-servers.
 	$allowed_servers = array();
+	
+	// Login greeting string
+	$greeting = "Willkommen beim Mailservice von Jameslinux";
 ?>

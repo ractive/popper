@@ -16,13 +16,30 @@ http://www.gnu.org/copyleft/gpl.html
 		global $logged_in;
 		return (isset($logged_in) && session_is_registered("logged_in") && $logged_in == 1);
 	}
+	
+	global $strings;
+	
+	set_time_limit(60);
 
 	include("class.popper.inc.php");
 	
-	set_time_limit(60);
-	
 	session_start();
-	if (!isset($popper)) {
+
+	if ($poppercookie["language"]) {
+		$lang_file = "lang/lang.".$poppercookie["language"].".inc.php";
+	}
+	else {
+		if (isset($popper->config["language"]) && !empty($popper->config["language"])) {
+			$lang_file = "lang/lang.".$popper->config["language"].".inc.php";
+		}
+		else {
+			$lang_file = "lang/lang.deutsch.inc.php";
+		}
+	}
+	
+	include($lang_file);
+
+	if (!isset($popper) || !is_object($popper)) {
 		$popper = new popper;
 	}
 	
@@ -35,47 +52,63 @@ http://www.gnu.org/copyleft/gpl.html
 		$popper->db_tool = new db_tool("popper.inc.php");
 	}	
 	
-	if (isset($login)) {
-
+	if (isset($login) || ($poppercookie["user"] && !is_logged_in())) {
 		if (!isset($login) || !isset($pwd)) {
-			$popper->show_in_window("login", "Login");
+			$popper->show_in_window("login", $strings["l_Login"]);
 			return;
 		}
 
  		if (!$popper->pwd_check($name, $pwd)) {
-			$popper->show_in_window("login", "Login", "Your password was not correct. Please try again");
+			$popper->show_in_window("login", $strings["l_Login"], $strings["l_PwdFail"]);
  			return;
  		}
 
 		if (!$popper->is_activated($name)) {
-			$popper->messagebox("Your account is not activated yet! Please follow the instructions you got by mail (to the mail address you entered during the account creation)", "Account not activated", "Account not activated", "Welcome");		
+			$popper->messagebox($strings["l_AccActivation1"], $strings["l_AccActivation1"], $strings["l_AccActivation1"], $strings["l_Welcome"]);		
 			return;			
+		}
+
+		if ($HTTP_COOKIE_VARS["poppercookie"] && $set_cookie != "on") {
+			// This indicates that the user previously set the cookie, but don't
+			// want to have it anymore
+			// We delete the cookies
+			setcookie ("poppercookie[user]", "", time() - 3600);		
+			setcookie ("poppercookie[language]", "", time() - 3600);
+			unset($poppercookie);
 		}
 
 		// The password was ok. Now we start the session
 		$logged_in = 1;
 		$popper->set_user($name);
+		
 		session_register("popper", "logged_in");
+
+		if (isset($set_cookie) && $set_cookie && !$HTTP_COOKIE_VARS["poppercookie"]) {
+			// Set the cookies if the user wants that and if it's not set yet.
+			setcookie("poppercookie[language]", $popper->config["language"], time() + 365 * 24 * 3600);
+			setcookie("poppercookie[user]", $name, time() + 365 * 24 * 3600);
+		}
+		
 		if (!$popper->has_account()) {
-			$popper->show_in_window("newaccount", "Account", "You first have to enter your account information");		
+			$popper->show_in_window("newaccount", $strings["l_Account"], $strings["l_AccInfo"]);		
 			return;
 		}
 		$popper->show();
 	}
 	else if (isset($newuser)) {
 		if ($popper->create_user()) {
-			$popper->messagebox("Your account was created. Check your mail and confirm the subscription", "Account created", "Account created", "Welcome");		
+			$popper->messagebox($strings["l_AccCreated1"], $strings["l_AccCreated2"], $strings["l_AccCreated2"], $strings["l_Welcome"]);		
 		}
 	}
 	else if (isset($check)) {
 		// The user calle the confirmation link
 		if ($popper->check_confirmation($check)) {
 			// The check was successful
-			$popper->messagebox("The confirmation was done! You now can login to your account", "Confirmation successful", "Confirmation successful", "Welcome");
+			$popper->messagebox($strings["l_ConfSucc1"], $strings["l_ConfSucc2"], $strings["l_ConfSucc2"], $strings["l_Welcome"]);
 		}
 		else {
 			// The checkID could not be confirmed
-			$popper->messagebox("The confirmation could not be done! Make sure you called this site with the whole internet address", "Confirmation not successful", "Confirmation not successful", "Try again");
+			$popper->messagebox($strings["l_ConfFail1"], $strings["l_ConfFail2"], $strings["l_ConfFail2"], $strings["l_TryAgain"]);
 		}
 	}
 	else if (is_logged_in()) {
@@ -87,14 +120,14 @@ http://www.gnu.org/copyleft/gpl.html
 				$popper->show_form("deluserack");
 			}
 			if ($ans == "No") {
-				$popper->show_form("main", "User deletion cancelled!");
+				$popper->show_form("main", $strings["l_DelCancel"]);
 			}
 			if (!$popper->delete_user()) {
-				$popper->messagebox("The user ".$popper->get_user()." could not be deleted from the database.<br>\nPlease try again!\n", "Error");
+				$popper->messagebox($popper->get_user().$strings["l_UserDelFail"]."\n", $strings["l_Error"]);
 			}
 			else {
 				session_destroy();
-				$popper->messagebox("The user ".$popper->get_user()." has been deleted and all subscriptions has been cancelled!", "User deleted");
+				$popper->messagebox($popper->get_user().$strings["l_UserDel"], $strings["l_UserDel2"]);
 			}
 		}
 
@@ -107,26 +140,29 @@ http://www.gnu.org/copyleft/gpl.html
 			}
 			else if ($action == "logoff") {
 				session_destroy();
-				$popper->messagebox("Thanks for your visit and come back soon ;-)", "Logoff", "$popper->name logged off.", "Good bye");
+				$popper->messagebox($strings["l_LogoffMsg"], $strings["l_Logoff"], "$popper->name ".$strings["l_LoggedOff"], $strings["l_GoodBye"]);
 				return;
 			}
 			else if ($action == "newmail") {
-				$popper->show_in_window("newmail", "New mail");
+				$popper->show_in_window("newmail", $strings["l_NewMail"]);
 			}
+			else if ($action == "printmail") {
+				$popper->show_print();
+			}			
 			else if ($action == "reply") {
-				$popper->show_in_window("newmail", "New mail");
+				$popper->show_in_window("newmail", $strings["l_ReplyMail"]);
 			}
 			else if ($action == "replytoall") {
-				$popper->show_in_window("newmail", "New mail");
+				$popper->show_in_window("newmail", $strings["l_ReplyAllMail"]);
 			}
 			else if ($action == "forward") {
-				$popper->show_in_window("newmail", "New mail");
+				$popper->show_in_window("newmail", $strings["l_ForwardMail"]);
 			}
 			else if ($action == "showmail") {
-				$popper->show_in_window("newmail", "Show mail");
+				$popper->show_in_window("newmail", $strings["l_ShowMail"]);
 			}
 			else if ($action == "choosen") {
-				$popper->show_in_window("newmail", "New mail");
+				$popper->show_in_window("newmail", $strings["l_Choosen"]);
 			}			
 			else if ($action == "cancel") {
 				if (isset($old_uri)) {
@@ -144,10 +180,10 @@ http://www.gnu.org/copyleft/gpl.html
 				$popper->show_form("addressbook");
 			}
 			else if ($action == "newaccount") {
-				$popper->show_in_window("newaccount", "Account", "Please fill in all fields!");
+				$popper->show_in_window("newaccount", $strings["l_Account"], $strings["l_FillInAll"]);
 			}
 			else if ($action == "newaddress") {
-				$popper->show_in_window("newaddress", "Address");
+				$popper->show_in_window("newaddress", $strings["l_Address"]);
 			}
 			else if ($action == "storemail") {
 				$msg = $popper->store_mail();
@@ -167,9 +203,12 @@ http://www.gnu.org/copyleft/gpl.html
 			else if ($action == "delaccount") {
 				$popper->del_account();
 			}
+			else if ($action == "checkrep") {
+				$popper->check_repetitive();
+			}			
 			else if ($action == "sendandreceive") {
 				if (!isset($what)) {
-					$popper->show_in_window("sendreceive", "Send and receive");
+					$popper->show_in_window("sendreceive", $strings["l_SendReceive"]);
 				}
 				else {
 					$popper->send_and_receive();
@@ -181,10 +220,15 @@ http://www.gnu.org/copyleft/gpl.html
 			else if ($action == "config") {
 				if (isset($GLOBALS[conf_submit])) {
 					$popper->store_config();
+		
+					$lang_file = "lang/lang.".$popper->config["language"].".inc.php";
+
+					include($lang_file);
+									
 					$popper->show();
 				}
 				else {
-					$popper->show_in_window("config", "Configuration");
+					$popper->show_in_window("config", $strings["l_Config"]);
 				}
 			}			
 			else if ($action == "deletemail") {
@@ -193,6 +237,9 @@ http://www.gnu.org/copyleft/gpl.html
 			else if ($action == "deletemails") {
 				$popper->delete_mails();
 			}
+			else if ($action == "deleteall") {
+				$popper->delete_all();
+			}			
 			else {
 				$popper->show();
 			}
@@ -202,14 +249,7 @@ http://www.gnu.org/copyleft/gpl.html
 		}
 	}
 	else {
-		if (count($GLOBALS[HTTP_GET_VARS]) > 0) {
-			// We keep the request information in case the user called us
-			// with parameters. This is especially useful if the
-			// user wants to answer a mail, but first hat to login.
-			$request = $GLOBALS[REQUEST_URI];
-			session_register("request");
-		}
-		$popper->show_in_window("home", "Welcome");
+		$popper->show_in_window("home", $strings["l_Welcome"]);
 	}
 	$cururi = getenv("REQUEST_URI");
 	if ($uri != $cururi) {

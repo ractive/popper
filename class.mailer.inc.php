@@ -133,7 +133,7 @@ class mailer extends mail {
 		return (strcasecmp($type, "text/plain") != 0);
 	}
 	
-	function store($folder, $msg = false) {
+	function store($folder, $msg = false, $server_uidl = 0) {
 		if ($msg) {
 			// ATTENTION
 			$this->headers->extract($msg);
@@ -154,6 +154,12 @@ class mailer extends mail {
 		$date = $this->make_timestamp($this->headers->get("Date"));
 		if ($folder == "sent") {
 			$was_read = 1;
+		}
+		
+		// Some POP server list uidls on request, but don't store them in
+		// the mail as X-UIDL
+		if ($server_uidl != 0 && !$uidl) {
+			$uidl = $server_uidl;
 		}
 		$query = "INSERT INTO mails (tos, froms, subject, date, folder, user_id, mail, uidl, acc_id, is_mime, was_read) VALUES ('$tos', '$froms', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl', '$this->acc_id', '$is_mime', '$was_read')";
 		$res = $this->db_tool->db_query($query);

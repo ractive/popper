@@ -1,6 +1,6 @@
 <?
 # phpop RCS version info:
-# $Id: class.pop3.inc.php,v 1.2 2001/02/05 00:30:11 jbergamin Exp $
+# $Id: class.pop3.inc.php,v 1.1.1.1 2001/02/05 01:00:12 jbergamin Exp $
 /*
 
 	class.POP3.php3 v1.0	99/03/24 CDI cdi@thewebmasters.net
@@ -611,7 +611,24 @@ class POP3
 		return $PopArray;
 	}
 
-	function uidl ($msgNum = "")
+	function own_uidl($msgNum) {
+		$top = $this->top($msgNum, 1);
+		if ($top === false) {
+			return false;
+		}
+		
+		// Some POP-server add a Status header to the mail as soon as it got read
+		// We remove this header for the uidl calculction, that the checksum
+		// is not different when you read the mail for the very first time
+		// (without this Status header)
+		
+		$top = preg_replace("/(Status: RO\r\n)/U", "", $top);
+		/*echo nl2br($top);	
+		echo "<br>".md5($top)."<br>";*/
+		return md5($top);
+	}
+
+	function uidl ($msgNum = 0, &$own_uidl)
 	{
 		//	Returns the UIDL of the msg specified. If called with
 		//	no arguments, returns an associative array where each
@@ -627,14 +644,18 @@ class POP3
 		$fp = $this->FP;
 		$buffer = $this->BUFFER;
 
-		if(!empty($msgNum))
+		if($msgNum != 0)
 		{
 			$cmd = "UIDL $msgNum";
 			$reply = $this->send_cmd($cmd);
 			if(!$this->is_ok($reply))
 			{
-				$this->ERROR = "POP3 uidl: Error [$reply]";
-				return false;
+				if ($myUidl = $this->own_uidl($msgNum) === false) {
+					$this->ERROR = "POP3 uidl: Error [$reply]";
+					return false;
+				}
+				$own_uidl = true;
+				return $myUidl;
 			}
 			list ($ok,$num,$myUidl) = explode(" ",$reply);
 			return $myUidl;
@@ -651,6 +672,7 @@ class POP3
 			{
 				return $UIDLArray;
 			}
+
 			$cmd = "UIDL";
 			fwrite($fp, "UIDL\r\n");
 			$reply = fgets($fp, $buffer);
@@ -658,8 +680,31 @@ class POP3
 			if($this->DEBUG) { @error_log("POP3 SEND [$cmd] GOT [$reply]",0); }
 			if(!$this->is_ok($reply))
 			{
-				$this->ERROR = "POP3 uidl: Error [$reply]";
-				return false;
+				// Try to calculate our own uidls
+				$get = $this->pop_list();
+
+				if ($get === false) {
+					$this->ERROR = "POP3 uidl: Error [$reply]";
+					return false;				
+				}
+
+				// The first entry contains the no. of mails. Remove it
+				array_shift($get);
+								
+				foreach($get as $get_now => $size) {
+					$num = $get_now + 1;
+					$uidl = $this->own_uidl($num);
+
+					if ($uidl === false) {
+						$this->ERROR = "POP3 uidl: Error [$reply]";
+						return false;					
+					}
+					$UIDLArray[$num] = $uidl;
+				}
+				
+				$own_uidl = true;
+								
+				return $UIDLArray;
 			}
 
 			$line = "";

@@ -2,7 +2,7 @@
 	<td width="25%" valign="top">
 		<?php $this->show_folders() ?>
 		<p class="windowtitle">
-			<a href="<?php echo("$GLOBALS[PHP_SELF]?action=newaddress");?>">Add contact...</a>
+			<?php echo("<a href=\"$GLOBALS[PHP_SELF]?action=newaddress\">$strings[l_AddContact]</a>");?>
 		</p>
 		<?php $this->show_addresses() ?>
 	</td>

@@ -70,14 +70,15 @@ class db_tool {
 
 	// Get the link to the db
 	function link_db() {
+		global $strings;
 		$doc_root = getenv("DOCUMENT_ROOT");
 		require("$doc_root/../$this->db_data_inc");
 		$this->db_link = $this->db_connect($host, $user, $pass)
-			or die ("Could not connect to the server".$this->db_error());
+			or die ($strings["l_ServerConnect"]."<br>".$this->db_error());
 
 		$query = "USE $dbname";
 		$this->query($query, $this->db_link)
-			or die ("Could not open database".$this->db_error());
+			or die ($strings["l_OpenDB"]."<br>".$this->db_error());
 	}
 
 	// Public functions

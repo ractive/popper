@@ -22,23 +22,24 @@ http://www.gnu.org/copyleft/gpl.html
 		$row = $this->db_tool->fetch_array($res);
 	}
 ?>
+<br>
 <center>
 <h2>
-Enter the address book entry
+<?php echo $strings["l_NewAddress"];?>
 </h2>
 
 <form action="<?php echo("$GLOBALS[PHP_SELF]");?>" method="post">
 	<table cellpadding="3" cellspacing="3">
 		<tr>
-			<td style="background-color: inherit; color: Red;">Name:</td>
+			<td style="background-color: inherit; color: Red;"><?php echo $strings["l_Name"];?>:</td>
 			<td><input name="name" size="25" value="<?php echo(stripslashes($row["name"]));?>"></td>
 		</tr>
 		<tr>
-			<td>Lastname:</td>
+			<td><?php echo $strings["l_LastName"];?>:</td>
 			<td><input name="lastname" size="25" value="<?php echo(stripslashes($row["lastname"]));?>"></td>
 		</tr>
 		<tr>
-			<td>Nickname:</td>
+			<td><?php echo $strings["l_NickName"];?>:</td>
 			<td><input name="nickname" size="25" value="<?php echo(stripslashes($row["nickname"]));?>"></td>
 		</tr>
 		<tr>
@@ -46,35 +47,35 @@ Enter the address book entry
 			<td><input name="email" size="25" value="<?php echo(stripslashes($row["email"]));?>"></td>
 		</tr>
 		<tr>
-			<td>Address 1:</td>
+			<td><?php echo $strings["l_Address"];?> 1:</td>
 			<td><input name="address1" size="25" value="<?php echo(stripslashes($row["address1"]));?>"></td>
 		</tr>
 		<tr>
-			<td>Address 2:</td>
+			<td><?php echo $strings["l_Address"];?> 2:</td>
 			<td><input name="address2" size="25" value="<?php echo(stripslashes($row["address2"]));?>"></td>
 		</tr>
 		<tr>
-			<td>ZIP:</td>
+			<td><?php echo $strings["l_ZIP"];?>:</td>
 			<td><input name="zip" size="16" value="<?php echo(stripslashes($row["zip"]));?>"></td>
 		</tr>
 		<tr>
-			<td>Town:</td>
+			<td><?php echo $strings["l_Town"];?>:</td>
 			<td><input name="town" size="25" value="<?php echo(stripslashes($row["town"]));?>"></td>
 		</tr>
 		<tr>
-			<td>State:</td>
+			<td><?php echo $strings["l_State"];?>:</td>
 			<td><input name="state" size="25" value="<?php echo(stripslashes($row["state"]));?>"></td>
 		</tr>
 		<tr>
-			<td>Country:</td>
+			<td><?php echo $strings["l_Country"];?>:</td>
 			<td><input name="country" size="25" value="<?php echo(stripslashes($row["country"]));?>"></td>
 		</tr>
 		<tr>
-			<td>Phone:</td>
+			<td><?php echo $strings["l_Phone"];?>:</td>
 			<td><input name="phone" size="25" value="<?php echo(stripslashes($row["phone"]));?>"></td>
 		</tr>
 		<tr>
-			<td>Mobile-phone:</td>
+			<td><?php echo $strings["l_MobilePhone"];?>:</td>
 			<td><input name="mobile" size="25" value="<?php echo(stripslashes($row["mobile"]));?>"></td>
 		</tr>
 		<tr>
@@ -84,8 +85,8 @@ Enter the address book entry
 	</table>
 	<br><hr><br>
 	&nbsp;
-	<input class="button" type="submit" value="Store">
-	<input class="button" type="reset" value="Reset">
+	<input class="button" type="submit" value="<?php echo $strings["l_Store"];?>">
+	<input class="button" type="reset" value="<?php echo $strings["l_Reset"];?>">
 	<input type="hidden" name="update" value="<?php echo($GLOBALS["update"]);?>">
 	<input type="hidden" name="action" value="storeaddress">
 </form>

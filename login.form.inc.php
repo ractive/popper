@@ -1,17 +1,27 @@
+<?php global $poppercookie;?>
+
 <center>
 <h2>Popper Login</h2>
 
 <form method="post" action="<?php echo("$GLOBALS[PHP_SELF]");?>">
 	<table cellpadding="5">
 		<tr>
-			<td>Loginname:</td>
-			<td><input type="text" name="name"><br></td>
+			<td><?php echo($strings["l_LoginName"]);?>:</td>
+			<td><input type="text" name="name" value="<?php echo($poppercookie["user"]);?>"><br></td>
 		</tr>
 		<tr>
-			<td>Password:</td>
+			<td><?php echo($strings["l_Pwd"]);?>:</td>
 			<td><input type="password" name="pwd"></td>
 		</tr>
 	</table>
-	<input class="button" type="submit" name="login" value="Login">
+	<input type="checkbox" name="set_cookie"
+	<?php
+		if ($poppercookie["user"]) {
+			echo(" checked");
+		}
+	?>
+	> <?php echo($strings["l_Remember"]);?><br><br>
+	
+	<input class="button" type="submit" name="login" value="<?php echo($strings["l_Login"]);?>">
 </form>
 </center>

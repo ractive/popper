@@ -1,9 +1,9 @@
 <center>
-<h2>Welcome to the ultimate PHP POP3 Client</h2>
-Please login or create an account if you don't have already one ...
+<h2><?php echo($GLOBALS["greeting"]);?></h2>
+<?php echo($strings["l_WelcomeLogin"]);?>
 
 <form method="get" action="<?php echo("$GLOBALS[PHP_SELF]");?>">
-	<input class="button" type="submit" name="login" value="Login"><br>
-	<input class="button" type="submit" name="newuser" value="Create New User">
+	<input class="button" type="submit" name="login" value="<?php echo($strings["l_Login"]);?>"><br>
+	<input class="button" type="submit" name="newuser" value="<?php echo($strings["l_NewUser"]);?>">
 </form>
 </center>

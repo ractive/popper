@@ -20,15 +20,15 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 ?>
 <center>
-<h2>Send and receive</h2>
+<h2><?php echo($strings["l_SendReceive"]);?></h2>
 
 <form method="post" action="<?php echo("$GLOBALS[REQUEST_URI]");?>">
-	Please choose your action?
+	<h4><?php echo($strings["l_Action"]);?></h4>
 	<p>
 	<select name="what" class="button">
-		<option value="sendonly">Send only</option>
-		<option value="sendandreceive">Send and receive all</option>
-		<option value="getall">Get all</option>
+		<option value="sendonly"><?php echo($strings["l_SendOnly"]);?></option>
+		<option value="sendandreceive"><?php echo($strings["l_SendRecvAll"]);?></option>
+		<option value="getall"><?php echo($strings["l_GetAll"]);?></option>
 <?php
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<option value=\"$row[id]\">".stripslashes($row["name"])."</option>");
@@ -36,6 +36,6 @@ http://www.gnu.org/copyleft/gpl.html
 ?>
 	</select>
 	</p>
-	<p><input class="button" type="submit" value="Go..."></p>
+	<p><input class="button" type="submit" value="<?php echo($strings["l_Go"]);?>"></p>
 </form>
 </center>

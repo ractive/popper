@@ -5,7 +5,7 @@
 <br>
 <hr>
 <center>
-<input class="button" type="submit" name="conf_submit" value="Store">&nbsp;
-<input class="button" type="reset" value="Reset">
+<input class="button" type="submit" name="conf_submit" value="<?php echo($strings["l_Store"]);?>">&nbsp;
+<input class="button" type="reset" value="<?php echo($strings["l_Reset"]);?>">
 </center>
 </form>
