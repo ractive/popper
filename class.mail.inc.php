@@ -127,7 +127,9 @@ class mail extends mimepart {
 		}
 		
 		$part = "Content-Type: ".$type."\r\n";
-		$part .= "Content-Transfer-Encoding: ".$encoding."\r\n";
+		if (!empty($encoding)) {
+			$part .= "Content-Transfer-Encoding: ".$encoding."\r\n";
+		}
 		if (!empty($description)) {
 			$part .= "Content-Description: ".$description."\r\n";
 		}
@@ -157,6 +159,9 @@ class mail extends mimepart {
 		$body = $this->generate_body(false, false);
 		$to = stripslashes($this->headers->get("To"));
 		$subject = $this->subject();
+		/*echo "TO: $to<br>";
+		echo nl2br($headers);
+		echo nl2br($body);*/
 		return mail($to, $subject, $body, rtrim($headers));
 	}
 }
