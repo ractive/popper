@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/gpl.html
 		$month = 0;
 		session_register("month");
 	}
-
+	
 	$time = time();
 	$time = mktime(0, 0, 0, date("m", $time) + $GLOBALS[month], date("j"), date("y", $time));
 	$days_of_month = date("t", $time);
@@ -34,17 +34,19 @@ http://www.gnu.org/copyleft/gpl.html
 	$start_day = (date("w", mktime(0, 0, 0, date("m", $time), 1, date("y", $time))) + 6) % 7;
 	$today = date("j", $time);
 
+	// Get the past mondy of this week
+	$monday = mktime(0, 0, 0, date("m"), date("j") - date("w") + 1, date("y"));
 ?>
 	<table width="100%" border="1">
-		<caption style="font-weight: bolder; font-size: x-large;"><?php echo(date("F Y", $time));?></caption>
+		<caption style="font-weight: bolder; font-size: x-large;"><?php echo(ucfirst(strftime("%B %Y", $time)));?></caption>
 		<tr>
-			<th style="width: 14%; font-size: smaller;">Monday</th>
-			<th style="width: 14%; font-size: smaller;">Tuesday</th>
-			<th style="width: 14%; font-size: smaller;">Wednesday</th>
-			<th style="width: 14%; font-size: smaller;">Thursday</th>
-			<th style="width: 14%; font-size: smaller;">Friday</th>
-			<th style="width: 14%; font-size: smaller;">Saturday</th>
-			<th style="font-size: smaller;">Sunday</th>
+			<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", $monday)));?></th>
+			<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 1, date("y", $monday)))));?></th>
+			<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 2, date("y", $monday)))));?></th>
+			<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 3, date("y", $monday)))));?></th>
+			<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 4, date("y", $monday)))));?></th>
+			<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 5, date("y", $monday)))));?></th>
+			<th style="font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 6, date("y", $monday)))));?></th>
 		</tr>
 <?php
 		for($i = 0; $i < 6 * 7; $i++) {
@@ -77,17 +79,17 @@ http://www.gnu.org/copyleft/gpl.html
 		</tr>
 		<tr class="calcontrol">
 			<td>
-				 <a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=prev">&lt;&lt;&lt; Previous</a>
+				 <a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=prev">&lt;&lt;&lt; <?php echo($strings["l_Previous"]);?></a>
 			</td>
 			<td colspan="2">
 			</td>
 			<td>
-				<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=current">Current</a>
+				<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=current"><?php echo($strings["l_Current"]);?></a>
 			</td>
 			<td colspan="2">
 			</td>
 			<td>
-				<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=next">Next &gt;&gt;&gt;</a>
+				<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=next"><?php echo($strings["l_Next"]);?> &gt;&gt;&gt;</a>
 			</td>
 		</tr>
 	</table>
