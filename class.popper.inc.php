@@ -40,48 +40,18 @@ class popper {
 	var $max_size;
 	var $language;
 	var $order = "date DESC";
-	var $folders = array(
-			"inbox" => array(
-				"name" => "Inbox",
-				"pic" => "inbox.gif",
-				"cur_page" => 0
-			),
-			"outbox" => array(
-				"name" => "Outbox",
-				"pic" => "outbox.gif",
-				"cur_page" => 0
-			),
-			"sent" => array(
-				"name" => "Sent mail",
-				"pic" => "sent.gif",
-				"cur_page" => 0
-			),
-			"bin" => array(
-				"name" => "Recycle bin",
-				"pic" => "bin.gif",
-				"cur_page" => 0
-			),
-			"drafts" => array(
-				"name" => "Drafts",
-				"pic" => "drafts.gif",
-				"cur_page" => 0
-			),
-			"cal" => array(
-				"name" => "Calendar",
-				"pic" => "cal.gif",
-				"cur_page" => 0
-			)
-		);
+	var $folders;
 	var $config = array();
 	var $version;
 
 	function popper() {
-		// Create the db_tool object
-		$this->db_tool = new db_tool("popper.inc.php");
+		if (!isset($_SESSION['popper']->db_tool)) {
+			// Create the db_tool object
+			$this->db_tool = new db_tool("popper.inc.php");
+		}
 		
 		// Determine the max size of a mail you can
 		// store in the DB
-
 		$query = "SHOW VARIABLES";
 		$res = $this->db_tool->db_query($query);
 		while($row = $this->db_tool->fetch_array($res)) {
@@ -283,7 +253,6 @@ Masked out for better security.  See prior DevNote.
 	
 
 	function show_in_window($form, $title="", $status_msg="", $msgboxtext = "", $msgboxhead="") {
-		global $top_part, $bottom_part;
 		
 		if ($this->config["mailview"] == FRAME_VIEW && $form != "config" && $form != "changepwd" && $form != "newmail") {
 			$this->show_small_window($form, $title, $status_msg, $msgboxtext, $msgboxhead);
@@ -294,11 +263,11 @@ Masked out for better security.  See prior DevNote.
 			$this->set_cur();
 		}
 
-		include($top_part);
+		include($_SESSION['top_part']);
 		include("titlebar.inc.php");
 		include("childwindow.inc.php");
 		include("statusbar.inc.php");
-		include($bottom_part);
+		include($_SESSION['bottom_part']);
 	}
 	
 	function show_small_window($form, $title = "", $status_msg = "", $msgboxtext = "", $msgboxhead = "") {
@@ -326,13 +295,13 @@ Masked out for better security.  See prior DevNote.
 		if (isset($addr_id) && !empty($addr_id)) {
 			$this->cur_address_id = $addr_id;
 		}
-		global $top_part, $bottom_part;
+		
 		if ($this->config["mailview"] == FRAME_VIEW && ($form == "addressbook" || $form == "accounts")) {
 			$this->frame_header();
 			echo("<table class=\"windowborder\" width=\"100%\" border=\"0\" align=\"center\">");
 		}
 		else {
-			include($top_part);
+			include($_SESSION['top_part']);
 			include("titlebar.inc.php");
 		}
 		if(file_exists($form.".toolbar.inc.php")) {
@@ -350,7 +319,7 @@ Masked out for better security.  See prior DevNote.
 		}		
 		else {
 			include("statusbar.inc.php");
-			include($bottom_part);
+			include($_SESSION['bottom_part']);
 		}
 	}
 
@@ -1581,7 +1550,7 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function create_user() {
-		global $name, $email, $pwd, $pwd2, $user_confirmation;
+		global $name, $email, $pwd, $pwd2;
 
 		if (!isset($name) && !isset($pwd) && !isset($pwd2)) {
 			// Seems like new user is called for the first time without any info
@@ -1603,7 +1572,7 @@ Masked out for better security.  See prior DevNote.
 		}
 
 		// Everything is fine. Now we insert the new user into the DB
-		$activated = !$user_confirmation;
+		$activated = !$_SESSION['user_confirmation'];
 		$query = "INSERT INTO users (name, pwd, email, activated) VALUES ('$name', '$pwd', '$email', '$activated')";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
@@ -1624,7 +1593,7 @@ Masked out for better security.  See prior DevNote.
 		$this->load_config();
 		$this->set_user($name);
 		
-		if ($user_confirmation) {
+		if ($_SESSION['user_confirmation']) {
 			$this->send_confirmation_mail($name, $email);
 		}
 
@@ -2490,27 +2459,31 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function send_and_receive() {
-		global $what, $show;
+		global $show;
 
-		if (!isset($what) || empty($what)) {
+		if (!isset($_SESSION['what']) || empty($_SESSION['what'])) {
 			$this->show($this->folder);
 		}
-		if ($what == "sendonly") {
+		
+		switch($_SESSION['what'])
+		{
+		case "sendonly":
 			$this->send_outbox();
-		}
-		else if ($what == "sendandreceive") {
+			break;
+		case "sendandreceive":
 			$msg = $this->send_outbox();
 			$this->get_mails();
 			/*$this->show("sent", $msg);
 			return;*/
-		}
-		else if ($what == "getall") {
+			break;
+		case "getall":
 			$this->get_mails();
-		}
-		else {
+			break;
+		default:
 			// Only get the mails from a specified account
-			$this->get_mails($what);
+			$this->get_mails($_SESSION['what']);
 		}
+		
 		if ($show == "no") {
 			Header("Location: $GLOBALS[PHP_SELF]?action=checkrep");
 			exit;
@@ -3025,6 +2998,49 @@ Masked out for better security.  See prior DevNote.
 	
 	function get_version() {
 		return $this->version;
+	}
+	
+	function set_folders() {
+/*DevNote: roytoo
+Functionalized in preparation for eventual ability to create custom folders.  
+Next step is to move the hard-coded information for the default folders into 
+the database (as `default_folders`:).  Final step will be to add `user_folders` 
+table to the database with a N:1 cardinality with `users`.`id`.
+`default_folders`: `folder_id`, `icon`
+`user_folders`: `folder_id`, `fkuser_id`, `label`, `parent_id`
+:DevNote*/
+		$this->folders = array(
+				"inbox" => array(
+					"name" => "Inbox",
+					"pic" => "inbox.gif",
+					"cur_page" => 0
+				),
+				"outbox" => array(
+					"name" => "Outbox",
+					"pic" => "outbox.gif",
+					"cur_page" => 0
+				),
+				"sent" => array(
+					"name" => "Sent mail",
+					"pic" => "sent.gif",
+					"cur_page" => 0
+				),
+				"bin" => array(
+					"name" => "Recycle bin",
+					"pic" => "bin.gif",
+					"cur_page" => 0
+				),
+				"drafts" => array(
+					"name" => "Drafts",
+					"pic" => "drafts.gif",
+					"cur_page" => 0
+				),
+				"cal" => array(
+					"name" => "Calendar",
+					"pic" => "cal.gif",
+					"cur_page" => 0
+				)
+		);
 	}
 }
 ?>
