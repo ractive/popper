@@ -54,3 +54,8 @@ Version 1.3
 - Selective deletion simplified
 - Own X-UIDL implementation redesigned. Works not.
 - Deletion of mails is handled better now
+
+Version 1.31
+============
+- Bug fixes (esp. for "Create new user")
+- New option in config.inc.php that let's you switch off the user confirmation
