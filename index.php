@@ -48,7 +48,7 @@ http://www.gnu.org/copyleft/gpl.html
 This is very insecure!  Need to validate input and screen for PHP [htmlspecialchars()]
 and MySQL [mysql_real_escape_string()] injection attacks.
 :DevNote*/
-	$action    = (!isset($_REQUEST['action']) ? "" : strtolower(htmlspecialchars($_REQUEST['action'])));
+	$_SESSION['action']    = (!isset($_REQUEST['action']) ? "" : strtolower(htmlspecialchars($_REQUEST['action'])));
 	$logged_in = (!isset($_SESSION['logged_in']) ? "" : $_SESSION['logged_in']);
 	$confirm_code     = (!isset($_REQUEST['confirm_code']) ? "" : htmlspecialchars($_REQUEST['confirm_code']));
 	$ok 		  = (!isset($_REQUEST['ok']) ? "" : strtolower(htmlspecialchars($_REQUEST['ok'])));
@@ -75,7 +75,7 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 	
 	/*
 	// Check for early exit conditions
-	switch ($action)
+	switch ($_SESSION['action'])
 	{
 	case "lostpwd":
 		$_SESSION['popper']->show_in_window("lostpwd");
@@ -93,7 +93,7 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 		$_SESSION['popper']->db_tool = new db_tool("test-popper.inc.php");
 	}
 	
-	switch ($action)
+	switch ($_SESSION['action'])
 	{
 	case "process_login":
 		process_login();
@@ -108,13 +108,6 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 		process_action();
 		break;
 	}
-	
-	$cururi = getenv("REQUEST_URI");
-	if ($_SESSION['uri'] != $cururi) {
-		$_SESSION['old_uri'] = $_SESSION['uri'];
-	}
-	
-	$_SESSION['uri'] = $cururi;
 
 print_r($_SESSION);
 /*==                                End Main
@@ -193,8 +186,8 @@ function process_new_user() {
 	
 	if ($_SESSION['popper']->create_user()) {
 		require("config.inc.php");
-		echo $GLOBALS[user_confirmation];
-		if ($GLOBALS[user_confirmation]) {
+		echo $GLOBALS['user_confirmation'];
+		if ($GLOBALS['user_confirmation']) {
 			$_SESSION['popper']->messagebox($_SESSION["strings"]["l_AccCreated1"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_Welcome"]);		
 		}
 		else {
@@ -217,14 +210,14 @@ function process_confirmation($code) {
 }
 
 function process_action() {
-	global $action, $ok, $what;
+	global $ok, $what;
 	
 	// Remove previously created tmp-files
 	$_SESSION['popper']->unlink_tmp();
 
 /*DevNote: roytoo
-Temporarily masked out the 'ok' functionality since it now interfers with $action processing.
-Will need to be re-implemented, most likely by dynamically changing the value of $action based 
+Temporarily masked out the 'ok' functionality since it now interfers with $_SESSION['action'] processing.
+Will need to be re-implemented, most likely by dynamically changing the value of $_SESSION['action'] based 
 upon the contents of $_SESSION['last_action'].
 :DevNote*/
 	/*if ($ok == "ok") {
@@ -240,7 +233,7 @@ upon the contents of $_SESSION['last_action'].
 	
 	$_SESSION['popper']->pre_frame();
 	
-	switch($action)
+	switch($_SESSION['action'])
 	{
 	case "showfolder":
 		$_SESSION['popper']->show($folder);
@@ -519,6 +512,21 @@ function unserialize_session() {
 	{
 		$_SESSION['cal'] = unserialize($_SESSION['cal']);
 	}
+}
+
+function takedown_session()
+{
+	// Update $_SESSION['last_action'] if needed
+	if ($_SESSION['last_action'] != $_SESSION['action']) {
+		$_SESSION['last_action'] = $_SESSION['action'];
+	}
+	
+	// Store the current and last URIs
+	$cururi = getenv("REQUEST_URI");
+	if ($_SESSION['uri'] != $cururi) {
+		$_SESSION['old_uri'] = $_SESSION['uri'];
+	}
+	$_SESSION['uri'] = $cururi;
 }
 
 function exit_popper() {

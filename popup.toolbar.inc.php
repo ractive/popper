@@ -2,16 +2,16 @@
 		<td colspan="3">
 		<img src="graphics/toolbar_left.gif" alt="|">
 <?php	
-		global $mail_id, $action;
+		global $mail_id;
 		
-		if ($this->config["mailview"] == SEP_VIEW && $action != "getattachment") {
+		if ($this->config["mailview"] == SEP_VIEW && $_SESSION['action'] != "getattachment") {
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=".$this->folder."&mail_id=$mail_id\">");			
 			echo("<img src=\"graphics/home.gif\" alt=\"".$_SESSION["strings"]["l_MainView"]."\" title=\"".$_SESSION["strings"]["l_MainView"]."\" border=\"0\"></a>\n");
 			echo("<img src=\"graphics/spacing.gif\" alt=\"|\">");				
 		}
 		else {
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showmail&mail_id=");	
-			if ($action == "getattachment") {
+			if ($_SESSION['action'] == "getattachment") {
 				echo($this->cur_message_id);
 			}
 			else {
@@ -49,7 +49,7 @@
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=deletemail&mail_id=$mail_id\"><img src=\"graphics/cancel.gif\" alt=\"".$_SESSION["strings"]["l_DeleteSel"]."\" title=\"".$_SESSION["strings"]["l_DeleteSel"]."\" border=\"0\"></a>\n");
 		}
 		
-		if ($action != "getattachment") {
+		if ($_SESSION['action'] != "getattachment") {
 			echo("<img src=\"graphics/spacing.gif\" alt=\"|\">");
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showmail&goto=prev&mail_id=$mail_id\"><img src=\"graphics/back.gif\" alt=\"".$_SESSION["strings"]["l_PrevMail"]."\" title=\"".$_SESSION["strings"]["l_PrevMail"]."\" border=\"0\"></a>\n");		
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showmail&goto=next&mail_id=$mail_id\"><img src=\"graphics/next.gif\" alt=\"".$_SESSION["strings"]["l_NextMail"]."\" title=\"".$_SESSION["strings"]["l_NextMail"]."\" border=\"0\"></a>\n");				

@@ -284,14 +284,14 @@ Masked out for better security.  See prior DevNote.
 	
 
 	function show_in_window($form, $title="", $status_msg="", $msgboxtext = "", $msgboxhead="") {
-		global $top_part, $bottom_part, $action;
+		global $top_part, $bottom_part;
 		
 		if ($this->config["mailview"] == FRAME_VIEW && $form != "config" && $form != "changepwd" && $form != "newmail") {
 			$this->show_small_window($form, $title, $status_msg, $msgboxtext, $msgboxhead);
 			return;
 		}
 		
-		if ($form != "choose" && $action != "choosen") {
+		if ($form != "choose" && $_SESSION['action'] != "choosen") {
 			$this->set_cur();
 		}
 
@@ -317,7 +317,7 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 	function show_form($form, $status_msg = "") {
-		global $account_id, $addr_id, $action;
+		global $account_id, $addr_id;
 
 		$this->set_cur();
 
@@ -345,7 +345,7 @@ Masked out for better security.  See prior DevNote.
 			}
 		}
 		include($form.".form.inc.php");
-		if ($this->config["mailview"] == FRAME_VIEW && ($action == "addressbook" || $action == "accounts")) {
+		if ($this->config["mailview"] == FRAME_VIEW && ($_SESSION['action'] == "addressbook" || $_SESSION['action'] == "accounts")) {
 			echo("</table></form>");
 			$this->frame_footer();
 		}		
@@ -978,7 +978,7 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 	function list_mails() {
-		global $mail_id, $page, $action;
+		global $mail_id, $page;
 		
 		if (empty($this->folder)) {
 			$this->folder = "inbox";
@@ -1226,7 +1226,7 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_mail_content($mailer = 0) {
-		global $action, $mail_id;
+		global $mail_id;
 
 		if ($mailer == 0) {
 			$mailer = $this->cur_mailer;
@@ -1235,7 +1235,7 @@ Masked out for better security.  See prior DevNote.
 
 		if ($this->cur_message_id == 0 || $this->cur_mailer == 0) {
 			$content = "\r\n\r\n  ======== ".$_SESSION["strings"]["l_NoMsgSelected"]." ========";
-			if ($action == "printmail" || $action == "showmail" || $action == "getattachment" || $action == "mail_cont") {
+			if ($_SESSION['action'] == "printmail" || $_SESSION['action'] == "showmail" || $_SESSION['action'] == "getattachment" || $_SESSION['action'] == "mail_cont") {
 				$content = nl2br($content);
 			}
 			if ($this->config["mailview"] == FRAME_VIEW) {
@@ -1246,7 +1246,7 @@ Masked out for better security.  See prior DevNote.
 			return;
 		}
 		$content = "";
-		if ($action == "showsources") {
+		if ($_SESSION['action'] == "showsources") {
 			if ($mail_id != "att") {
 				$query = "SELECT mail FROM mails WHERE id='$mail_id' AND user_id='$this->userid'";
 				$res = $this->db_tool->db_query($query);
@@ -1267,31 +1267,31 @@ Masked out for better security.  See prior DevNote.
 		}
 
 		if (empty($content)) {
-			$get_html = $this->config["mailview"] == FRAME_VIEW && $action == "mail_cont";
+			$get_html = $this->config["mailview"] == FRAME_VIEW && $_SESSION['action'] == "mail_cont";
 			$content = $mailer->get_text_body($get_html);
 		}
 
-		if ($this->config["mailview"] == FRAME_VIEW && $action == "mail_cont" || $action == "notification") {
+		if ($this->config["mailview"] == FRAME_VIEW && $_SESSION['action'] == "mail_cont" || $_SESSION['action'] == "notification") {
 			// We return the content, so that show_mail_frame can handle it correctly
 			// This is needed if $content is a HTML mail
 			return $content;
 		}
 
 		// If we are here, the mail has been read, we tell that the DB
-		if ($action != "printmail" ) {
+		if ($_SESSION['action'] != "printmail" ) {
 			$this->set_mail_read($this->cur_message_id);
 		}		
 
 		$content = stripslashes($content);
 
-		if ($action == "printmail" || $action == "showmail" || $action == "getattachment" || $action == "mail_cont") {
+		if ($_SESSION['action'] == "printmail" || $_SESSION['action'] == "showmail" || $_SESSION['action'] == "getattachment" || $_SESSION['action'] == "mail_cont") {
 
 			$content = nl2br($content);
 			// Convert http:// entries to hyperlinks
 			$this->make_clickable($content);
 		}
 
-		if ($action == "showsources") {
+		if ($_SESSION['action'] == "showsources") {
 			Header("Content-Type: text/plain");
 		}
 		
@@ -1313,13 +1313,12 @@ Masked out for better security.  See prior DevNote.
 
 	
 	function show_mail_frame() {
-		global $action;
 		
 		$this->set_cur();
 		
 		$content = $this->show_mail_content();
 		
-		if ($action == "showsources") {
+		if ($_SESSION['action'] == "showsources") {
 			Header("Content-Type: text/plain");
 			echo $content;
 		}		
@@ -1418,7 +1417,7 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 	function show_popup_mail($show_att_mail = false) {
-		global $action, $mail_id;
+		global $mail_id;
 		
 		$this->next_prev();
 		
@@ -1434,7 +1433,7 @@ Masked out for better security.  See prior DevNote.
 			$mailer = $this->cur_mailer;
 		}
 				
-		$style_sheet = $action == "printmail" ? "print.css" : "style.css";
+		$style_sheet = (($_SESSION['action'] == "printmail") ? "print.css" : "style.css");
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 
@@ -1446,7 +1445,7 @@ Masked out for better security.  See prior DevNote.
 <body>
 <?php
 
-		if ($action == "showmail" || $action == "getattachment") {
+		if ($_SESSION['action'] == "showmail" || $_SESSION['action'] == "getattachment") {
 			include("titlebar.inc.php");
 			//echo("<table style=\"border: none; margin-bottom: 2em;\">");
 			include("popup.toolbar.inc.php");
@@ -1484,7 +1483,7 @@ Masked out for better security.  See prior DevNote.
 			}			
 			echo("</td></tr>");
 		}	
-		if ($action == "printmail") {
+		if ($_SESSION['action'] == "printmail") {
 			// If the mail should be printed we display the names of the attachments
 			$bShown = false;
 			$i = 1;
@@ -1527,7 +1526,7 @@ Masked out for better security.  See prior DevNote.
 			echo $this->show_mail_content();
 		}
 		
-		if ($action == "showmail") {
+		if ($_SESSION['action'] == "showmail") {
 			echo("</tr></td></table>");
 		}
 		echo("</div></body></html>");	
@@ -2019,7 +2018,7 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 	function get_attachment() {
-		global $action, $mail_id;
+		global $mail_id;
 		
 		$this->set_cur();
 
