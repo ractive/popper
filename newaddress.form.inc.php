@@ -12,7 +12,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-	if ($GLOBALS[update]) {
+	if ($GLOBALS["update"] == 1) {
 		$query = "SELECT * FROM addresses WHERE id = '$this->cur_address_id' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {

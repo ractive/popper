@@ -38,6 +38,11 @@ class mailer extends mail {
 
 		$row = $this->db_tool->fetch_array($res);
 		$this->from_text(stripslashes($row["mail"]));
+		/*$fp = fopen("torture-test.mbox", "r");
+		$file_cont = fread($fp, filesize("torture-test.mbox"));
+		$this->from_text($file_cont);
+		$this->print_array($this->headers->header_arr);
+		exit;*/
 		$this->userid = $row["user_id"];
 		$this->folder = $row["folder"];
 		$this->id = $row["id"];

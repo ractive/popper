@@ -184,6 +184,9 @@ http://www.gnu.org/copyleft/gpl.html
 				}
 				return;
 			}
+			else if ($action == "newfolder") {
+				$popper->show_in_window("newfolder");
+			}			
 			else if ($action == "accounts") {
 				$popper->show_form("accounts");
 			}
@@ -208,6 +211,13 @@ http://www.gnu.org/copyleft/gpl.html
 				$popper->store_address();
 				$popper->show_form("addressbook");
 			}
+			else if ($action == "storefolder") {
+				$popper->store_folder();
+				$popper->show();
+			}
+			else if ($action == "move") {
+				$popper->show_in_window("move");
+			}						
 			else if ($action == "deladdress") {
 				$popper->del_address();
 			}

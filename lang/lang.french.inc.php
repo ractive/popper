@@ -9,7 +9,7 @@
 	$strings["l_ShowDetails"]	= "Voir détails";
 	$strings["l_SendMail"]		= "Envoyer";	
 	$strings["l_ClickName"]		= "Choisissez un nom pour des details...";
-	$strings["l_NoMails"]		= " Pas de messages dans ce dossier";
+	$strings["l_NoMails"]		= "Pas de messages dans ce dossier";
 	$strings["l_To"]		= "A";
 	$strings["l_From"]		= "De";
 	$strings["l_Date"]		= "Date";
@@ -167,4 +167,8 @@
 	$strings["l_MinWnd"]		= "Laisser cette fenêtre ouverte pour la vérification automatique";
 	$strings["l_MinWndTitle"]	= "popper - Vérification automatique";	
 	$strings["l_MinWndInfo"]	= "Intervalle";	
+	$strings["l_NewFolder"]		= "Nouveaux dossier";	
+	$strings["l_MoveTo"]		= "Déplacer vers le dossier...";
+	$strings["l_Create"]		= "Créer";	
+	$strings["l_FolderName"]	= "Nom du dossier";	
 ?>

@@ -59,6 +59,9 @@
 			}
 ?>
 		<img src="graphics/spacing.gif" alt="|">
+		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=newfolder");?>"><img src="graphics/newfolder.gif" alt="<?php echo($strings["l_NewFolder"]);?>" title="<?php echo($strings["l_NewFolder"]);?>" border="0"></a>
+		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=move");?>"><img src="graphics/move.gif" alt="<?php echo($strings["l_MoveTo"]);?>" title="<?php echo($strings["l_MoveTo"]);?>" border="0"></a>		
+		<img src="graphics/spacing.gif" alt="|">
 		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=sendandreceive");?>"><img src="graphics/sendandreceive.gif" alt="<?php echo($strings["l_SendReceive"]);?>" title="<?php echo($strings["l_SendReceive"]);?>" border="0"></a>
 		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=checkrep");?>" target="_blank"><img src="graphics/get_rep.gif" alt="<?php echo($strings["l_GetRep"]);?>" title="<?php echo($strings["l_GetRep"]);?>" border="0"></a>		
 		<img src="graphics/spacing.gif" alt="|">

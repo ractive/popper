@@ -1,5 +1,5 @@
 <center>
-<h2>Create new user</h2>
+<h2><?php echo($strings["l_NewUser"]);?></h2>
 <h5>The login-name you provide here has nothing to do with the POP3 username. It's just for the identification for this site.</h5>
 
 <form method="post" action="<?php echo($GLOBALS[PHP_SELF]);?>">

@@ -42,7 +42,8 @@ class popper {
 			"inbox" => array(
 				"name" => "Inbox",
 				"pic" => "inbox.gif",
-				"cur_page" => 0
+				"cur_page" => 0,
+				"children" => array()
 			),
 			"outbox" => array(
 				"name" => "Outbox",
@@ -530,6 +531,55 @@ class popper {
 		$this->db_tool->store("accounts", "user_id", "name", "fromname", "replyto", "popserver", "poplogin" ,"poppwd", "id='$this->cur_account_id' AND user_id='$this->userid'");
 	}
 
+	function store_folder() {
+		global $foldername, $parent;
+		if ($parent == 0 || !isset($parent)) {
+			$parent = "inbox";
+		}
+		$query = "INSERT INTO folders (name, user_id) VALUES ('$foldername', '$this->userid')";
+		$res = $this->db_tool->db_query($query);
+		global $parent, $foldername;
+	
+		$this->folders[$parent]["children"][$foldername] = array("name" => $foldername, "pic" => "subfolder.gif", "cur_page" => 0);
+		return $res != 0;
+	}
+	
+	function folder_list($folders = 0) {
+		if ($folders == 0) {
+			$folders = $this->folders;
+		}
+		else {
+			$sub = 1;
+		}
+		
+		if (!$sub) {
+			echo("<select name=\"sel_folder\">");
+		}
+			foreach($folders as $key => $val) {
+				echo("<option value=\"$val[name]\">");
+				if ($sub) {
+					echo("   ");
+				}
+				echo("$val[name]</option>");
+				if (sizeof($val["children"] > 0)) {
+					$this->folder_list($val["children"]);
+				}
+				
+			}
+			
+		if (!$sub) {
+			echo("</select>");
+		}
+	}
+	
+	function move_to() {
+		
+	}
+	
+	function make_short_foldername($foldername) {
+		$name = str_replace(" ", "", $foldername);
+	}
+
 	function get_account_name($id = "") {
 		global $strings;
 		if(!isset($id) || empty($id)) {
@@ -632,7 +682,15 @@ class popper {
 		$this->show_form("accounts", $del_msg);
 	}
 
-	function show_folders() {
+	function show_folders($folders = 0) {
+		//echo "GGG:".$folders["inbox"]["children"]["Von James"];
+		if ($folders == 0) {
+			$folders = $this->folders;
+		}
+		else {
+			$sub = 1;
+		}
+
 		$query = "SELECT folder, count(*) as count FROM mails WHERE was_read!=1 AND user_id='$this->userid' GROUP BY folder";
 		$res = $this->db_tool->db_query($query);
 		if ($res != 0) {
@@ -641,11 +699,20 @@ class popper {
 				$folder_info[$row[folder]] = $row[count];
 			}
 		}
+		if (!$sub) {
 		echo("<table width=\"80%\">");
-			while(list($key, $val) = each($this->folders)) {
+		}
+			while(list($key, $val) = each($folders)) {
 				echo("<tr>\n");
+					if ($sub) {
+						echo("<td><img src=\"graphics/line.gif\" alt=\"+\" style=\"vertical-align: top; float: right;\"></td>\n");
+					}
 					echo("<td width=\"1%\"><img src=\"graphics/$val[pic]\" alt=\"$val[name]\" title=\"$val[name]\" style=\"vertical-align: middle;\"></td>\n");
-					echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$key\"");
+					echo("<td");
+					if (!$sub) {
+						echo(" colspan=\"2\"");
+					}					
+					echo("><a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$key\"");
 					echo($this->folder_selected($key));
 					if ($folder_info[$key] > 0) {
 						echo("style=\"font-weight: bolder\"");
@@ -657,8 +724,17 @@ class popper {
 					}
 					echo("</a><br></td>\n");
 				echo("</tr>\n");
-			}
+				if (sizeof($val["children"]) > 0) {
+					//echo("<tr><td><img src=\"graphics/line.gif\" alt=\"\" style=\"vertical-align: super; float: right;\"></td><td>\n");
+					//echo("<tr><td></td><td>");
+					$this->show_folders($val["children"]);
+					//echo("</td></tr>\n");
+				}
+
+		}
+		if(!$sub) {
 		echo("</table>");
+		}
 	}
 
 	function count_mails() {
@@ -709,8 +785,8 @@ class popper {
 					continue;
 				}
 				else {
-					echo ($strings[l_NoMails]);
-					echo(str_repeat("<br>", $this->config["mails_per_page"] - 1));
+					echo($strings["l_NoMails"]);
+					echo(str_repeat("<br>", $this->config["mails_per_page"] - 2));
 					return;
 				}
 			}
@@ -849,7 +925,7 @@ class popper {
 		if (empty($content)) {
 			$content = $this->cur_mailer->get_text_body();
 		}
-
+	
 		// If we are here, the mail has been read, we tell that the DB
 		$this->set_mail_read($this->cur_message_id);
 
@@ -1716,7 +1792,8 @@ class popper {
 
 			foreach($get as $num => $uid) {
 				$get_mail = $num + 1;
-
+				
+				// Check if the mail is too big to store it in the DB
 				$mail = $pop3->get_text($get_mail);
 
 				if(empty($mail)) {

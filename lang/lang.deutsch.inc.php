@@ -8,8 +8,8 @@
 	$strings["l_NoAddress"]		= "Keine Eintr&auml;ge";
 	$strings["l_ShowDetails"]	= "Zeige Details";
 	$strings["l_SendMail"]		= "Nachricht senden";	
-	$strings["l_ClickName"]		= "Auf einen Namen klickn, um die Details zu sehen...";
-	$strings["l_NoMails	"]		= " Keine Nachrichten in diesem Ordner";
+	$strings["l_ClickName"]		= "Auf einen Namen klicken, um die Details zu sehen...";
+	$strings["l_NoMails"]		= "Keine Nachrichten in diesem Ordner";
 	$strings["l_To"]			= "An";
 	$strings["l_From"]			= "Von";
 	$strings["l_Date"]			= "Datum";
@@ -167,4 +167,8 @@
 	$strings["l_MinWnd"]		= "Lassen Sie dieses Fenster offen, wenn sie automatisch den Posteingang pr&uuml;fen wollen.";	
 	$strings["l_MinWndTitle"]	= "popper - Auto Empf&auml;nger";
 	$strings["l_MinWndInfo"]	= "Das Empfangsintervall";
+	$strings["l_NewFolder"]		= "Neuer Ordner";
+	$strings["l_MoveTo"]		= "In Ordner verschieben...";
+	$strings["l_Create"]		= "Erstellen";	
+	$strings["l_FolderName"]	= "Ordnername";
 ?>
