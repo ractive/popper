@@ -64,7 +64,7 @@ http://www.gnu.org/copyleft/gpl.html
 		$mailer = $this->cur_mailer;
 	}
 	else {
-		dbg("NEW CUR_MAILER");
+//		dbg("NEW CUR_MAILER");
 		$this->cur_mailer = new mailer($this->userid);	
 		$mailer = $this->cur_mailer;
 	}
@@ -204,7 +204,7 @@ http://www.gnu.org/copyleft/gpl.html
 			echo("<td><input style=\"vertical-align: middle;\" name=\"to\" type=\"image\" src=\"graphics/small_address.gif\" alt=\"$strings[l_To]:\" value=\"to\"> <label for=\"tos\" accesskey=\"T\">$strings[l_To]:</label></td>");						
 			// When the user clicked on an address in the addressbook, the $to_row is set (from above)
 			if ($to_row) {
-				dbg("TO_ROW: $to_row[email]");
+//				dbg("TO_ROW: $to_row[email]");
 ?>
 				<td><input name="tos" size="80" value="<?php echo(stripslashes($to_row["email"])); ?>"></td>
 <?php

@@ -31,10 +31,11 @@ http://www.gnu.org/copyleft/gpl.html
 
 	// Set this var only to true if you don't have access to the document-root and popper.inc.php
 	// was moved into the document-root
+//	$db_include = "test-popper.inc.php";
 	$in_docroot = false;
 
 	// Login greeting
-	$greeting = "Willkommen beim Mailservice von Jameslinux";
-	$titlebar = "Weblook - Benutzer ";
-	$browsertitle = "Weblook";
+	$greeting = "Welcome to TestMail @ roytoo.org";
+	$titlebar = "TestMail - Welcome ";
+	$browsertitle = "TestMail";
 ?>

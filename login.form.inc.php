@@ -22,10 +22,11 @@
 	?>
 	> 
 	<?php echo($strings["l_Remember"]."<br><br>");
-	if ($status_msg == $strings["l_PwdWrong"]) {
+	if ($status_msg == $strings["l_LoginFail"]) {
 		echo("<a href=\"$GLOBALS[PHP_SELF]?action=lostpwd\" style=\"color: blue;\">$strings[l_LostPwd]</a><br><br>");
 	}
 	?>
+	<input type="hidden" name="action" value="process_login" />
 	<input class="button" type="submit" name="login" value="<?php echo($strings["l_Login"]);?>">
 </form>
 </center>

@@ -1,11 +1,13 @@
 <tr class="window">
 <?php
+	//$this->load_config();
+	
 	if ($this->config["view"] == MIN_VIEW) {
 		$width = "1%";
 		$style = "style=\"background-color: gray;\"";
 	}
 	else {
-		$width = "25%";
+		$width = $this->config["folder_view_width"]."%";
 	}
 	
 	echo("<td width=\"$width\" valign=\"top\" $style>");
@@ -23,7 +25,7 @@
 		}
 ?>
 	</td>
-	<td width="75%">
+	<td width="<?php echo(100 - $this->config["folder_view_width"])?>%">
 <?php
 	if ($this->folder == "cal") {
 		include("cal.form.inc.php");

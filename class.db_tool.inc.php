@@ -23,10 +23,6 @@ class db_tool {
 		$this->db_data_inc = $data_inc;
 	}
 
-	function db_query($query) {
-		return mysql_query($query);
-	}
-
 	function db_connect($host, $user, $pwd) {
 		return @mysql_connect($host, $user, $pwd);
 	}
@@ -74,7 +70,7 @@ class db_tool {
 		$doc_root = getenv("DOCUMENT_ROOT");
 		$path = $doc_root;
 		if ($GLOBALS["in_docroot"] === false) {
-			$path .= "/..";
+			$path .= "";
 		}
 		$path .= "/".$this->db_data_inc;
 		require($path);
@@ -82,6 +78,7 @@ class db_tool {
 			or die ($strings["l_ServerConnect"]."<br>".$this->db_error());
 
 		$query = "USE $dbname";
+		
 		$this->query($query, $this->db_link)
 			or die ($strings["l_OpenDB"]."<br>".$this->db_error());
 	}

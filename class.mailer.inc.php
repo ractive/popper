@@ -23,7 +23,7 @@ class mailer extends mail {
 
 	function mailer($user_id, $acc_id = 0) {
 		$this->headers = new headers;
-		$this->db_tool = new db_tool("popper.inc.php");
+		$this->db_tool = new db_tool("test-popper.inc.php");
 		$this->user_id = $user_id;
 		$this->acc_id = $acc_id;
 	}

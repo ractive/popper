@@ -61,13 +61,13 @@ class mimepart {
 	function get_text_body($get_html = false, $was_multipart = false) {
 		$c_type = $this->get_header("Content-Type");
 		$type = $c_type["CONTENT-TYPE"];
-		dbg("Entering get_text_body $get_html");
+//		dbg("Entering get_text_body $get_html");
 		if (strtoupper(substr($type, 0, strlen("MULTIPART/"))) == "MULTIPART/") {
 			$i = 1;
 			$body = "";
 			$text_body = "";
 			while($this->extract_part($i)) {
-				dbg("Extracting: $i");
+//				dbg("Extracting: $i");
 				$body = $this->mimeparts[$i]->get_text_body($get_html, true);
 				if (is_array($body) && $body[1] == true) {
 					return $body;
@@ -80,7 +80,7 @@ class mimepart {
 				$c_type = $this->mimeparts[$i]->get_header("Content-Type");
 				$type = $c_type["CONTENT-TYPE"];
 				if (strtoupper($type) == "TEXT/PLAIN") {
-					dbg("Found text/plain");
+//					dbg("Found text/plain");
 					if (!$get_html) {
 						return $body;
 					}
@@ -92,7 +92,7 @@ class mimepart {
 					$text_body = $body;
 				}
 				else if ($found_text_in_multipart && $get_html && strtoupper($type) == "TEXT/HTML") {
-					dbg("Found text/html!!!");					
+//					dbg("Found text/html!!!");					
 					// We already found a text-part in a multipart
 					// If this is text/html we got the HTML mail
 					return array($this->mimeparts[$i]->decode($this->mimeparts[$i]->body), true);
@@ -206,7 +206,6 @@ class mimepart {
 		$address = $this->strip_comment($address, $comment);
 		// Try to fetch the name and the mail-address
 		preg_match("/([\"\'])?(.*?)([\"\'])?\s*<(.*?)>/", $address, $matches);
-		//$this->print_array($matches);
 		
 		$ret["name"] = $matches[2];
 		if (!empty($matches[4])) {
@@ -282,7 +281,6 @@ class mimepart {
 			return false;
 		}
 		$parameter = $this->split_header($header, ";");
-		//$this->print_array($parameter);
 		$header_arr[strtoupper($name)] = $parameter[0];
 		reset($parameter);
 		next($parameter);
@@ -292,12 +290,6 @@ class mimepart {
 		}
 				
 		return $header_arr;
-	}
-
-	function print_array($array) {
-		foreach($array as $key => $val) {
-			echo("$key -> $val<br>");
-		}
 	}
 
 	// Extract part number $num
@@ -582,12 +574,6 @@ class mimepart {
 		}
 		
 		return $split_arr;
-	}
-	
-	function print_array($arr) {
-		foreach($arr as $key => $val) {
-			echo("$key --> $val<br>\r\n");
-		}
 	}
 	
 	function generate_header_str($all_headers = true) {

@@ -60,7 +60,7 @@ Popper tries to fill this gap. It gives you the possibility to read and write
 your mails from (almost ;-) any web-browser from any place.
 It's MIME conformant. This means that you also can get and send attachments.
 
-What brwosers are supported?
+What browsers are supported?
 ============================
 Popper is 100% Java(-script) FREE which eliminates problems on different
 platforms and browsers (yes, you can even use lynx ;-)!
@@ -156,7 +156,10 @@ Make it accessible for all:
 chmod 777 tmp
 
 Update the database structure:
-From version >= 1.31
+From version 1.41:
+    mysql popper -p < update14-r1.mysql
+
+From version >= 1.31:
     mysql popper -p < update14.mysql
     mysql popper -p < update14b5.mysql
     mysql popper -p < update14b6.mysql
@@ -185,7 +188,7 @@ From Versions < 1.2:
 
 (Sorry about the many DB updates :-(
 
-Then run the script update14.php in your browser. This will fill in the
+Then run the script update14-r1.php in your browser. This will fill in the
 new column from_name in the table mails!
 
 
