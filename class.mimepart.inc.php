@@ -47,7 +47,15 @@ class mimepart {
 		$type = $c_type["Content-Type"];
 
 		if (strcasecmp($type, "multipart/mixed") == 0 || strcasecmp($type, "multipart/alternative") == 0 || strcasecmp($type, "multipart/related") == 0) {
-			if (!$this->extract_part(1)) {
+			$i = 1;
+			while($this->extract_part($i)) {
+				return $this->mimeparts[$i]->get_text_body();
+				$i++;
+			}
+			
+			return "\r\n   This mail does not contain a plaintext part\r\n\r\n   Please open the attachments to see the content";			
+			
+			/*if (!$this->extract_part(1)) {
 				return $this->decode($this->body);
 			}
 
@@ -58,7 +66,7 @@ class mimepart {
 			}
 			else {
 				return $body;
-			}
+			}*/
 		}
 		else {
 			return $this->decode($this->body);
@@ -75,7 +83,7 @@ class mimepart {
 		$string = preg_replace("/(=\s*\r\n)/m", "", $string);
 		// Replace the =XY encoded parts with the correct character
 		$string = preg_replace("/(=([0-9A-F]){1,1}([0-9A-F]){1,1})/e", "chr(hexdec('\\2'.'\\3'))", $string);
-		return $string;
+		return str_replace("_", " ", $string);
 	}
 	
 	function decode($data = "", $encoding = "") {
@@ -138,7 +146,8 @@ class mimepart {
 	
 	function get_address($address) {
 		$address = $this->strip_comment($address);
-		preg_match("/(\"(.*?)\"\s*)*<(.*?)>/", $address, $matches);
+		preg_match("/([\"\'](.*?)[\"\']\s*)*<(.*?)>/", $address, $matches);
+		//$this->print_array($matches);
 		$ret["name"] = $matches[2];
 		if (!empty($matches[3])) {
 			$ret["address"] = $matches[3];
@@ -220,10 +229,17 @@ class mimepart {
 		return $header_arr;
 	}
 
+	function print_array($array) {
+		foreach($array as $key => $val) {
+			echo("$key -> $val<br>");
+		}
+	}
+
 	// Extract part number $num
 	function extract_part($num) {
-		//echo "NUM: $num<br>";
+		// echo "NUM: $num<br>";
 		// Did we extract this part already?
+
 		if (isset($this->mimeparts[$num]) && !empty($this->mimeparts[$num])) {
 			// Yes, we extracted it
 			return true;
@@ -241,8 +257,6 @@ class mimepart {
 		}
 
 		$boundary = "--".$c_type["boundary"]."\r\n";
-
-		//echo $boundary;
 
 		if (!isset($this->part_count) || empty($this->part_count)) {
 			$this->part_count = substr_count($this->body, $boundary);
@@ -302,7 +316,11 @@ class mimepart {
 			$part->offset = $pos2 + strlen($boundary);
 
 			$this->mimeparts[$i] = $part;
-			
+			$j = 1;
+			while($this->mimeparts[$i]->extract_part($j)) {
+				//echo($this->mimeparts[$i]->get_attachment($j));
+				$j++;
+			}
 			if ($end)
 				break;
 		}
@@ -310,11 +328,13 @@ class mimepart {
 		return true;
 	}
 
-	function get_attachment($num) {
+	function get_attachment($num, $sub = 0) {
 		if (!$this->extract_part($num)) {
 			return false;
 		}
-
+		if ($sub > 0) {
+			return $this->mimeparts[$num]->mimeparts[$sub]->decode($this->mimeparts[$num]->mimeparts[$sub]->body);			
+		}
 		return $this->mimeparts[$num]->decode($this->mimeparts[$num]->body);
 	}
 
@@ -322,16 +342,23 @@ class mimepart {
 		if (!$this->extract_part($num)) {
 			return false;
 		}
-		
+
 		$c_type = $this->mimeparts[$num]->get_header("Content-Type");
-		return $c_type["name"];
+		$att_name = $c_type["name"];
+		if (empty($att_name)) {
+			return "Unnamed";
+		}	
+		
+		return $att_name;
 	}
 
 	function get_attachment_type($num) {
 		if (!$this->extract_part($num)) {
 			return false;
 		}
+		
 		$c_type = $this->mimeparts[$num]->get_header("Content-Type");	
+		
 		return $c_type["Content-Type"];
 	}
 
