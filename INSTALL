@@ -1,5 +1,5 @@
 =============================================================================
-POPPER (Version 1.3)
+POPPER (Version 1.31, 11. Feb. 2001)
 =============================================================================
 
 POPPER (or however it will be called :-) is a free web mail-reader written
@@ -31,8 +31,8 @@ CONTACT
 If you have any questions, improvements, tips or anything else, don't
 hesitate to contact me: 
 
-Developers are always welcome to join the program. I will set up a
-sourceforge account with everything you need (CVS, ftp, mailinglists etc...)
+Developers are always welcome to join the program. I set up a sourceforge
+account with everything you need (CVS, ftp, mailinglists etc...)
 at: http://sourceforge.net/projects/popper
 
 
@@ -59,14 +59,19 @@ Popper tries to fill this gap. It gives you the possibility to read and write
 your mails from (almost ;-) any web-browser from any place.
 It's MIME conformant. This means that you also can get and send attachments.
 
-Popper is 100% Java(-script) free which eliminates problems on different
+What brwosers are supported?
+============================
+Popper is 100% Java(-script) FREE which eliminates problems on different
 platforms and browsers (yes, you can even use lynx ;-)!
 
-It uses CSS heavily. Therefore browsers with a good CSS support are
-recommended.
+CSS is used heavily. Therefore browsers with a good CSS support are
+recommended. This does not mean that popper is tuned to a certain browser.
+Virtually every browser could be used.
+
 Netscape 4.x should be avoided because the lacking CSS support. Best reults
-are achieved with Internet Explorer 5.x, Opera 5.x (YEAH!), Mozilla and
-Netscape 6.
+are achieved with Internet Explorer 5.x, Mozilla and Netscape 6 (yuck!).
+Opera 5.x has a small bug that doesn't stretch textareas to the full width.
+Therefore it looks a bit odd, but does not cause problems :-(
 
 =============================================================================
 INSTALLATION
@@ -79,10 +84,11 @@ I recommend the following configuration:
 
 - Linux (your favorite brand :-)
 - Apache webserver (www.apache.org)
-- PHP 4.0.1 or newer (www.php.net)
+- PHP 4.0.0 or newer (www.php.net)
 - MySQL (www.mysql.com)
+  (with some work you could port is to postgres or other DBMS)
 
-All the above products are freely available.
+All the above products are freely available!
 
 
 1. Create a MySQL database (i.e. called popper) or let your provider create
@@ -101,7 +107,7 @@ All the above products are freely available.
 
 3. Create the database structure with
 
-   mysql --database=popper --user=dbusername -p < popper.mysql
+   mysql popper --user=dbusername -p < popper.mysql
 
    Instead of popper, use the correct name of the database.
 
@@ -122,7 +128,7 @@ All the above products are freely available.
    		require("$doc_root/$this->db_data_inc");
 
 5. Edit config.inc.php and change the settings to your needs.
-   Set $is_php400 to true if you are using PHP 4.0.0!
+   Set $is_php400 to true if you are using PHP 4.0.0 (PHP3 is NOT SUPPORTED)!
    For version >= 4.0.1 this value is "false"!
 
 6. You may want to change the look and feel by changing the attributes
@@ -131,38 +137,38 @@ All the above products are freely available.
 7. It should work now :-)
 
 =============================================================================
-UPDATE FROM VERSIONS >= 1.2
+UPDATE FROM PREVIOUS VERSIONS
 =============================================================================
-Rename the file config.inc.php to (i.e.) config.inc.php.orig.
-Untar the archive to the same directory. Rename config.inc.php.orig back
+
+Untar the archive to the same directory.
+
+Edit config.inc.php and set it to your needs. (New options in there)
+(You may want to copy config.inc.php to i.e. config.inc.php.tmp before
+untarring, to compare your settings)
 
 Create a sub-directory in the directory popper, called tmp.
 Make it accessible for all:
 chmod 777 tmp
 
-Update the MySQL database, by adding the definitions in update.mysql:
+Update the database structure:
 
-mysql popper -p < update13.mysql
+For version 1.3:
+    mysql popper -p < update131.mysql
 
-More informations about MySQL below...
+For versions >= 1.2:
+    mysql popper -p < update13.mysql
+    mysql popper -p < update131.mysql
 
-=============================================================================
-UPDATE FROM VERSIONS < 1.2
-=============================================================================
-Rename the file config.inc.php to (i.e.) config.inc.php.orig.
-Untar the archive to the same directory. Rename config.inc.php.orig back
-to config.inc.php. Delete the file popper.inc.php.
+For Versions < 1.2:
+    mysql popper -p < update.mysql
+    mysql popper -p < update13.mysql
+    mysql popper -p < update131.mysql
 
-Create a sub-directory in the directory popper, called tmp.
-Make it accessible for all:
-chmod 777 tmp
-
-Update the MySQL database, by adding the definitions in update.mysql:
-
-mysql popper -p < update.mysql
-mysql popper -p < update13.mysql
+(Sorry about the many DB updates :-(
 
 More informations about MySQL below...
+
+
 
 =============================================================================
 MySQL
@@ -170,23 +176,37 @@ MySQL
 To create a new database you need root privileges. Ask your system
 administrator for help.
 
+Some MySQL clients don't accept the syntax:
+   mysql popper [commands here]
+try this instead:
+   mysql --database=popper [commands here]
+
+
 As root:
+========
 1. Start the mysql console by typing "mysql -p". Enter the password to
    log in
+
 2. Create the database with:
+
    create database popper;
-3. Change the priviliges for the new database to a normal user account:
-   GRANT insert, update, select, delete ON popper.* TO dbusername@localhost 
-   IDENTIFIED BY 'theuserpassword';
+
+3. Change the priviliges for the new database for a normal user account:
+
+   GRANT insert, update, select, delete, alter, drop, create ON popper.*
+   TO dbusername@localhost IDENTIFIED BY 'theuserpassword';
 
 As normal user:
+===============
 1. Create the datbase structure:
-   mysql --database=popper --user=dbusername -p < popper.mysql 
+
+   mysql popper --user=dbusername -p < popper.mysql 
+      
 2. Change the file popper.inc.php located beneath the documet root to 
    the settings you made.
    It should look something like this then:
       $host = "localhost";       // Unlikely to be another host than localhost
-	  $user = "dbusername";        // Or the user-name given in step 3
+	  $user = "dbusername"       // Or the user-name given in step 3
 	  $pass = "theuserpassword"; // Or the password given in step 3
 	  $dbname = "popper";        // Or the name given in step 2
 	  
@@ -195,7 +215,7 @@ As normal user:
 =============================================================================
 SECURITY ISSUES
 =============================================================================
-Web applications are not secure!
+Web applications are not known to be secure!
 I tried to make popper as secure as possible. But I'm sure someone will find
 a hole somewhere. Please report ANY security-considerations to
 james@ractive.ch or post is to the mailinglist.
@@ -238,6 +258,7 @@ http://sourceforge.net/bugs/?func=addbug&group_id=15135
 
 You may want to create a file phpinfo.php with this content:
 <?php phpinfo(); ?>
+Call this file with your webbrowser (i.e. http://somewhere.com/phpinfo.php)
 This helps to gather information about your system.
 
 Subscribe yourself to the mailinglist to discuss things about popper:
@@ -253,4 +274,8 @@ http://sourceforge.net/projects/popper/
 Visit http://popper.sourceforge.net for more infomation (under construction)
 
 Contact me if you need more information: james@ractive.ch
+=============================================================================
+
+                     Einmal gepoppt - nie mehr gestoppt
+
 =============================================================================
