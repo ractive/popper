@@ -180,7 +180,7 @@ class popper {
 	}
 
 	function update_lang() {
-		global $poppercookie, $locale;
+		global $poppercookie;
 		$lang_file = "lang/lang.".$this->config["language"].".inc.php";
 		
 		if (!file_exists($lang_file)) {
@@ -189,7 +189,7 @@ class popper {
 		
 		require($lang_file);
 		
-		setlocale(LC_ALL, $locale);
+		setlocale(LC_ALL, $_SESSION["locale"]);
 		
 		$this->folders["inbox"]["name"] = $_SESSION["strings"]["l_Inbox"];
 		$this->folders["outbox"]["name"] = $_SESSION["strings"]["l_Outbox"];

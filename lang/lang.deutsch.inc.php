@@ -1,5 +1,5 @@
 <?php
-	$locale = "german";
+	$_SESSION["locale"] = "german";
 
 	$_SESSION["strings"]["l_Inbox"]			= "Posteingang";
 	$_SESSION["strings"]["l_Outbox"]		= "Postausgang";	
@@ -219,8 +219,8 @@
 	$_SESSION["strings"]["l_UserDeleted2"]	= "Ihr Benutzerkonto und alle Daten wurden gel&ouml;scht. Vielen Dank, dass Sie diesen Service benutzt haben";
 	$_SESSION["strings"]["l_LostPwd"]		= "Passwort vergessen?";
 	$_SESSION["strings"]["l_LostPwdEx"]		= "Geben Sie Ihren Benuternamen ein. Das Password wird Ihnen and die E-Mail Adresse geschickt, die sie bei der Anmeldung angegeben haben";
-	$_SESSION["strings"]["l_LostPwdMail1"]	= "Nachstehend finden sie das Passwort f¶¶¶r Ihr Webmail-Konto bei";
-	$_SESSION["strings"]["l_LostPwdMail2"]	= "Vielen Dank f¶¶¶r die Benutzung dieser Dienstleistung";
+	$_SESSION["strings"]["l_LostPwdMail1"]	= "Nachstehend finden sie das Passwort f¶¶¶¶¶¶¶r Ihr Webmail-Konto bei";
+	$_SESSION["strings"]["l_LostPwdMail2"]	= "Vielen Dank f¶¶¶¶¶¶¶r die Benutzung dieser Dienstleistung";
 	$_SESSION["strings"]["l_LostPwdMail3"]	= "Das Passwort wurde per Mail verschickt";
 	$_SESSION["strings"]["l_LostPwdMail4"]	= "Passwort gesendet";
 	$_SESSION["strings"]["l_LostPwdMail5"]	= "Das Passwort konnte nicht per Mail verschickt werden. Haben Sie bei der Registrierung eine g&uuml;ltige Adresse angegeben?";		

@@ -1,6 +1,6 @@
 <?php
-	$default_charset		= "koi8-r";
-	$default_encoding		= "7bit";
+	$_SESSION["default_charset"]		= "koi8-r";
+	$_SESSION["default_encoding"]		= "7bit";
 
 	$_SESSION["strings"]["l_Inbox"]			= "Входящие";
 	$_SESSION["strings"]["l_Outbox"]		= "Исходящие";

@@ -1,5 +1,5 @@
 <?php
-	$locale = "lithuanian";
+	$_SESSION["locale"] = "lithuanian";
 
 	$_SESSION["strings"]["l_Inbox"]		= "Atsiustas pastas";
 	$_SESSION["strings"]["l_Outbox"]		= "Paruostas issiuntimui pastas";	

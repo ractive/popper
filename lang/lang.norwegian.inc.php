@@ -1,5 +1,5 @@
 <?php
-	$locale = "norwegian";
+	$_SESSION["locale"] = "norwegian";
 
 	$_SESSION["strings"]["l_Inbox"]			= "Innboks";
 	$_SESSION["strings"]["l_Outbox"]		= "Utboks";	

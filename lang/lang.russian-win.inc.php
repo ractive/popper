@@ -1,6 +1,6 @@
 <?php
-	$default_charset		= "windows-1251";
-	$default_encoding		= "8bit";
+	$_SESSION["default_charset"]		= "windows-1251";
+	$_SESSION["default_encoding"]		= "8bit";
 
 	$_SESSION["strings"]["l_Inbox"]			= "Входящие";
 	$_SESSION["strings"]["l_Outbox"]		= "Исходящие";

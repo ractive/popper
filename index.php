@@ -54,8 +54,6 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 	$ok 		  = (!isset($_REQUEST['ok']) ? "" : strtolower(htmlspecialchars($_REQUEST['ok'])));
 	$what		  = (!isset($_REQUEST['what']) ? "" : htmlspecialchars($_REQUEST['what']));
 	
-	global $locale;
-	
 	@set_time_limit(60);
 
 	include("class.popper.inc.php");
@@ -63,7 +61,7 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 	
 	$lang_file = language_get();
 	include($lang_file);
-	setlocale(LC_ALL, $locale);
+	setlocale(LC_ALL, $_SESSION["locale"]);
 	
 	// If needed, setup the persistent session data objects.
 	if (!isset($_SESSION['popper']) || !is_object($_SESSION['popper'])) {
@@ -372,7 +370,7 @@ Functionalize this one.
 			
 			include($lang_file);
 			
-			setlocale(LC_ALL, $locale);	
+			setlocale(LC_ALL, $_SESSION["locale"]);	
 			
 			$_SESSION['popper']->show();
 		}
