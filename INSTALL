@@ -36,7 +36,8 @@ account with everything you need (CVS, ftp, mailinglists etc...)
 at: http://sourceforge.net/projects/popper
 
 
-E-Mail:				james@ractive.ch
+E-Mail:				roytoo@roytoo.org
+						james@ractive.ch (alternate contact)
 Homepage:			http://www.ractive.ch
 POPPER-Homepage:	http://popper.ractive.ch
 POPPER-forum:		http://forum.ractive.ch
@@ -188,8 +189,20 @@ From Versions < 1.2:
 
 (Sorry about the many DB updates :-(
 
-Then run the script update14-r1.php in your browser. This will fill in the
-new column from_name in the table mails!
+
+Update of PHP files:
+
+If you are using V1.4, V1.41 or V1.41-p1:
+Apply the class.pop3.inc.php-V1_41-r2-patch.diff to 
+class.pop3.inc.php from your respective popper source:
+patch class.pop3.inc.php class.pop3.inc.php.php-V1_41-r2-patch.diff
+
+If you are using earlier versions:
+Download the popper-1.41-r2.tar.gz package, then extract and copy it to 
+the popper (or whatever you call it) folder on your webserver.  If you 
+have already performed the mysql updates, everything should work just fine.
+
+
 
 
 =============================================================================
@@ -227,7 +240,7 @@ As normal user:
 2. Change the file popper.inc.php located above the documet root to 
    the settings you made.
    It should look something like this then:
-      $host = "localhost";       // Unlikely to be another host than localhost
+	  $host = "localhost";       // Unlikely to be another host than localhost
 	  $user = "dbusername"       // Or the user-name given in step 3
 	  $pass = "theuserpassword"; // Or the password given in step 3
 	  $dbname = "popper";        // Or the name given in step 2
@@ -240,7 +253,8 @@ SECURITY ISSUES
 Web applications are not known to be secure!
 I tried to make popper as secure as possible. But I'm sure someone will find
 a hole somewhere. Please report ANY security-considerations to
-james@ractive.ch or post is to the mailinglist.
+roytoo@roytoo.org (alternate contact: james@ractive.ch) or post is to the 
+mailinglist.
 
 Some thoughts about security:
 - ALL passwords of ALL POP-servers of ALL users are stored in plain-text
@@ -274,9 +288,9 @@ Some thoughts about security:
 BUGS
 =============================================================================
 There are probably still a lot of bugs in this program.     
-Report them to james@ractive.ch with a detailed descprition of the
-problem, including your PHP version and the used webserver.
-Put them also in the bug-tracking system at sourceforge.net:
+Report them to roytoo@roytoo.org (alternate contact: james@ractive.ch) with 
+a detailed description of the problem, including your PHP version and the 
+used webserver.  Put them also in the bug-tracking system at sourceforge.net:
 http://sourceforge.net/bugs/?func=addbug&group_id=15135
 
 You may want to create a file phpinfo.php with this content:
@@ -296,7 +310,8 @@ http://sourceforge.net/projects/popper/
 
 Visit http://popper.sourceforge.net for more infomation (under construction)
 
-Contact me if you need more information: james@ractive.ch
+Contact me if you need more information: roytoo@roytoo.org (alternate 
+contact: james@ractive.ch)
 
 =============================================================================
 

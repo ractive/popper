@@ -126,7 +126,11 @@ Version 1.41
 - Some jerks with frame-view fixed.
 - E-Mail adresses in mails are also clickable now
   
-  
 Version 1.41-r1
-============
+===============
 - Fix for reserved word collision in MySQL >4 (bug #1100222).  Thanks to kodekrash for the heads up.
+
+Version 1.41-r2
+===============
+- Fix for removal of 0's (zeros) from email addresses in headers (bug #1066379).
+
