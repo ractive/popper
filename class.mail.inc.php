@@ -91,12 +91,22 @@ class mail extends mimepart {
 		if (empty($encoding)) {
 			$encoding = "base64";
 		}
+		if (substr(phpversion(), 0, 5) >= "4.0.3") {
+	        $tmp_path = "tmp/".basename($path);
+	        $move = move_uploaded_file($path, $tmp_path);
+	        if (!$move) {
+	                return false;
+	        }
+	        $path = $tmp_path;		
+        }
+		
 		$fp = @fopen($path, "rb");
 		if (!$fp) {
 			return false;
 		}
 		$data = fread($fp, filesize($path));
 		fclose($fp);
+		@unlink($fp);
 		$type .= ";\tname=\"$filename\";";
 		$disposition .= "attachment; filename=\"$filename\"";
 	
