@@ -50,10 +50,9 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 		$_SESSION['popper'] = new popper;
 	}
 	
-	if (!isset($_SESSION['cal']) || !is_object($_SESSION['cal'])) {
-		$_SESSION['cal'] = new cal;
+	if (!isset($_SESSION['calendar']) || !is_object($_SESSION['calendar'])) {
+		$_SESSION['calendar'] = new cal;
 	}
-	$cal =& $_SESSION['cal'];
 	
 	/*
 	// Check for early exit conditions
@@ -447,7 +446,7 @@ function cookie_unset() {
 
 function language_get() {
 	
-	if ($_SESSION["poppercookie"]["language"]) {
+	if (isset($_SESSION["poppercookie"]["language"])) {
 		$langfile = "lang/lang.".$_SESSION["poppercookie"]["language"].".inc.php";
 	}
 	else {
@@ -478,9 +477,9 @@ function serialize_session() {
 	{
 		$_SESSION['popper'] = serialize($_SESSION['popper']);
 	}
-	if (isset($_SESSION['cal']) && is_object($_SESSION['cal']))
+	if (isset($_SESSION['calendar']) && is_object($_SESSION['calendar']))
 	{
-		$_SESSION['cal'] = serialize($_SESSION['cal']);
+		$_SESSION['calendar'] = serialize($_SESSION['calendar']);
 	}
 }
 
@@ -490,9 +489,9 @@ function unserialize_session() {
 	{
 		$_SESSION['popper'] = unserialize($_SESSION['popper']);
 	}
-	if (isset($_SESSION['cal']) && !is_object($_SESSION['cal']))
+	if (isset($_SESSION['calendar']) && !is_object($_SESSION['calendar']))
 	{
-		$_SESSION['cal'] = unserialize($_SESSION['cal']);
+		$_SESSION['calendar'] = unserialize($_SESSION['calendar']);
 	}
 }
 

@@ -11,6 +11,4 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-	global $cal;	
-
-	$cal->show();
+	$_SESSION['cal']->show();
