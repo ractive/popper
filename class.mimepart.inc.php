@@ -44,7 +44,7 @@ class mimepart {
 
 	function get_text_body() {
 		$c_type = $this->get_header("Content-Type");
-		$type = $c_type["Content-Type"];
+		$type = $c_type["CONTENT-TYPE"];
 
 		if (strcasecmp($type, "multipart/mixed") == 0 || strcasecmp($type, "multipart/alternative") == 0 || strcasecmp($type, "multipart/related") == 0) {
 			$i = 1;
@@ -83,7 +83,8 @@ class mimepart {
 		$string = preg_replace("/(=\s*\r\n)/m", "", $string);
 		// Replace the =XY encoded parts with the correct character
 		$string = preg_replace("/(=([0-9A-F]){1,1}([0-9A-F]){1,1})/e", "chr(hexdec('\\2'.'\\3'))", $string);
-		return str_replace("_", " ", $string);
+		//return str_replace("_", " ", $string);
+		return $string;
 	}
 	
 	function decode($data = "", $encoding = "") {
@@ -95,10 +96,10 @@ class mimepart {
 			if (!$ctf) {
 				return $data;
 			}
-			if (strcasecmp($ctf["Content-Transfer-Encoding"], "quoted-printable") == 0) {
+			if (strcasecmp($ctf["CONTENT-TRANSFER-ENCODING"], "quoted-printable") == 0) {
 				$encoding = "Q";
 			}
-			else if (strcasecmp($ctf["Content-Transfer-Encoding"], "base64") == 0) {
+			else if (strcasecmp($ctf["CONTENT-TRANSFER-ENCODING"], "base64") == 0) {
 				$encoding = "B";
 			}	
 		}
@@ -162,7 +163,7 @@ class mimepart {
 	function get_pretty_header($name) {
 		$header = $this->get_header($name);
 		// Decode the charset
-		$cont = $this->charset_decode($header[$name]);
+		$cont = $this->charset_decode($header[strtoupper($name)]);
 
 		if ($name != "Subject") {
 			// Strip out header comments
@@ -206,7 +207,7 @@ class mimepart {
 			}
 			// If nothing did match, we just return the original header content
 	
-			return $header[$name];
+			return $header[strtoupper($name)];
 		}
 	}
 	
@@ -218,12 +219,12 @@ class mimepart {
 		}
 		$parameter = $this->split_header($header, ";");
 		//$this->print_array($parameter);
-		$header_arr[$name] = $parameter[0];
+		$header_arr[strtoupper($name)] = $parameter[0];
 		reset($parameter);
 		next($parameter);
 		while(list($key, $p) = each($parameter)) {
 			$split = $this->split_header($p, "=");
-			$header_arr[$split[0]] = $this->un_quote($split[1]);
+			$header_arr[strtoupper($split[0])] = $this->un_quote($split[1]);
 		}
 				
 		return $header_arr;
@@ -248,15 +249,17 @@ class mimepart {
 		// Get the boundary
 		$c_type = $this->get_header("Content-Type");
 
-		if (empty($c_type["boundary"]) && empty($c_type["Boundary"])) {
+		$type = $c_type["CONTENT-TYPE"];
+
+		$is_multipart = (substr($type, 0, strlen("MULTIPART/")) == "MULTIPART/");
+
+		echo $is_multipart;
+
+		if (empty($c_type["BOUNDARY"])) {
 			return false;
 		}
 
-		if (empty($c_type["boundary"])) {
-			$c_type["boundary"] = $c_type["Boundary"];
-		}
-
-		$boundary = "--".$c_type["boundary"]."\r\n";
+		$boundary = "--".$c_type["BOUNDARY"]."\r\n";
 
 		if (!isset($this->part_count) || empty($this->part_count)) {
 			$this->part_count = substr_count($this->body, $boundary);
@@ -266,7 +269,7 @@ class mimepart {
 			return false;
 		}
 
-		$endboundary = "\r\n--".$c_type["boundary"]."--";
+		$endboundary = "\r\n--".$c_type["BOUNDARY"]."--";
 		$pos = 0;
 		//echo nl2br($this->body);
 		// We get all the parts from 1 to $num
@@ -328,14 +331,71 @@ class mimepart {
 		return true;
 	}
 
-	function get_attachment($num, $sub = 0) {
-		if (!$this->extract_part($num)) {
+	function get_cid_part($cid, $mimepart = 0) {
+		if ($mimepart == 0) {
+			$mimepart = $this;
+		}
+
+		$i = 1;
+		while($mimepart->extract_part($i)) {
+			if (preg_match("/".preg_quote($cid)."/", $mimepart->mimeparts[$i]->headers->get("CONTENT-ID")) || preg_match("/cid: ".$cid."/i", $mimepart->mimeparts[$i]->headers->get("CONTENT-LOCATION"))) {
+				return $mimepart->mimeparts[$i];
+			}
+
+			if (sizeof($mimepart->mimeparts[$i]->mimeparts) > 0) {
+				$part = $this->get_cid_part($cid, $mimepart->mimeparts[$i]);
+				if (!empty($part)) {
+					return $part;
+				}
+			}
+						
+			$i++; 
+		}
+	}
+	function get_cid_body($cid) {
+		$part = $this->get_cid_part($cid);
+		if ($part === false) {
+			return false;
+		}		
+		return $part->body;
+	}
+	
+	function get_cid_type($cid, $mimepart = 0) {
+		$part = $this->get_cid_part($cid);
+		if ($part === false) {
 			return false;
 		}
-		if ($sub > 0) {
-			return $this->mimeparts[$num]->mimeparts[$sub]->decode($this->mimeparts[$num]->mimeparts[$sub]->body);			
+		return $part->headers->get("Content-Type");
+	}
+
+	function get_part($num, $part) {
+		if ($part->extract_part($num) === false) {
+			return false;
 		}
-		return $this->mimeparts[$num]->decode($this->mimeparts[$num]->body);
+		
+		return $part->mimeparts[$num];
+	}
+
+	function get_attachment($att_path) {
+		
+		$part = $this;
+		
+		foreach($att_path as $key => $val) {
+			$part = $part->get_part($val, $part);
+			if ($part === false) {
+				return false;
+			}
+		}
+
+		return $part;
+	}
+	
+	function get_attachment_data($att_path) {
+		$part = $this->get_attachment($att_path);
+		if ($part === false) {
+			return false;
+		}
+		return $part->decode($part->body);
 	}
 
 	function get_attachment_name($num) {
@@ -344,10 +404,7 @@ class mimepart {
 		}
 
 		$c_type = $this->mimeparts[$num]->get_header("Content-Type");
-		$att_name = $c_type["name"];
-		if (empty($att_name)) {
-			return "Unnamed";
-		}	
+		$att_name = $c_type[strtoupper("name")];
 		
 		return $att_name;
 	}
@@ -359,7 +416,7 @@ class mimepart {
 		
 		$c_type = $this->mimeparts[$num]->get_header("Content-Type");	
 		
-		return $c_type["Content-Type"];
+		return $c_type["CONTENT-TYPE"];
 	}
 
 	function extract_headers(&$part) {

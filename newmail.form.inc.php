@@ -90,7 +90,17 @@ http://www.gnu.org/copyleft/gpl.html
 			return;
 		}
 	}
-
+	else if (isset($GLOBALS[action]) && $GLOBALS[action] == "showattmail") {
+		if ($this->cur_mailer == 0) {
+			$this->show();
+			return;
+		}
+		
+		$mailer = $this->cur_mailer;
+		
+		$readonly = 1;
+	}
+	
 	if (!$readonly) {
 		$query = "SELECT id, replyto, name FROM accounts WHERE user_id='$this->userid'";
 		$acc_res = $this->db_tool->db_query($query);
@@ -208,7 +218,12 @@ http://www.gnu.org/copyleft/gpl.html
 <?php
 		if ($readonly) {
 			echo('<img src="graphics/clip.gif" alt="Attachment" title="Attachment" border="0">');
-			$this->show_attachments();
+			if ($GLOBALS[action] == "showattmail") {
+				$this->show_attachments($this->cur_mailer);
+			}
+			else {
+				$this->show_attachments();
+			}
 		}
 		else {
 ?>
@@ -229,7 +244,8 @@ http://www.gnu.org/copyleft/gpl.html
 <input type="hidden" name="action" value="storemail">
 <input type="hidden" name="update" value="<?php if ($GLOBALS[action] == "showmail") echo("1"); else echo("0");?>">
 <?php
-		}
+	}
+
 ?>
 </center>
 </form>

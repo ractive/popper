@@ -123,13 +123,8 @@ class mailer extends mail {
 	
 	function is_mime() {
 		$cont_type = $this->get_header("Content-Type");
-		if (empty($type)) {
-			$cont_type = $this->get_header("Content-type");
-		}
-		$type = trim($cont_type["Content-Type"]);
-		if (empty($type)) {
-			$type = trim($cont_type["Content-type"]);
-		}
+
+		$type = trim($cont_type["CONTENT-TYPE"]);
 
 		if (empty($type)) {
 			// There's no content-type. Assume it's text/plain
@@ -163,7 +158,7 @@ class mailer extends mail {
 		$query = "INSERT INTO mails (tos, froms, subject, date, folder, user_id, mail, uidl, acc_id, is_mime, was_read) VALUES ('$tos', '$froms', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl', '$this->acc_id', '$is_mime', '$was_read')";
 		$res = $this->db_tool->db_query($query);
 
-		return $res != 0;	
+		return $this->db_tool->insert_id();	
 	}
 
 	function start_timer($event) {

@@ -19,6 +19,8 @@ http://www.gnu.org/copyleft/gpl.html
 
 	include("class.popper.inc.php");
 	
+	set_time_limit(60);
+	
 	session_start();
 	if (!isset($popper)) {
 		$popper = new popper;
@@ -36,7 +38,7 @@ http://www.gnu.org/copyleft/gpl.html
 	if (isset($login)) {
 
 		if (!isset($login) || !isset($pwd)) {
-				$popper->show_in_window("login", "Login");
+			$popper->show_in_window("login", "Login");
 			return;
 		}
 
@@ -77,6 +79,9 @@ http://www.gnu.org/copyleft/gpl.html
 		}
 	}
 	else if (is_logged_in()) {
+		// Remove previously created tmp-files
+		$popper->unlink_tmp();
+		
 		if (isset($deluser)) {
 			if (!isset($ans)) {
 				$popper->show_form("deluserack");

@@ -1,5 +1,5 @@
 =============================================================================
-POPPER (Version 1.2)
+POPPER (Version 1.21)
 =============================================================================
 
 POPPER (or however it will be called :-) is a free web mail-reader written
@@ -40,6 +40,7 @@ E-Mail:			james@ractive.ch
 Homepage:		http://www.ractive.ch
 POPPER-Page:	http://www.ractive.ch/gpl/popper.html
 Mailinglist:	http://www.ractive.ch/gpl/mailinglist.html
+Sourceforge:	http://sorceforge.net/projects/popper
 
 =============================================================================
 INTRODUCTION
@@ -88,8 +89,8 @@ All the above products are freely available.
    one for you.
    See the section MySQL below for further instructions.
 
-2. Untar the file popper.tar.gz to a location under your webserver's document-
-   root (i.e. /usr/local/httpd/htdocs/):
+2. Untar the file popper.tar.gz to a location under your webserver's
+   document-root (i.e. /usr/local/httpd/htdocs/):
    
    tar -xzvf popper.tar.gz
    
@@ -100,12 +101,12 @@ All the above products are freely available.
 
 3. Create the database structure with
 
-   mysql popper -p < popper.mysql
+   mysql --database=popper --user=dbusername -p < popper.mysql
 
    Instead of popper, use the correct name of the database.
 
 4. IMPORTANT!
-   MOVE the file popper.inc.php to the directory beneath the document-root
+   MOVE the file popper.inc.php to the directory above the document-root
    (i.e. /usr/local/httpd/). This gives you maximum security that the
    connection details are never revealed to anyone.
    
@@ -113,18 +114,30 @@ All the above products are freely available.
    Change the values according to your settings.
    
    MAKE SURE THAT popper.inc.php IS NOT IN THE DOCUMENT ROOT ANY MORE!
+   
+   If you don't have access to the directory above your document-root,
+   put it in the document-root itself and change line 74
+   of class.db_tool.inc.php to:
+   
+   		require("$doc_root/$this->db_data_inc");
 
 5. Edit config.inc.php and change the settings to your needs.
    Set $is_php400 to true if you are using PHP 4.0.0!
+   For version >= 4.0.1 this value is "false"!
 
 6. You may want to change the look and feel by changing the attributes
    in the stylesheet style.css
 
 7. It should work now :-)
 
+=============================================================================
+UPDATE FROM VERSIONS >= 1.2
+=============================================================================
+Rename the file config.inc.php to (i.e.) config.inc.php.orig.
+Untar the archive to the same directory. Rename config.inc.php.orig back
 
 =============================================================================
-UPDATE FROM A PREVIOUS VERSION
+UPDATE FROM VERSIONS < 1.2
 =============================================================================
 Rename the file config.inc.php to (i.e.) config.inc.php.orig.
 Untar the archive to the same directory. Rename config.inc.php.orig back
@@ -148,31 +161,81 @@ As root:
 2. Create the database with:
    create database popper;
 3. Change the priviliges for the new database to a normal user account:
-   GRANT insert, update, select, delete ON popper.* TO username@localhost 
+   GRANT insert, update, select, delete ON popper.* TO dbusername@localhost 
    IDENTIFIED BY 'theuserpassword';
 
 As normal user:
 1. Create the datbase structure:
-   mysql popper -p < popper.mysql 
+   mysql --database=popper --user=dbusername -p < popper.mysql 
 2. Change the file popper.inc.php located beneath the documet root to 
    the settings you made.
    It should look something like this then:
       $host = "localhost";       // Unlikely to be another host than localhost
-	  $user = "username";        // Or the user-name given in step 3
+	  $user = "dbusername";        // Or the user-name given in step 3
 	  $pass = "theuserpassword"; // Or the password given in step 3
 	  $dbname = "popper";        // Or the name given in step 2
 	  
    Avoid using your root account to access the database!
-   In case somehow the file popper.inc.php is visible to the outsice world,
-   an attacker can mess up your whole MySQL DB system!
 
+=============================================================================
+SECURITY ISSUES
+=============================================================================
+Web applications are not secure!
+I tried to make popper as secure as possible. But I'm sure someone will find
+a hole somewhere. Please report ANY security-considerations to
+james@ractive.ch or post is to the mailinglist.
+
+Some thoughts about security:
+- ALL passwords of ALL POP-servers of ALL users are stored in plain-text
+  in the database! I thought about encrypting them, but since it must
+  be decrypted again to send it to the POP-server an attacker that knows
+  the passwords wouldn't find it difficult to decrypt it, since he knows
+  the way to do it.
+  Another reason is that the POP password is sent to the POP-server in
+  plain text any way.
+  Do you have better ideas how to make this more secure?
+  
+- NEVER use your root MySQL account to access the database. If (for some
+  reason) an attacker gets this password, he has FULL ACCESS to ALL
+  of your databases!
+  
+- The reason why popper.inc.php is put above the document-root is that
+  the web-server cannot (should not be able to) access it.
+  But don't count on it ;-)
+
+- If a user views a multipart/related mail with inbound objects (i.e.
+  pictures) temporary files are created in the sub-directory tmp.
+  These files are deleted after the user logs off or when he opens a new
+  mail.
+  If the user just closes the browser without logging off, the files stay
+  there. Since everone has access to the tmp directory, the content of these
+  tmp-files are open to everyone.
+  Any ideas how to resolve that problem?
+
+=============================================================================
 BUGS
-====
+=============================================================================
 There are probably still a lot of bugs in this program.     
 Report them to james@ractive.ch with a detailed descprition of the
 problem, including your PHP version and the used webserver.
+Put them also in the bug-tracking system at sourceforge.net:
+http://sourceforge.net/bugs/?func=addbug&group_id=15135
+
+You may want to create a file phpinfo.php with this content:
+<?php phpinfo(); ?>
+This helps to gather information about your system.
 
 Subscribe yourself to the mailinglist to discuss things about popper:
 http://www.ractive.ch/gpl/mailinglist.html
 
+=============================================================================
+DEVELOPERS
+=============================================================================
+You are welcome to join the developement of popper. You find everyting you
+need on sourceforge (including CVS access etc.):
+http://sourceforge.net/projects/popper/
 
+Visit http://popper.sourceforge.net for more infomation (under construction)
+
+Contact me if you need more information: james@ractive.ch
+=============================================================================

@@ -33,6 +33,7 @@ class popper {
 	var $cur_account_id = 0;
 	var $cur_mailer = 0;
 	var $month = 0;
+	var $tmp_files = array();
 
 	var $del;
 	var $to;
@@ -73,6 +74,12 @@ class popper {
 	function popper() {
 		$this->db_tool = new db_tool("popper.inc.php");
 		$this->folder = "inbox";
+	}
+
+	function unlink_tmp() {
+		foreach($this->tmp_files as $file) {
+			@unlink($file);
+		}
 	}
 
 	function get_userid($name = "") {
@@ -964,7 +971,13 @@ class popper {
 			}
 		}
 	}
-	function show_attachments($of_part = 0, $parent_id = 0) {
+	function show_attachments($of_part = 0, $att_path = 0, $level = 1) {
+
+		if ($att_path == 0) {
+			unset($att_path);
+			$att_path = array();
+			$att_path[1] = 1;
+		}
 		if ($this->cur_message_id == 0) {
 			return;
 		}
@@ -983,7 +996,10 @@ class popper {
 		//echo "BODY:<br><br>".nl2br($mailer->body)."<br><br>";
 		while($mailer->extract_part($i)) {
 			if (sizeof($mailer->mimeparts[$i]->mimeparts) > 0) {
-				$this->show_attachments($mailer->mimeparts[$i], $i);
+				$att_path[$level] = $i;
+				$this->show_attachments($mailer->mimeparts[$i], $att_path, $level + 1);
+				// Don't show an icon for it, since it's a multipart part
+				echo('<img src="graphics/space.gif" alt="|">');
 				$i++;
 				continue;
 			}
@@ -1009,26 +1025,40 @@ class popper {
 					break;
 				case "text/plain":
 				case "application/rtf":
-				case "text/html":
 					$type_pic = "text.gif";
+					break;
+				case "text/html":
+					$type_pic = "html.gif";
 					break;
 				case "application/pdf":
 					$type_pic = "pdf.gif";
+					break;
+				case "message/rfc822":
+					$type_pic = "email.gif";
 					break;
 				default:
 					$type_pic = "unknown.gif";
 			}
 
 			$att_name = $mailer->get_attachment_name($i);
+			if (!empty($att_name)) {
+				$att_name .= "\r\n";
+			}
+			$att_name .= "$type";
 			
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=$GLOBALS[mail_id]&att_id=");
-			if ($of_part != 0) {
-				echo("$parent_id&sub_att_id=$i");
+			$att_path[$level] = $i;
+			echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=$GLOBALS[mail_id]");
+
+			foreach($att_path as $key => $att_pid) {
+				echo("&att$key=$att_pid");
 			}
-			else {
-				echo("$i");
+			echo("\" title=\"$att_name\"");
+			if ($type != "message/rfc822") {
+				// Open attachments in a new window.
+				// Attached messages must be opened in the same window, because $this->cur_mailer gets changed
+				echo(" target=\"top_\"");
 			}
-			echo("\" title=\"$att_name\" target=\"top_\" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"vertical-align: top;\"></a>\n");
+			echo(" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"vertical-align: top;\"></a>\n");
 			$i++;
 		}
 	}
@@ -1054,10 +1084,6 @@ class popper {
 	}
 	
 	function get_attachment() {
-		global $att_id, $sub_att_id;
-		if (!isset($att_id)) {
-			$att_id = 1;
-		}
 		if ($this->cur_mailer == 0 || $this->cur_message_id != $GLOBALS["mail_id"]) {
 			$this->cur_mailer = new mailer($this->userid);
 			if (!$this->cur_mailer->load($GLOBALS["mail_id"])) {
@@ -1066,30 +1092,89 @@ class popper {
 			}
 		}
 
-		if (isset($sub_att_id)) {
-			$data = $this->cur_mailer->get_attachment($att_id, $sub_att_id);
-		}
-		else {
-			$data = $this->cur_mailer->get_attachment($att_id);
+		$i = 1;
+		while(isset($GLOBALS["att$i"])) {
+			$att_path[$i] = $GLOBALS["att$i"];
+			$i++;
 		}
 		
+		/*foreach($att_path as $key => $val) {
+			echo("$key -> $val<br>");
+		}*/
+
+		$data = $this->cur_mailer->get_attachment_data($att_path);
+
 		if ($data === false) {
 			$this->report_error("The attachment could not be extracted", "Mail error");
 			exit;
 		}
-		if (isset($sub_att_id)) {
-			$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->mimeparts[$sub_att_id]->headers->get("Content-Disposition"));
-			$type = "Content-Type: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->mimeparts[$sub_att_id]->headers->get("Content-Type"));			
-		}
-		else {
-			$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers->get("Content-Disposition"));
-			$type = "Content-Type: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers->get("Content-Type"));
+		
+		$part = $this->cur_mailer->get_attachment($att_path);
+		
+		$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $part->headers->get("Content-Disposition"));
+		$type = "Content-Type: ".str_replace("\r\n\t", " ", $part->headers->get("Content-Type"));			
+		
+		$disp = str_replace("attachment;", "inline;", $disp);
+
+		// Check for multipart/related inbound elements
+		if (preg_match_all("/cid:(.[^\">]*)/", $data, $matches)) {
+
+			foreach($matches[1] as $cid) {
+				// Create for each inbound element a temporary file
+				
+				// Get the data of the object
+				$cid_data = base64_decode($this->cur_mailer->get_cid_body($cid));
+				$cid_type = $this->cur_mailer->get_cid_type($cid);
+				
+				// Create a uniqe filename
+				srand((double)microtime()*1000000);
+				$rand = md5(rand());
+				
+				$tmp_name = "tmp/tmp_".substr($rand, 0, 5);
+
+				// Add a suitalbe extension if possible
+				if (preg_match("|image/jpeg|", $cid_type)) {
+					$tmp_name .= ".jpg";
+				}
+				else if (preg_match("|image/gif|", $cid_type)) {
+					$tmp_name .= ".gif";
+				}
+				else if (preg_match("|image/png|", $cid_type)) {
+					$tmp_name .= ".png";
+				}				
+				else {
+					$tmp_name .= ".tmp";
+				}
+
+				$this->tmp_files[] = $tmp_name;
+
+				// Create the temporary file with the object data
+				$fp = @fopen($tmp_name, "w");
+				@fwrite($fp, $cid_data);
+				
+				// Replace the occurence of the object reference with the location
+				// of the newly created temp-file
+				$data = str_replace("cid:$cid", $tmp_name, $data);
+				
+				// Outlook express sometimes ads a <BASE file:path> tag
+				// What for? It messes everything up.
+				// We just remove it...
+				$data = preg_replace("|(<BASE .*>)|Us", "", $data);
+
+			}
 		}
 
-		$disp = str_replace("attachment;", "inline;", $disp);
-		
-		//echo "DISP: $disp<br>";
-		//echo "TYPE: $type<br>";
+		// If the attachment is a message, we open it like a mail
+		if (preg_match("|message/rfc822|i", $type)) {
+			$this->cur_mailer = new mailer($this->userid);
+			$this->cur_mailer->from_text($data);
+			$GLOBALS["action"] = "showattmail";
+			$this->show_in_window("newmail", "Attached E-mail");
+			return;
+		}
+
+		/*echo "DISP: $disp<br>";
+		echo "TYPE: $type<br>";*/
 		
 		Header($disp);
 		Header($type);
@@ -1360,6 +1445,7 @@ class popper {
 		// Make an array with all UIDLs we already have
 		$query = "SELECT uidl FROM mails WHERE user_id = '$this->userid' AND folder != 'outbox' AND folder != 'sent'";
 		$res = $this->db_tool->db_query($query);
+
 		$uidls = array();
 
 		while($row = $this->db_tool->fetch_array($res)) {
@@ -1396,35 +1482,76 @@ class popper {
 			// Get the UIDLs from the server
 			$server_uidls = $pop3->uidl();
 			
-			// If the server doesn't support the X-UIDL header, just get
-			// ALL the mails
+			// If the server doesn't support the X-UIDL header, we make our own x-uidl
+			// Get one line of every mail and calculate the md5 checksum.
 			if ($server_uidls === false) {
-			//if (true){
+				// Get information about the mails in the mailbox
 				$get = $pop3->pop_list();
+				
+				// The first entry contains the no. of mails. Remove it
 				array_shift($get);
+				
+				foreach($get as $get_now => $size) {
+					$num = $get_now + 1;
+
+					$top = $pop3->top($num, 1);
+					// Some POP-server add a Status header to the mail as soon as it got read
+					// We remove this header for the uidl calculction, that the checksum
+					// is not different when you read the mail for the very first time
+					// (without this Status header)
+					$data = preg_replace("|(<BASE .*>)|Us", "", $data);					
+					$top = preg_replace("/(Status: RO\r\n)/U", "", $top);
+
+					$xuidl = md5($top);
+
+					$server_uidls[$num] = $xuidl;
+					$own_uidl = true;
+				}
+				/*echo("<h3>SERVER_UIDLS ARRAY</h3>");
+				foreach($server_uidls as $key => $val) {
+					echo("$key -> $val<br>");
+				}*/				
+				
 			}
 			else {
 				// Remove the first entry. It contains the amount of mails on the server
 				// BUT the mail-ids must then be set +1
 				array_shift($server_uidls);
-	
-				// Get the difference between the UIDLS on the server and in the DB
-				$get = array_diff($server_uidls, $uidls);			
 			}
+			
+			// Get the difference between the UIDLS on the server and in the DB
+			$get = array_diff($server_uidls, $uidls);			
+			
+			/*echo("<h3>GET ARRAY</h3>");
+			foreach($get as $key => $val) {
+				echo("$key -> $val<br>");
+			}*/
+			
 			$mailer = new mailer($this->userid, $row[id]);
 			reset($get);
 
 			foreach($get as $num => $uid) {
-				$get_mail = $num + 1;
+				$get_mail = $num;
+				
+				if (!$own_uidl) {
+					$get_mail++;
+				}
+
 				$mail = $pop3->get_text($get_mail);
 
 				if(empty($mail)) {
 					continue;
 				}
 
-				if (!$mailer->store("inbox", $mail)) {
+				if (($insert_id = $mailer->store("inbox", $mail)) == 0) {
 					$this->report_error($mailer->db_tool->db_error(), "Mail could not be stored");
 					exit;
+				}
+
+				if ($own_uidl) {
+					// If we use our own calculated uidls, we have to store it in the DB, too
+					$query = "UPDATE mails SET uidl='".$server_uidls[$get_mail]."' WHERE user_id = '$this->userid' AND id = '$insert_id'";
+					$update_res = $this->db_tool->db_query($query);
 				}
 
 				if ($this->config["keep"] != 1) {

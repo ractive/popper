@@ -1,6 +1,6 @@
 <?
 # phpop RCS version info:
-# $Id: class.pop3.inc.php,v 1.1.1.1 2000/11/20 07:51:34 james Exp $
+# $Id: class.pop3.inc.php,v 1.1.1.3 2001/02/04 10:48:36 jbergamin Exp $
 /*
 
 	class.POP3.php3 v1.0	99/03/24 CDI cdi@thewebmasters.net
@@ -119,16 +119,16 @@ class POP3
 		}
 		$this->FP = $fp;
 		$this->BANNER = $this->parse_banner($reply);
-		$this->RFC1939 = $this->noop();
+		/*$this->RFC1939 = $this->noop();
 		if($this->RFC1939)
 		{
-      if ($this->VMAILMGR) {
-      } else {
-  			$this->ERROR = "POP3: premature NOOP OK, NOT an RFC 1939 Compliant server";
-	  		$this->quit();
-		  	return false;
-      }
-		}
+	      if ($this->VMAILMGR) {
+	      } else {
+	  			$this->ERROR = "POP3: premature NOOP OK, NOT an RFC 1939 Compliant server";
+		  		$this->quit();
+			  	return false;
+	      }
+		}*/
 		return true;
 	}
 
@@ -321,18 +321,17 @@ class POP3
 		}
 
 		$count = 0;
-		$MsgArray = array();
 
 		$line = fgets($fp,$buffer);
-		while ( !ereg("^\.\r\n",$line))
+		while(!ereg("^\.\r\n",$line))
 		{
-			$MsgArray[$count] = $line;
-			$count++;
+			$msg .= $line;
 			$line = fgets($fp,$buffer);
-			if(empty($line))	{ break; }
+			if(empty($line)) {
+				break;
+			}
 		}
-
-		return $MsgArray;
+		return $msg;
 	}
 
 	function pop_list ($msgNum = "")
