@@ -63,7 +63,7 @@ http://www.gnu.org/copyleft/gpl.html
  		}
 
 		if (!$popper->is_activated($name)) {
-			$popper->messagebox($strings["l_AccActivation1"], $strings["l_AccActivation1"], $strings["l_AccActivation1"], $strings["l_Welcome"]);		
+			$popper->messagebox($strings["l_AccActivation1"], $strings["l_AccActivation2"], $strings["l_AccActivation2"], $strings["l_Welcome"]);		
 			return;			
 		}
 
@@ -96,7 +96,15 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 	else if (isset($newuser)) {
 		if ($popper->create_user()) {
-			$popper->messagebox($strings["l_AccCreated1"], $strings["l_AccCreated2"], $strings["l_AccCreated2"], $strings["l_Welcome"]);		
+			require("config.inc.php");
+			echo $GLOBALS[user_confirmation];
+			if ($GLOBALS[user_confirmation]) {
+				$popper->messagebox($strings["l_AccCreated1"], $strings["l_AccCreated2"], $strings["l_AccCreated2"], $strings["l_Welcome"]);		
+			}
+			else {
+				$popper->messagebox($strings["l_ConfSucc1"], $strings["l_AccCreated2"], $strings["l_AccCreated2"], $strings["l_Welcome"]);
+			}
+		
 		}
 	}
 	else if (isset($check)) {
