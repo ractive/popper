@@ -140,6 +140,12 @@ Create a sub-directory in the directory popper, called tmp.
 Make it accessible for all:
 chmod 777 tmp
 
+Update the MySQL database, by adding the definitions in update.mysql:
+
+mysql popper -p < update13.mysql
+
+More informations about MySQL below...
+
 =============================================================================
 UPDATE FROM VERSIONS < 1.2
 =============================================================================
@@ -153,7 +159,8 @@ chmod 777 tmp
 
 Update the MySQL database, by adding the definitions in update.mysql:
 
-mysql popper -p < update.mysql 
+mysql popper -p < update.mysql
+mysql popper -p < update13.mysql
 
 More informations about MySQL below...
 

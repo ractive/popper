@@ -46,3 +46,11 @@ Version 1.21
 - Own X-UIDL implementation for POP-server that don't support that
   This prevents that mails are downloaded multiple times
 - more bug-fixes
+
+Version 1.3
+============
+- Language support added. Currently available: English, German
+- "Delete all mails" feature added
+- Selective deletion simplified
+- Own X-UIDL implementation redesigned. Works not.
+- Deletion of mails is handled better now
