@@ -47,18 +47,18 @@ http://www.gnu.org/copyleft/gpl.html
 			<td>
 <?php
 		// Check which mail-server are allowed...
-		if ($GLOBALS["only_localhost"]) {
+		if ($_SESSION['only_localhost']) {
 			// Only localhost is allowed
 ?>
 			<input name="popserver" size="25" value="localhost" readonly>
 <?php
 		}
-		else if (count($GLOBALS["allowed_servers"]) > 0) {
+		else if (count($_SESSION['allowed_servers']) > 0) {
 			// Display the list of allowed servers
 			echo("<select name=\"popserver\" style=\"width: 25ex\">\n");
-			foreach($GLOBALS["allowed_servers"] as $server) {
+			foreach($_SESSION['allowed_servers'] as $server) {
 				echo("<option value=\"$server\"");
-					if ($row[popserver] == $server) {
+					if ($row['popserver'] == $server) {
 						echo(" selected");
 					}
 				echo(">$server</option>\n");
@@ -68,7 +68,7 @@ http://www.gnu.org/copyleft/gpl.html
 		else {
 			// All servers are allowed
 ?>
-			<input name="popserver" size="25" value="<?php echo("$row[popserver]");?>">
+			<input name="popserver" size="25" value="<?php echo($row['popserver']);?>">
 <?php
 		}
 ?>
@@ -77,11 +77,11 @@ http://www.gnu.org/copyleft/gpl.html
 		</tr>
 		<tr>
 			<td>POP Loginname:</td>
-			<td><input name="poplogin" size="25" value="<?php echo("$row[poplogin]");?>"></td>
+			<td><input name="poplogin" size="25" value="<?php echo($row['poplogin']);?>"></td>
 		</tr>
 		<tr>
 			<td>Password:</td>
-			<td><input type="password" name="poppwd" size="25" value="<?php echo("$row[poppwd]");?>"></td>
+			<td><input type="password" name="poppwd" size="25" value="<?php echo($row['poppwd']);?>"></td>
 		</tr>
 	</table>
 	<br><hr><br>

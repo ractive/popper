@@ -22,17 +22,17 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 	//Header("Content-Type: text/html;\ncharset=\"KOI8-R\"\nContent-Transfer-Encoding: 8bit");
 ?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 
 <html>
 
 <head>
-<title><?php echo($GLOBALS[browsertitle]);?></title>
+<title><?php echo($_SESSION['browsertitle']);?></title>
 <META NAME="resource-type" CONTENT="document">
 <META HTTP-EQUIV="author" CONTENT="Jean-Pierre Bergamin">
 <META NAME="keywords" CONTENT="php, pop3, pop, client, pop client, popclient, free, freeware, asp">
 <META NAME="description" CONTENT="">
-<!--<META HTTP-EQUIV="Refresh" content="10;URL=<?php echo($GLOBALS[PHP_SELF]."?action=sendandreceive&what=getall");?>">-->
+<!--<META HTTP-EQUIV="Refresh" content="10;URL=<?php echo($GLOBALS['PHP_SELF']."?action=sendandreceive&what=getall");?>">-->
 <!--<meta http-equiv="Content-Type" content="text/html; charset=KOI8-R">-->
 <!--<meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="-1">-->
@@ -40,7 +40,7 @@ http://www.gnu.org/copyleft/gpl.html
 // Don't use the style sheet for Netsape. It looks crappy...
 if ($isNS == 0) {
 ?>
-<LINK REL=stylesheet TYPE="text/css" HREF="style.css">
+<LINK REL="stylesheet" TYPE="text/css" HREF="style.css">
 <?php
 }
 ?>

@@ -69,7 +69,7 @@ class db_tool {
 	   
 		$doc_root = getenv("DOCUMENT_ROOT");
 		$path = $doc_root;
-		if ($GLOBALS["in_docroot"] === false) {
+		if ($_SESSION['in_docroot'] === false) {
 			$path .= "";
 		}
 		$path .= "/".$this->db_data_inc;

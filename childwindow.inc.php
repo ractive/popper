@@ -11,7 +11,7 @@
 									echo("&nbsp;");
 								}
 								else {
-									echo("$title");
+									echo($title);
 								}
 ?>
 							</td>
@@ -21,7 +21,7 @@
 				</td>
 			</tr>
 <?php
-		if(file_exists($form.".toolbar.inc.php")) {
+		if(@file_exists($form.".toolbar.inc.php")) {
 			include($form.".toolbar.inc.php");
 		}
 ?>
