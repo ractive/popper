@@ -29,19 +29,16 @@ This is very insecure!  Need to validate input and screen for PHP [htmlspecialch
 and MySQL [mysql_real_escape_string()] injection attacks.
 :DevNote*/
 	$_SESSION['action']    = (!isset($_REQUEST['action']) ? "" : strtolower(htmlspecialchars($_REQUEST['action'])));
-	$logged_in = (!isset($_SESSION['logged_in']) ? "" : $_SESSION['logged_in']);
-	$confirm_code     = (!isset($_REQUEST['confirm_code']) ? "" : htmlspecialchars($_REQUEST['confirm_code']));
-	$ok 		  = (!isset($_REQUEST['ok']) ? "" : strtolower(htmlspecialchars($_REQUEST['ok'])));
-	$what		  = (!isset($_REQUEST['what']) ? "" : htmlspecialchars($_REQUEST['what']));
+	$_SESSION['confirm_code']     = (!isset($_REQUEST['confirm_code']) ? "" : htmlspecialchars($_REQUEST['confirm_code']));
+	$_SESSION['ok'] 		  = (!isset($_REQUEST['ok']) ? "" : strtolower(htmlspecialchars($_REQUEST['ok'])));
+	$_SESSION['what']		  = (!isset($_REQUEST['what']) ? "" : htmlspecialchars($_REQUEST['what']));
 	
 	@set_time_limit(60);
 
 	include("class.popper.inc.php");
 	include("class.cal.inc.php");
 	
-	$lang_file = language_get();
-	include($lang_file);
-	setlocale(LC_ALL, $_SESSION["locale"]);
+	set_language();
 	
 	// If needed, setup the persistent session data objects.
 	if (!isset($_SESSION['popper']) || !is_object($_SESSION['popper'])) {
@@ -50,26 +47,6 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 	
 	if (!isset($_SESSION['calendar']) || !is_object($_SESSION['calendar'])) {
 		$_SESSION['calendar'] = new cal;
-	}
-	
-	/*
-	// Check for early exit conditions
-	switch ($_SESSION['action'])
-	{
-	case "lostpwd":
-		$_SESSION['popper']->show_in_window("lostpwd");
-		exit_popper();
-	case "sendpwd":
-		$_SESSION['popper']->send_pwd();
-		exit_popper();
-	case "help":
-		$_SESSION['popper']->show_form("help");
-		exit_popper();
-	}
-	*/
-	
-	if (!isset($_SESSION['popper']->db_tool)) {
-		$_SESSION['popper']->db_tool = new db_tool("test-popper.inc.php");
 	}
 	
 	switch ($_SESSION['action'])
@@ -81,7 +58,7 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 		process_new_user();
 		break;
 	case "confirm":
-		process_confirmation($confirm_code);
+		process_confirmation($_SESSION['confirm_code']);
 		break;
 	default:
 		process_action();
@@ -107,10 +84,15 @@ function setup_session() {
 		Header("Location: ".$hdr);
 		exit_popper();
 	}
-	else {
-		$_SESSION['in_session']++;
+	elseif (!$_SESSION['config_loaded']) {
 		require_once("config.inc.php");
 	}
+}
+
+function set_language() {
+	$lang_file = language_get();
+	require($lang_file);
+	setlocale(LC_ALL, $_SESSION["locale"]);
 }
 
 function process_login() {
@@ -135,18 +117,16 @@ function process_login() {
 	// The password was good and there is at least one account.
 	// Save the info to the session
 /*DevNote: roytoo
-Setting $logged_in = 1 is a security hole since it is easy to guess and gain access 
-to a valid user's accounts.  It is better to set $logged_in to a hash composed of 
+Setting $_SESSION['logged_in'] = 1 is a security hole since it is easy to guess and gain access 
+to a valid user's accounts.  It is better to set $_SESSION['logged_in'] to a hash composed of 
 the PHPSESSID, users name and password [i.e. md5($_SESSION['PHPSESSID']+$name+$pwd)].  
 Even this is not completely secure if an attacker has access to the server's session
 save path and popper is not on an https:// server.
 
 Need to add info about this topic to INSTALL?
 :DevNote*/
-	$logged_in = 1;	
+	$_SESSION['logged_in'] = 1;	
 	$_SESSION['popper']->set_user($name);
-	
-	$_SESSION["logged_in"] = $logged_in;
 	
 	if ($_COOKIE["poppercookie"] && $set_cookie != "on") {
 		cookie_unset();
@@ -166,8 +146,7 @@ Need to add info about this topic to INSTALL?
 function process_new_user() {
 	
 	if ($_SESSION['popper']->create_user()) {
-		echo $GLOBALS['user_confirmation'];
-		if ($GLOBALS['user_confirmation']) {
+		if ($_SESSION['user_confirmation']) {
 			$_SESSION['popper']->messagebox($_SESSION["strings"]["l_AccCreated1"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_Welcome"]);		
 		}
 		else {
@@ -190,7 +169,6 @@ function process_confirmation($code) {
 }
 
 function process_action() {
-	global $ok, $what;
 	
 	// Remove previously created tmp-files
 	$_SESSION['popper']->unlink_tmp();
@@ -200,7 +178,7 @@ Temporarily masked out the 'ok' functionality since it now interfers with $_SESS
 Will need to be re-implemented, most likely by dynamically changing the value of $_SESSION['action'] based 
 upon the contents of $_SESSION['last_action'].
 :DevNote*/
-	/*if ($ok == "ok") {
+	/*if ($_SESSION['ok'] == "ok") {
 		if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
 			$_SESSION['popper']->show_frame_list();
 		}
@@ -317,7 +295,7 @@ Functionalize this one.
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		if (!isset($what)) {
+		if (!isset($_SESSION['what'])) {
 			if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
 				$_SESSION['popper']->show_small_window("sendreceive", $_SESSION["strings"]["l_SendReceive"]);
 			}
@@ -465,9 +443,7 @@ function language_get() {
 }
 
 function is_logged_in() {
-	global $logged_in;
-	
-	return (isset($logged_in) && isset($_SESSION['logged_in']) && $logged_in == 1);
+	return (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] == 1);
 }
 
 function serialize_session() {
