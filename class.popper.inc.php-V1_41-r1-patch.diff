@@ -1,0 +1,42 @@
+diff -u -b -r1.10 -r1.11
+--- class.popper.inc.php	7 Jul 2003 23:17:53 -0000	1.10
++++ class.popper.inc.php	7 Feb 2005 02:05:06 -0000	1.11
+
+@@ -1617,13 +1617,13 @@
+ 		global $strings;
+ 		
+ 		srand((double)microtime()*1000000);
+-		$check = md5(rand());
++		$confirm_code = md5(rand());
+ 		$server = "http://".getenv("SERVER_NAME");
+ 		$href  = $server.$GLOBALS[PHP_SELF];
+-		$href .= "?check=$check";
++		$href .= "?confirm_code=$confirm_code";
+ 
+ 		// Save it in the database
+-		$query = "INSERT INTO confirmations (user_id, check) VALUES ('$this->userid', '$check')";
++		$query = "INSERT INTO confirmations (user_id, confirm_code) VALUES ('$this->userid', '$confirm_code')";
+ 		$res = $this->db_tool->db_query($query);
+ 		if ($res == 0) {
+ 			$this->report_error($strings["l_ConfFail"]."<br><br>".$this->db_tool->db_error(), $strings["l_DBError"]);
+@@ -1643,10 +1643,10 @@
+ 		}
+ 	}
+ 
+-	function check_confirmation($check) {
++	function check_confirmation($confirm_code) {
+ 		global $strings;
+ 		
+-		$query = "SELECT user_id FROM confirmations WHERE check='$check'";
++		$query = "SELECT user_id FROM confirmations WHERE confirm_code='$confirm_code'";
+ 		$res = $this->db_tool->db_query($query);
+ 		$row = $this->db_tool->fetch_array($res);
+ 		$ret = $this->db_tool->affected_rows($res);
+@@ -1655,7 +1655,7 @@
+ 			$ret &= $this->db_tool->db_query($query);
+ 			
+ 			if ($ret != 0) {
+-				$query = "DELETE FROM confirmations WHERE check='$check'";
++				$query = "DELETE FROM confirmations WHERE confirm_code='$confirm_code'";
+ 				$ret = $this->db_tool->db_query($query);
+ 			}

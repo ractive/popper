@@ -1,0 +1,1 @@
+ALTER TABLE confirmations CHANGE check confirm_code char(32) default NULL;

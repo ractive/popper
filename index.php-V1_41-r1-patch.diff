@@ -1,0 +1,40 @@
+diff -u -b -r1.11 -r1.13
+--- index.php 24 Feb 2003 11:31:00 -0000	1.11
++++ index.php	7 Feb 2005 02:05:06 -0000	1.13
+@@ -42,6 +42,15 @@
+ 	define("SEP_VIEW", 2);	
+ 	define("FRAME_VIEW", 3);			
+ 	
++	$action    = $_REQUEST['action'];
++	$popper    =& $_SESSION['popper'];
++	$logged_in = $_SESSION['logged_in'];
++	$cal       =& $_SESSION['cal'];
++	$confirm_code     = $_REQUEST['confirm_code'];
++	$new_user  = $_REQUEST['new_user'];
++	$login     = $_REQUEST['login'];
++
++	
+ 	function is_logged_in() {
+ 		global $logged_in;
+ 		return (isset($logged_in) && session_is_registered("logged_in") && $logged_in == 1);
+@@ -100,7 +109,7 @@
+ 		$popper->db_tool = new db_tool("popper.inc.php");
+ 	}	
+ 	
+-	if (!isset($check) && !isset($newuser) && (isset($login) || ($poppercookie["user"] && !is_logged_in()))) {
++	if (!isset($confirm_code) && !isset($newuser) && (isset($login) || ($poppercookie["user"] && !is_logged_in()))) {
+ 
+ 		if (!isset($login) || !isset($pwd)) {
+ 			$popper->show_in_window("login", $strings["l_Login"]);
+@@ -158,9 +167,9 @@
+ 		
+ 		}
+ 	}
+-	else if (isset($check)) {
++	else if (isset($confirm_code)) {
+ 		// The user calle the confirmation link
+-		if ($popper->check_confirmation($check)) {
++		if ($popper->check_confirmation($confirm_code)) {
+ 			// The check was successful
+ 			$popper->messagebox($strings["l_ConfSucc1"], $strings["l_ConfSucc2"], $strings["l_ConfSucc2"], $strings["l_Welcome"]);
+ 		}
