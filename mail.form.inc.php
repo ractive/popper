@@ -1,15 +1,3 @@
-/*========================================================================
-A POP3 web mail-client written in PHP
-Copyright (C) 2000 by Jean-Pierre Bergamin
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License.
-
-For more information see the file gpl.txt or go to
-http://www.gnu.org/copyleft/gpl.html
-
-==========================================================================*/
-
 <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" style="border-bottom: medium solid silver;">
 	<tr>
 		<td class="windowtitle">
@@ -26,9 +14,9 @@ http://www.gnu.org/copyleft/gpl.html
 
 			if ($page_no != 0) {
 				$fromto = "Show mails ";
-				$fromto .= ($page_no - 1) * $this->mails_per_page + 1;
+				$fromto .= ($page_no - 1) * $this->config["mails_per_page"] + 1;
 				$fromto .= " to ";
-				$fromto .= $page_no * $this->mails_per_page;
+				$fromto .= $page_no * $this->config["mails_per_page"];
 				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&page=prev\"><img src=\"graphics/arrowup.gif\"  border=\"0\" title=\"$fromto\" alt=\"$fromto\"></a>");
 			}
 			else {
@@ -45,15 +33,15 @@ http://www.gnu.org/copyleft/gpl.html
 		<td class="scrollbar" valign="bottom">
 <?php
 			$fromto = "Show mails ";
-			$fromto .= ($page_no + 1) * $this->mails_per_page + 1;
+			$fromto .= ($page_no + 1) * $this->config["mails_per_page"] + 1;
 			$fromto .= " to ";
-			$to_no = ($page_no + 2) * $this->mails_per_page;
+			$to_no = ($page_no + 2) * $this->config["mails_per_page"];
 			if ($mail_count < $to_no) {
 				$to_no = $mail_count;
 			}
 			$fromto .= $to_no;
 
-			if (($page_no + 1) * $this->mails_per_page < $mail_count) {
+			if (($page_no + 1) * $this->config["mails_per_page"] < $mail_count) {
 				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&page=next\"><img src=\"graphics/arrowdown.gif\" border=\"0\" title=\"$fromto\" alt=\"$fromto\"></a>");
 			}
 			else {
@@ -70,7 +58,7 @@ http://www.gnu.org/copyleft/gpl.html
 		$this->show_head();
 ?>
 	</td>
-	<td>
+	<td align="right">
 <?php	
 		$this->show_attachments();
 ?>
@@ -78,7 +66,7 @@ http://www.gnu.org/copyleft/gpl.html
 </tr>
 </table>
 <form>
-<textarea readonly rows="<?php echo($this->mail_rows);?>" style="width: 100%;">
+<textarea readonly rows="<?php echo($this->config["mail_rows"]);?>" cols="80" style="width: 100%;">
 <?php
 	$this->show_mail_content()
 ?>

@@ -287,3 +287,38 @@ td.scrollbar {
 .mail img {
 	vertical-align: middle;
 }
+
+/*****************************
+
+ Help window
+
+*****************************/
+
+.help {
+
+}
+
+.help dt {
+	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-weight : bolder;
+	padding-bottom : 1ex;
+	padding-top : 2ex;
+}
+
+.help h3 {
+	padding-top: 1ex;
+	border-top: medium solid silver;
+}
+
+.help li {
+	margin-top: 3pt;
+	margin-bottom: 3pt;
+}
+
+.help a {
+	width: auto;
+}
+
+.help img {
+	vertical-align: middle;
+}

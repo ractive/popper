@@ -1,3 +1,5 @@
+<?php
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,19 +12,21 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
-
 include("class.mimepart.inc.php");
 
 class mail extends mimepart {
 
 	var $mail_text;
-
+	
+	function mail() {
+		$this->headers = new headers;
+	}
+	
 	function create($to, $from, $subject, $body) {
 		$this->to($to);
 		$this->from($from);
 		$this->subject($subject);
-		$this->headers["Content-Type"] = "text/plain;\tcharset=\"us-ascii\"";
+		//$this->headers["Content-Type"] = "text/plain;\tcharset=\"us-ascii\"";
 		$this->body = $body;
 	}
 
@@ -30,48 +34,49 @@ class mail extends mimepart {
 		if ($to === false) {
 			return $this->get_pretty_header("To");
 		}
-		$this->headers["To"] = $to;
+		$this->headers->put("To", $to);
 	}
 
 	function cc($cc = false) {
 		if ($cc === false) {
-			$cc = $this->headers["Cc"];
+			$cc = $this->headers->get("Cc");
 			return $this->get_pretty_header("Cc");
 		}
 		
-		$this->headers["Cc"] = $cc;
+		$this->headers->put("Cc", $cc);
 	}	
 	
 	function bcc($bcc = false) {
 		if ($bcc === false) {
-			$bcc = $this->headers["Bcc"];
+			$bcc = $this->headers->get("Bcc");
 			return $this->get_pretty_header("Bcc");
 		}
 		
-		$this->headers["Bcc"] = $bcc;
+		$this->headers->put("Bcc", $bcc);
 	}	
 		
 	function from($from = false) {
 		if ($from === false) {
-			$from = $this->headers["From"];
+			$from = $this->headers->get("From");
 			return $this->get_pretty_header("From");
 		}
 		
-		$this->headers["From"] = $from;
+		$this->headers->put("From", $from);
 	}	
 	
 	function subject($subject = false) {
 		if ($subject === false) {
-			$subject = $this->headers["Subject"];
+			$subject = $this->headers->get("Subject");
 			return $this->get_pretty_header("Subject");
 		}
 		if (empty($subject)) {
 			$subject = "(No subject)";
 		}
-		$this->headers["Subject"] = $subject;
+		$this->headers->put("Subject", $subject);
 	}
 	
 	function add_header($header) {
+		// TODO
 		trim($header);
 		if (empty($header)) {
 			return;
@@ -79,7 +84,7 @@ class mail extends mimepart {
 		$header .= "\r\n\r\n";
 		$header_arr = $this->extract_headers($header);
 
-		$this->headers = array_merge($this->headers, $header_arr);
+		//$this->headers = array_merge($this->headers, $header_arr);
 	}
 	
 	function attach_file($path, $filename, $type = "application/octet-stream", $encoding = "base64", $description = "", $disposition = "") {
@@ -91,11 +96,11 @@ class mail extends mimepart {
 			return false;
 		}
 		$data = fread($fp, filesize($path));
-
-		$type .= "\tname=$filename;";
+		fclose($fp);
+		$type .= ";\tname=\"$filename\";";
 		$disposition .= "attachment; filename=\"$filename\"";
 	
-		return $this->attach_data(&$data, $type, $encoding, $description, $disposition);
+		return $this->attach_data($data, $type, $encoding, $description, $disposition);
 	}
 	
 	function attach_data(&$data, $type = "application/octet-stream", $encoding = "base64", $description = "", $disposition = "") {
@@ -137,10 +142,10 @@ class mail extends mimepart {
 	}
 	
 	function send() {
-		$this->headers["X-Mailer"] = "PoPHPer";
+		$this->headers->put("X-Mailer", "popper");
 		$headers = $this->generate_header_str(false);
 		$body = $this->generate_body(false, false);
-		$to = $this->to();
+		$to = stripslashes($this->headers->get("To"));
 		$subject = $this->subject();
 		return mail($to, $subject, $body, rtrim($headers));
 	}

@@ -1,3 +1,5 @@
+<?php
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,7 +12,6 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
 	if ($GLOBALS["update"] == 1) {
 		$query = "SELECT * FROM accounts WHERE id = '$this->cur_account_id' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
@@ -30,19 +31,48 @@ Enter the account information
 	<table cellpadding="5">
 		<tr>
 			<td>Account name:</td>
-			<td><input name="name" size="25" value="<?php echo("$row[name]");?>"></td>
+			<td><input name="name" size="25" value="<?php echo(stripslashes($row["name"]));?>"></td>
 		</tr>
 		<tr>
 			<td>From name:</td>
-			<td><input name="fromname" size="25" value="<?php echo("$row[fromname]");?>"></td>
+			<td><input name="fromname" size="25" value="<?php echo(stripslashes($row["fromname"]));?>"></td>
 		</tr>
 		<tr>
 			<td>Reply to email:</td>
-			<td><input name="replyto" size="25" value="<?php echo("$row[replyto]");?>"></td>
+			<td><input name="replyto" size="25" value="<?php echo(stripslashes($row["replyto"]));?>"></td>
 		</tr>
 		<tr>
 			<td>POP-Server:</td>
-			<td><input name="popserver" size="25" value="<?php echo("$row[popserver]");?>"></td>
+			<td>
+<?php
+		// Check which mail-server are allowed...
+		if ($GLOBALS["only_localhost"]) {
+			// Only localhost is allowed
+?>
+			<input name="popserver" size="25" value="localhost" readonly>
+<?php
+		}
+		else if (count($GLOBALS["allowed_servers"]) > 0) {
+			// Display the list of allowed servers
+			echo("<select name=\"popserver\" style=\"width: 25ex\">\n");
+			foreach($GLOBALS["allowed_servers"] as $server) {
+				echo("<option value=\"$server\"");
+					if ($row[popserver] == $server) {
+						echo(" selected");
+					}
+				echo(">$server</option>\n");
+			}
+			echo("</select>\n");
+		}
+		else {
+			// All servers are allowed
+?>
+			<input name="popserver" size="25" value="<?php echo("$row[popserver]");?>">
+<?php
+		}
+?>
+
+			</td>
 		</tr>
 		<tr>
 			<td>POP Loginname:</td>

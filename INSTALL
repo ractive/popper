@@ -1,0 +1,178 @@
+=============================================================================
+POPPER (Version 1.2)
+=============================================================================
+
+POPPER (or however it will be called :-) is a free web mail-reader written
+with PHP 4. It's (more or less) MIME conformant.
+
+=============================================================================
+LICENSE
+=============================================================================
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+Copyright (C) 21. November 2000 by Jean-Pierre Bergamin
+
+=============================================================================
+CONTACT
+=============================================================================
+If you have any questions, improvements, tips or anything else, don't
+hesitate to contact me: 
+
+Developers are always welcome to join the program. I will set up a
+sourceforge account with everything you need (CVS, ftp, mailinglists etc...)
+at: http://sourceforge.net/projects/popper
+
+
+E-Mail:			james@ractive.ch
+Homepage:		http://www.ractive.ch
+POPPER-Page:	http://www.ractive.ch/gpl/popper.html
+Mailinglist:	http://www.ractive.ch/gpl/mailinglist.html
+
+=============================================================================
+INTRODUCTION
+=============================================================================
+Popper is a web based mail-client which allows you to read mails from
+different POP3 accounts.
+Accessing a POP3 account from different computers is not always
+easy. Web-based mail solutions like hotmail.com etc. are an option, but
+not the best solution.
+
+There are already PHP web interfaces to read POP3 mails, but most of them
+require that PHP is compiled with the --with-imap options which is mostly not
+the case.
+
+Popper tries to fill this gap. It gives you the possibility to read and write
+your mails from (almost ;-) any web-browser from any place.
+It's MIME conformant. This means that you also can get and send attachments.
+
+Popper is 100% Java(-script) free which eliminates problems on different
+platforms and browsers (yes, you can even use lynx ;-)!
+
+It uses CSS heavily. Therefore browsers with a good CSS support are
+recommended.
+Netscape 4.x should be avoided because the lacking CSS support. Best reults
+are achieved with Internet Explorer 5.x, Opera 5.x (YEAH!), Mozilla and
+Netscape 6.
+
+=============================================================================
+INSTALLATION
+=============================================================================
+Popper needs a system running a webserver with PHP 4 support (NO, PHP3 won't
+work) and a MySQL database system (other database systems may be supported
+in the future).
+
+I recommend the following configuration:
+
+- Linux (your favorite brand :-)
+- Apache webserver (www.apache.org)
+- PHP 4.0.1 or newer (www.php.net)
+- MySQL (www.mysql.com)
+
+All the above products are freely available.
+
+
+1. Create a MySQL database (i.e. called popper) or let your provider create
+   one for you.
+   See the section MySQL below for further instructions.
+
+2. Untar the file popper.tar.gz to a location under your webserver's document-
+   root (i.e. /usr/local/httpd/htdocs/):
+   
+   tar -xzvf popper.tar.gz
+   
+   A new directory popper will be created. You can rename the directory
+   to any name you want (i.e. mail):
+   
+   mv popper mail
+
+3. Create the database structure with
+
+   mysql popper -p < popper.mysql
+
+   Instead of popper, use the correct name of the database.
+
+4. IMPORTANT!
+   MOVE the file popper.inc.php to the directory beneath the document-root
+   (i.e. /usr/local/httpd/). This gives you maximum security that the
+   connection details are never revealed to anyone.
+   
+   This file contains the database connection information.
+   Change the values according to your settings.
+   
+   MAKE SURE THAT popper.inc.php IS NOT IN THE DOCUMENT ROOT ANY MORE!
+
+5. Edit config.inc.php and change the settings to your needs.
+   Set $is_php400 to true if you are using PHP 4.0.0!
+
+6. You may want to change the look and feel by changing the attributes
+   in the stylesheet style.css
+
+7. It should work now :-)
+
+
+=============================================================================
+UPDATE FROM A PREVIOUS VERSION
+=============================================================================
+Rename the file config.inc.php to (i.e.) config.inc.php.orig.
+Untar the archive to the same directory. Rename config.inc.php.orig back
+to config.inc.php. Delete the file popper.inc.php.
+
+Update the MySQL database, by adding the definitions in update.mysql:
+
+mysql popper -p < update.mysql 
+
+More informations about MySQL below...
+
+=============================================================================
+MySQL
+=============================================================================
+To create a new database you need root privileges. Ask your system
+administrator for help.
+
+As root:
+1. Start the mysql console by typing "mysql -p". Enter the password to
+   log in
+2. Create the database with:
+   create database popper;
+3. Change the priviliges for the new database to a normal user account:
+   GRANT insert, update, select, delete ON popper.* TO username@localhost 
+   IDENTIFIED BY 'theuserpassword';
+
+As normal user:
+1. Create the datbase structure:
+   mysql popper -p < popper.mysql 
+2. Change the file popper.inc.php located beneath the documet root to 
+   the settings you made.
+   It should look something like this then:
+      $host = "localhost";       // Unlikely to be another host than localhost
+	  $user = "username";        // Or the user-name given in step 3
+	  $pass = "theuserpassword"; // Or the password given in step 3
+	  $dbname = "popper";        // Or the name given in step 2
+	  
+   Avoid using your root account to access the database!
+   In case somehow the file popper.inc.php is visible to the outsice world,
+   an attacker can mess up your whole MySQL DB system!
+
+BUGS
+====
+There are probably still a lot of bugs in this program.     
+Report them to james@ractive.ch with a detailed descprition of the
+problem, including your PHP version and the used webserver.
+
+Subscribe yourself to the mailinglist to discuss things about popper:
+http://www.ractive.ch/gpl/mailinglist.html
+
+

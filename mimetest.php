@@ -2,13 +2,19 @@
 	include("class.db_tool.inc.php");
 	include("class.mailer.inc.php");
 	
-	/*$path = "mail_html_att.txt";
+	/*$path = "mail.txt";
 	$fp = fopen($path, "rb");
 	$mail = fread($fp, filesize($path));
 
-	$mime = new mail(&$mail);
-	$to = $mime->get_pretty_header("To");
-	echo("TO: $to<br>");*/
+	$mime = new mailer(1, 1);
+	$mime->from_text(&$mail);
+	
+	$is_mime = $mime->is_mime();
+	//echo $is_mime ? "YES" : "NO";
+	
+	$body = $mime->get_text_body();
+	echo(nl2br($body));*/
+	
 	/*$att = 5;
 	$name = $mime->get_attachment_name($att);
 
@@ -32,11 +38,15 @@
 	//$mailer->store("inbox");
 	//unset($mailer);
 	//$mailer = new mailer(1, 1);
-	//$mailer->load(1);
+	$mailer->load(27);
+	echo("<h1>Subject</h1>");
+	$sub = $mailer->headers["Subject"];
+	echo $sub."<br>";
+	echo(nl2br($mailer->charset_decode($sub)));
 	//$body = $mailer->generate_body();
-	$mailer->load(1);
+	/*$mailer->load(1);
 	$data = $mailer->get_attachment(4);
-	echo $mailer->part_count;
+	echo $mailer->part_count;*/
 	//echo($data);
 	/*Header("Content-Disposition: inline; filename=\"gd.jpg\"");
 	Header("Content-Type: image/jpeg; name=\"gd.jpg\"");	

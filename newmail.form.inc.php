@@ -1,3 +1,5 @@
+<?php
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,7 +12,6 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
 	if (isset($GLOBALS[addr_id]) && $GLOBALS[addr_id] != 0) {
 		$query = "SELECT email, name FROM addresses WHERE id='$GLOBALS[addr_id]' AND user_id='$this->userid'";
 		$to_res = $this->db_tool->db_query($query);
@@ -31,7 +32,7 @@ http://www.gnu.org/copyleft/gpl.html
 			return;
 		}
 		while($row = $this->db_tool->fetch_array($res)) {
-			$rec .= $row[email].", "; 
+			$rec .= stripslashes($row["email"]).", "; 
 		}
 		// Remove the last ", "
 		$rec = trim(substr($rec, 0, strlen($rec) - 2));
@@ -120,10 +121,10 @@ http://www.gnu.org/copyleft/gpl.html
 					if ($acc_row[id] == $mailer->acc_id) {
 						echo(" selected");
 					}	
-					echo(">$acc_row[replyto] ($acc_row[name])</option>");
+					echo(">".stripslashes($acc_row["replyto"])." (".stripslashes($acc_row["name"]).")</option>");
 				}
 ?>
-			<select>
+			</select>
 <?php
 		}
 ?>
@@ -133,19 +134,19 @@ http://www.gnu.org/copyleft/gpl.html
 <?php
 		if ($readonly) {
 			echo("<td><label for=\"tos\" accesskey=\"T\">To:</label><td>\n");
-			echo(htmlspecialchars($mailer->to()));
+			echo(htmlspecialchars(stripslashes($mailer->headers->get("To"))));
 		}
 		else {
 			echo("<td><input style=\"vertical-align: middle;\" name=\"to\" type=\"image\" src=\"graphics/small_address.gif\" alt=\"TO:\" value=\"to\"> <label for=\"tos\" accesskey=\"T\">TO:</label></td>");						
 			// When the user clicked on an address in the addressbook, the $to_row is set (from above)
 			if ($to_row) {
 ?>
-				<td><input name="tos" style="width: 100%" value="<?php echo($to_row["email"]); ?>"></td>
+				<td><input name="tos" style="width: 100%" value="<?php echo(stripslashes($to_row["email"])); ?>"></td>
 <?php
 			}
 			else {
 ?>
-				<td><input name="tos" style="width: 100%" value="<?php echo(htmlspecialchars($mailer->headers["To"])); ?>"></td>
+				<td><input name="tos" style="width: 100%" value="<?php echo(htmlspecialchars(stripslashes($mailer->headers->get("To")))); ?>"></td>
 <?php
 			}
 		}
@@ -187,10 +188,9 @@ http://www.gnu.org/copyleft/gpl.html
 ?>
 	</tr>
 </table>
-<textarea name="body" rows="<?php echo($this->mail_rows);?>" cols="80" <?php if ($readonly) echo(" readonly ");?>>
+<textarea name="body" rows="<?php echo($this->config["mail_rows"]);?>" cols="80" <?php if ($readonly) echo(" readonly ");?>>
 <?php
 	echo($mailer->decode($mailer->get_text_body()));
-
 	// Show the signature if the user wants to...
 	if (!$readonly && !isset($GLOBALS[rec])) {
 		$query = "SELECT signature, app_sig FROM conf WHERE user_id = '$this->userid'";

@@ -1,3 +1,5 @@
+<?php
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,13 +12,12 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
 	$query = "SELECT id, name FROM accounts WHERE user_id = '$this->userid'";
 	$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), "DB Error");
-			return;
-		}
+	if ($res == 0) {
+		$this->report_error($this->db_tool->db_error(), "DB Error");
+		return;
+	}
 ?>
 <center>
 <h2>Send and receive</h2>
@@ -30,7 +31,7 @@ http://www.gnu.org/copyleft/gpl.html
 		<option value="getall">Get all</option>
 <?php
 		while($row = $this->db_tool->fetch_array($res)) {
-			echo("<option value=\"$row[id]\">$row[name]</option>");
+			echo("<option value=\"$row[id]\">".stripslashes($row["name"])."</option>");
 		}
 ?>
 	</select>

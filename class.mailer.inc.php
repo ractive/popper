@@ -1,3 +1,5 @@
+<?
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,12 +12,9 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?
-
-//include("class.db_tool.inc.php");
 include("class.mail.inc.php");
 
-class mailer extends mail{
+class mailer extends mail {
 
 	var $db_tool;
 	var $user_id;
@@ -23,6 +22,7 @@ class mailer extends mail{
 	var $folder;
 
 	function mailer($user_id, $acc_id = 0) {
+		$this->headers = new headers;
 		$this->db_tool = new db_tool("popper.inc.php");
 		$this->user_id = $user_id;
 		$this->acc_id = $acc_id;
@@ -56,9 +56,9 @@ class mailer extends mail{
 		$this->body = "> ".str_replace("\n", "\n> ", $body);
 
 		$this->subject("Fw: ".$this->subject());
-		$this->headers["To"] = "";
-		$this->headers["Cc"] = "";
-		$this->headers["Bcc"] = "";
+		$this->headers->put("To", "");
+		$this->headers->put("Cc", "");
+		$this->headers->put("Bcc", "");
 
 		return true;
 	}
@@ -71,23 +71,23 @@ class mailer extends mail{
 		$body = $this->get_text_body();
 
 		$this->body = "> ".str_replace("\n", "\n> ", $body);
-
-		if (!empty($this->headers["Reply-To"])) {
-			$to = $this->headers["Reply-To"];
+		$reply_to = $this->headers->get("Reply-To");
+		if (!empty($reply_to)) {
+			$to = $this->headers->get("Reply-To");
 		}
 		else {
-			$to = $this->headers["From"];
+			$to = $this->headers->get("From");
 		}
 		$subject = $this->subject();
 		$this->subject("Re: ".$subject);
 
 		if ($to_all) {
-			$to .= ", ".$this->to();
+			$to .= ", ".stripslashes($this->headers->get("To"));
 			//leave the CC files intact
 		}
 		else {
 			// Clear the CC field
-			$this->headers["Cc"] = "";
+			$this->headers->put("Cc", "");
 		}
 
 		$this->to($to);
@@ -99,6 +99,12 @@ class mailer extends mail{
 	function make_timestamp($date) {
 		if (empty($date)) {
 			return "NOW()";
+		}
+		$z = ord($date)-ord("0");
+		// If the first char is a number, the date string is formed like this:
+		// "21 Nov 2000 05:32:49 UT"; Just add a dummy weekday that it is processed normally
+		if ($z >= 0 & $z <= 9) {
+			$date = "Sun, ".$date;
 		}
 		$date = explode(" ", $date);
 		$time = explode(":", $date[4]);
@@ -117,27 +123,40 @@ class mailer extends mail{
 	
 	function is_mime() {
 		$cont_type = $this->get_header("Content-Type");
-		$type = trim($cont_type["Content-Type"]);	
+		if (empty($type)) {
+			$cont_type = $this->get_header("Content-type");
+		}
+		$type = trim($cont_type["Content-Type"]);
+		if (empty($type)) {
+			$type = trim($cont_type["Content-type"]);
+		}
+
+		if (empty($type)) {
+			// There's no content-type. Assume it's text/plain
+			return false;
+		}
 		return (strcasecmp($type, "text/plain") != 0);
 	}
 	
 	function store($folder, $msg = false) {
 		if ($msg) {
-			$this->headers = $this->extract_headers($msg);
+			// ATTENTION
+			$this->headers->extract($msg);
+			//$this->headers = $this->extract_headers($msg);
 		}
 		else if ($msg === false) {
 			$msg = $this->generate_body(true, true);
 		}
 
 		$is_mime = $this->is_mime();
-		$uidl = $this->headers["X-UIDL"];
-
 		//Escape special chars like ' and "
+		$uidl = addslashes($this->headers->get("X-UIDL"));
 		$msg = addslashes($msg);
-		$tos = addslashes($this->headers["To"]);
-		$froms = addslashes($this->headers["From"]);
-		$subject = addslashes($this->headers["Subject"]);
-		$date = $this->make_timestamp($this->headers["Date"]);
+		$tos = addslashes($this->headers->get("To"));
+		$froms = addslashes($this->headers->get("From"));
+		$subject = addslashes($this->headers->get("Subject"));
+
+		$date = $this->make_timestamp($this->headers->get("Date"));
 		if ($folder == "sent") {
 			$was_read = 1;
 		}

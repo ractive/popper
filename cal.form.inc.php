@@ -1,3 +1,4 @@
+<?php
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,7 +11,6 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
 	if (isset($GLOBALS[show])) {
 		if ($GLOBALS[show] == "next") {
 			$GLOBALS[month] = $GLOBALS[month] + 1;

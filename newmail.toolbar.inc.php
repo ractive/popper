@@ -1,3 +1,5 @@
+<?php
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,12 +12,11 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
 	// Show the toolbar only if we show an existing mail
 	if (isset($GLOBALS[action]) && $GLOBALS[action] == "showmail") {
 ?>
 	<tr class="toolbar">
-		<td colspan="2">
+		<td colspan="3">
 			<img src="graphics/toolbar_left.gif" alt="|">
 			<a href="<?php echo("$GLOBALS[PHP_SELF]?action=reply");?>"><img src="graphics/reply.gif" alt="Reply" title="Reply" border="0"></a>
 			<a href="<?php echo("$GLOBALS[PHP_SELF]?action=replytoall");?>"><img src="graphics/replytoall.gif" alt="Reply to all" title="Reply to all" border="0"></a>

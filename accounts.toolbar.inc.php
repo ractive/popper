@@ -1,3 +1,4 @@
+<?php
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,11 +11,10 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
 	$disable = $this->cur_account_id == 0;
 ?>
 	<tr class="toolbar">
-		<td colspan="2">
+		<td colspan="3">
 		<img src="graphics/toolbar_left.gif" alt="|">
 		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder"); ?>"><img src="graphics/home.gif" alt="Go to main view" title="Go to main view" border="0"></a>
 		<img src="graphics/spacing.gif" alt="">

@@ -1,3 +1,5 @@
+<?php
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,7 +12,6 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
 class db_tool {
 
 	var $db_data_inc = "";			// contains the vars $host, $user, $pass
@@ -100,7 +101,7 @@ class db_tool {
 		$col_names = str_replace(" ", ", ", trim($col_names));
 		$values = str_replace(" ", ", ", trim($values));
 		$query = "INSERT INTO $tablename ($col_names) VALUES ($values)";
-		echo $query;
+		//echo $query;
 		return;
 		$res = $this->query($query);
 		if ($res == 0) {
@@ -121,7 +122,7 @@ class db_tool {
 		$update = str_replace(" ", ", ", trim($update));
 
 		$query = "UPDATE $tablename SET $update WHERE $where";
-		echo $query;
+		//echo $query;
 		return;
 		$res = $this->query($query);
 		if ($res == 0) {

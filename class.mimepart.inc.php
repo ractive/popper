@@ -1,3 +1,7 @@
+<?php
+
+include("class.headers.inc.php");
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,31 +14,26 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
-
 class mimepart {
 
-	var $headers = array();
 	var $body;
 	var $mimeparts = array();
 	var $offset;
 	var $part_count;
 	var $boundary;
+	var $headers;
 
 	function mimepart($part = 0) {
+		$this->headers = new headers;
 		if ($part) {
 			$this->from_text($part);
 		}
 	}
 
 	function from_text(&$part) {
-		$this->headers = $this->extract_headers($part);
+		//$this->headers = $this->extract_headers($part);
+		$this->headers->extract($part);
 		$this->body = $this->extract_whole_body($part);	
-	}
-
-	function get_header_str(&$part) {
-		$pos = strpos($part, "\r\n\r\n");
-		return substr($part, 0, $pos);
 	}
 
 	function extract_whole_body(&$mail) {
@@ -47,9 +46,19 @@ class mimepart {
 		$c_type = $this->get_header("Content-Type");
 		$type = $c_type["Content-Type"];
 
-		if ($type == "multipart/mixed" || $type == "multipart/alternative") {
-			$this->extract_part(1);
-			return $this->mimeparts[1]->decode($this->mimeparts[1]->get_text_body());
+		if (strcasecmp($type, "multipart/mixed") == 0 || strcasecmp($type, "multipart/alternative") == 0 || strcasecmp($type, "multipart/related") == 0) {
+			if (!$this->extract_part(1)) {
+				return $this->decode($this->body);
+			}
+
+			$body = $this->mimeparts[1]->get_text_body();
+			$m_type = $this->mimeparts[1]->get_header("Content-Type");
+			if (strcasecmp($m_type["Content-Type"], "text/plain") != 0) {
+				return "\r\n   This mail does not contain a plaintext part\r\n\r\n   Please open the attachments to see the content";
+			}
+			else {
+				return $body;
+			}
 		}
 		else {
 			return $this->decode($this->body);
@@ -57,7 +66,44 @@ class mimepart {
 	}
 	
 	function charset_decode($string) {
-		return str_replace("_", " ", preg_replace("/=\?(.*?)\?([QB])\?(.*?)\?=/sexi", "$this->decode('\\3', '\\2')", $string));
+		return preg_replace("/=\?(.*?)\?([QB])\?(.*?)\?=/sexi", '$this->decode("\\3", "\\2")', $string);
+	}
+	
+	function qp_decode($string) {
+		// Remove all soft linebreaks wich are an = followed by a CRLF pair
+		// All whitespaces at the end of the line are ignored
+		$string = preg_replace("/(=\s*\r\n)/m", "", $string);
+		// Replace the =XY encoded parts with the correct character
+		$string = preg_replace("/(=([0-9A-F]){1,1}([0-9A-F]){1,1})/e", "chr(hexdec('\\2'.'\\3'))", $string);
+		return $string;
+	}
+	
+	function decode($data = "", $encoding = "") {
+		if (empty($data)) {
+			$data = $this->body;
+		}
+		if (empty($encoding)) {
+			$ctf = $this->get_header("Content-Transfer-Encoding");
+			if (!$ctf) {
+				return $data;
+			}
+			if (strcasecmp($ctf["Content-Transfer-Encoding"], "quoted-printable") == 0) {
+				$encoding = "Q";
+			}
+			else if (strcasecmp($ctf["Content-Transfer-Encoding"], "base64") == 0) {
+				$encoding = "B";
+			}	
+		}
+	
+		if ($encoding == "Q") {
+			return $this->qp_decode($data);
+		}
+		else if ($encoding == "B") {
+			return base64_decode($data);
+		}
+		else {
+			return $data;
+		}
 	}	
 	
 	// Strip Header comments from the string
@@ -90,67 +136,79 @@ class mimepart {
 		return $str_ret;
 	}
 	
+	function get_address($address) {
+		$address = $this->strip_comment($address);
+		preg_match("/(\"(.*?)\"\s*)*<(.*?)>/", $address, $matches);
+		$ret["name"] = $matches[2];
+		if (!empty($matches[3])) {
+			$ret["address"] = $matches[3];
+		}
+		else {
+			$ret["address"] = $address;		
+		}
+		
+		return $ret;
+	}
+	
 	function get_pretty_header($name) {
 		$header = $this->get_header($name);
 		// Decode the charset
 		$cont = $this->charset_decode($header[$name]);
-		
+
 		if ($name != "Subject") {
 			// Strip out header comments
 			$cont = $this->strip_comment($cont);
 		}
 		
-		// Get the parts that are either quoted or in angle brackets
-		preg_match("/(\"(.*?)\"\s*)*<(.*?)>/", $cont, $matches);
-
-		// We prefer the quoted representation
-		if (!empty($matches[2])) {
-			return $matches[2];
-		}
-		// Then the string in brackets
-		if (!empty($matches[3])) {
-			return $matches[3];
-		}
-		// If nothing did match, we just return the original header content
-
-		return $header[$name];
-	}
-	
-	function decode($data = "", $encoding = "") {
-		if (empty($data)) {
-			$data = $this->body;
-		}
-		if (empty($encoding)) {
-			$ctf = $this->get_header("Content-Transfer-Encoding");
-			if (!$ctf) {
-				return $data;
+		// The To, Cc and Bcc fields can contain comma separated entries
+		if ($name == "To" || $name == "Cc" || $name == "Bcc") {
+			$cont = explode(", ", $cont);
+			foreach($cont as $entry) {
+				// Get the parts that are either quoted or in angle brackets
+				preg_match("/(\"(.*?)\"\s*)*<(.*?)>/", $entry, $matches);
+		
+				// We prefer the quoted representation
+				if (!empty($matches[2])) {
+					$ret[] = $matches[2];
+				}
+				// Then the string in brackets
+				else if (!empty($matches[3])) {
+					$ret[] = $matches[3];
+				}
+				else {
+					$ret[] = $entry;
+				}
+				
 			}
-			if (strcasecmp($ctf["Content-Transfer-Encoding"], "quoted-printable") == 0) {
-				$encoding = "Q";
-			}
-			else if (strcasecmp($ctf["Content-Transfer-Encoding"], "base64") == 0) {
-				$encoding = "B";
-			}	
-		}
-
-		if ($encoding == "Q") {
-			return quoted_printable_decode($data);
-		}
-		else if ($encoding == "B") {
-			return base64_decode($data);
+			
+			return implode(", ", $ret);
 		}
 		else {
-			return $data;
+			// Get the parts that are either quoted or in angle brackets
+			preg_match("/(\"(.*?)\"\s*)*<(.*?)>/", $cont, $matches);
+	
+			// We prefer the quoted representation
+			if (!empty($matches[2])) {
+				return $matches[2];
+			}
+			// Then the string in brackets
+			if (!empty($matches[3])) {
+				return $matches[3];
+			}
+			// If nothing did match, we just return the original header content
+	
+			return $header[$name];
 		}
 	}
 	
 	function get_header($name) {
-		$header = $this->headers[$name];
+		$header = stripslashes($this->headers->get($name));
+
 		if (!$header) {
 			return false;
 		}
 		$parameter = $this->split_header($header, ";");
-
+		//$this->print_array($parameter);
 		$header_arr[$name] = $parameter[0];
 		reset($parameter);
 		next($parameter);
@@ -164,28 +222,41 @@ class mimepart {
 
 	// Extract part number $num
 	function extract_part($num) {
-	
+		//echo "NUM: $num<br>";
 		// Did we extract this part already?
 		if (isset($this->mimeparts[$num]) && !empty($this->mimeparts[$num])) {
 			// Yes, we extracted it
 			return true;
 		}
-		
+
 		// Get the boundary
 		$c_type = $this->get_header("Content-Type");
-		$boundary = "\r\n--".$c_type["boundary"]."\r\n";
+
+		if (empty($c_type["boundary"]) && empty($c_type["Boundary"])) {
+			return false;
+		}
+
+		if (empty($c_type["boundary"])) {
+			$c_type["boundary"] = $c_type["Boundary"];
+		}
+
+		$boundary = "--".$c_type["boundary"]."\r\n";
+
+		//echo $boundary;
 
 		if (!isset($this->part_count) || empty($this->part_count)) {
 			$this->part_count = substr_count($this->body, $boundary);
 		}
+
 		if ($num > $this->part_count) {
 			return false;
 		}
 
 		$endboundary = "\r\n--".$c_type["boundary"]."--";
 		$pos = 0;
-
+		//echo nl2br($this->body);
 		// We get all the parts from 1 to $num
+
 		for($i = 1; $i <= $num; $i++) {
 			
 			// Check if we already extracted this part
@@ -201,6 +272,7 @@ class mimepart {
 			else {
 				// This is the first part. Search for the first boundary
 				$pos = strpos($this->body, $boundary);
+
 				if ($pos === false) {
 					// No boundary was found
 
@@ -212,6 +284,7 @@ class mimepart {
 			
 			// Search the boundary that closes this part
 			$pos2 = strpos($this->body, $boundary, $pos);
+
 			if ($pos2 === false) {
 				// The 2nd boundary was not found. Check for end boundary
 				$pos2 = strpos($this->body, $endboundary, $pos);
@@ -223,7 +296,7 @@ class mimepart {
 				$end = true;
 			}
 			$part_str = substr($this->body, $pos, $pos2 - $pos);
-			
+	
 			$part = new mimepart($part_str);
 			// This is the offset in the body where the part ends
 			$part->offset = $pos2 + strlen($boundary);
@@ -233,7 +306,7 @@ class mimepart {
 			if ($end)
 				break;
 		}
-		
+	
 		return true;
 	}
 
@@ -250,7 +323,7 @@ class mimepart {
 			return false;
 		}
 		
-		$c_type = $this->mimeparts[$num]->get_header("Content-Type");	
+		$c_type = $this->mimeparts[$num]->get_header("Content-Type");
 		return $c_type["name"];
 	}
 
@@ -295,7 +368,7 @@ class mimepart {
 
 			$line = strtok("\n");
 		}
-		
+
 		return $header_arr;
 	}
 	
@@ -353,17 +426,17 @@ class mimepart {
 	
 	function print_array($arr) {
 		foreach($arr as $key => $val) {
-			echo("$key --> $val<br>");
+			echo("$key --> $val<br>\r\n");
 		}
 	}
 	
 	function generate_header_str($all_headers = true) {
 		$header_str = "";
-		foreach($this->headers as $header_name => $header_content) {
-			// Don't include these two header fileds, because the PHP mail
+		foreach($this->headers->header_arr as $element) {
+			// Don't include these two header fields, because the PHP mail
 			// function will add them itself
-			if ($all_headers || ($header_name != "Subject" && $header_name != "To")) {
-				$header_str .= "$header_name: $header_content\r\n";
+			if ($all_headers || ($element["name"] != "Subject" && $element["name"] != "To")) {
+				$header_str .= "$element[name]: $element[content]\r\n";
 			}
 		}
 		
@@ -400,8 +473,8 @@ class mimepart {
 		srand((double)microtime()*1000000);
 		$boundary = '-NextPart---'.chr(rand(65, 91)).'---'.md5(uniqid(rand()).'---');
 		$this->boundary = $boundary;
-		$this->headers["Content-Type"] = "multipart/mixed;\tboundary=\"$boundary\"";
-		$this->headers["MIME-Version"] = "1.0";
+		$this->headers->put("Content-Type", "multipart/mixed;\tboundary=\"$boundary\"");
+		$this->headers->put("MIME-Version", "1.0");
 		// Create a mimepart out of the body
 		$msg = "Content-Type: text/plain;\tcharset=\"us-ascii\"\r\n";
 		$msg .= "Content-Transfer-Encoding: 7bit\r\n\r\n";

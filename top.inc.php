@@ -1,3 +1,4 @@
+<?php
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,13 +11,12 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
 	// Check with which browser we are called.
 	if(ereg("MSIE ([0-9]+)",$HTTP_USER_AGENT)) {
   		// IE
   		$isNS = 0;
 	}
-	elseif (ereg("Mozilla/([0-9]+)",$HTTP_USER_AGENT)) {
+	elseif (ereg("Mozilla/([0-4]+)",$HTTP_USER_AGENT)) {
   		// NS
   		$isNS = 1;
 	}
@@ -55,6 +55,8 @@ else {
 <body>
 <?php
 }
+
+	// From here you can enter what you want.....
 ?>
 <!--<center>
 <h3>PHP POP3 mailclient</h3>

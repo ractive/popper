@@ -1,3 +1,5 @@
+<?php
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,34 +12,18 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
-
 include("class.pop3.inc.php");
 include("class.mailer.inc.php");
 include("config.inc.php");
 include("class.db_tool.inc.php");
-include("diff.inc.php");
-/*function array_diff($first, $second) {
-	$res = array();
-	foreach($first as $key => $val) {
-		$found = false;
-		foreach($second as $key2 => $val2) {
-			if ($val == $val2) {
-				$found = true;
-				break;
-			}
-		}
-		if (!$found) {
-			$res[$key] = $val;
-		}
-	}	
-	
-	return $res;	
-}*/
+
+// Include the missing function array_diff for PHP 4.0.0
+if ($GLOBALS["is_php400"]) {
+	include("diff.inc.php");
+}
 
 class popper {
 	var $db_tool;
-	var $pop3;
 	var $name = "";
 	var $userid = 0;
 	var $db;
@@ -47,8 +33,7 @@ class popper {
 	var $cur_account_id = 0;
 	var $cur_mailer = 0;
 	var $month = 0;
-	var $mails_per_page;
-	var $mail_rows;
+
 	var $del;
 	var $to;
 	var $folders = array(
@@ -86,18 +71,8 @@ class popper {
 	var $config = array();
 
 	function popper() {
-		global $mails_per_page, $mail_rows;
 		$this->db_tool = new db_tool("popper.inc.php");
-		$this->pop3 = new pop3;
 		$this->folder = "inbox";
-		$this->mails_per_page = $mails_per_page;
-		if ($this->mails_per_page == 0 || empty($this->mails_per_page)) {
-			$this->mails_per_page = 10;
-		}
-		$this->mail_rows = $mail_rows;
-		if ($this->mail_rows == 0 || empty($this->mail_rows)) {
-			$this->mail_rows = 15;
-		}
 	}
 
 	function get_userid($name = "") {
@@ -142,7 +117,7 @@ class popper {
 	}
 	
 	function load_config() {
-		$query = "SELECT * from conf WHERE user_id = '$this->userid'";
+		$query = "SELECT * FROM conf WHERE user_id = '$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
 			$this->report_error($this->db_tool->db_error(), "The user-configuration could not be fetched");
@@ -155,7 +130,10 @@ class popper {
 		$this->config["auto_check"] = $row["auto_check"];
 		$this->config["signature"] = $row["signature"];
 		$this->config["app_sig"] = $row["app_sig"];								
-		$this->config["send_direct"] = $row["send_direct"];			
+		$this->config["send_direct"] = $row["send_direct"];
+		$this->config["mails_per_page"] = $row["mails_per_page"];
+		$this->config["mail_rows"] = $row["mail_rows"];
+		$this->config["add_address"] = $row["add_address"];
 	}
 
 	function show_in_window($form, $title="", $status_msg="", $msgboxtext = "", $msgboxhead="") {
@@ -190,11 +168,6 @@ class popper {
 	function show($folder = "", $msg = "") {
 		global $mail_id;
 
-		if (!$this->has_account()) {
-			$this->show_in_window("newaccount", "Account", "You first have to enter your account information");		
-			return;
-		}
-
 		if (isset($mail_id) && !empty($mail_id)) {
 			$this->cur_message_id = $mail_id;
 		}
@@ -217,7 +190,7 @@ class popper {
 
 	function update_pageno($page, $mail_count) {
 		$cur_page = $this->folders["$this->folder"]["cur_page"];
-		if ($page == "next" && (($cur_page + 1) * $this->mails_per_page) < $mail_count) {
+		if ($page == "next" && (($cur_page + 1) * $this->config["mails_per_page"]) < $mail_count) {
 			$cur_page++;
 		}
 		else if ($page == "prev" && $cur_page != 0) {
@@ -276,8 +249,8 @@ class popper {
 			echo("<tr><td>\n");
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=addressbook&addr_id=$row[id]\" title=\"Show details\"");
 			$this->address_selected($row[id]);
-			echo(">$row[name]</a></td>\n");
-			echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"Send mail\">$row[email]</a></td></tr>\n");
+			echo(">".$this->extract_disp_name(stripslashes($row[name]))."</a></td>\n");
+			echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"Send mail\">".stripslashes($row["email"])."</a></td></tr>\n");
 		}
 		echo("</table>\n");
 	}
@@ -303,58 +276,58 @@ class popper {
 		<table cellpadding="3" cellspacing="3">
 			<tr>
 				<td><b>Name:</b></td>
-				<td><?php echo("$row[name]"); ?></td>
+				<td><?php echo(stripslashes($row["name"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>Lastname:</b></td>
-				<td><?php echo("$row[lastname]"); ?></td>
+				<td><?php echo(stripslashes($row["lastname"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>Nickname:</b></td>
-				<td><?php echo("$row[nickname]"); ?></td>
+				<td><?php echo(stripslashes($row["nickname"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>E-Mail:</b></td>
-				<td><?php echo("$row[email]"); ?></td>
+				<td><?php echo(stripslashes($row["email"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>Address 1:</b></td>
-				<td><?php echo("$row[address1]"); ?></td>
+				<td><?php echo(stripslashes($row["address1"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>Address 2:</b></td>
-				<td><?php echo("$row[address2]"); ?></td>
+				<td><?php echo(stripslashes($row["address2"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>ZIP:</b></td>
-				<td><?php echo("$row[zip]"); ?></td>
+				<td><?php echo(stripslashes($row["zip"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>Town:</b></td>
-				<td><?php echo("$row[town]"); ?></td>
+				<td><?php echo(stripslashes($row["town"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>State:</b></td>
-				<td><?php echo("$row[state]"); ?></td>
+				<td><?php echo(stripslashes($row["state"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>Country:</b></td>
-				<td><?php echo("$row[country]"); ?></td>
+				<td><?php echo(stripslashes($row["country"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>Phone:</b></td>
-				<td><?php echo("$row[phone]"); ?></td>
+				<td><?php echo(stripslashes($row["phone"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>Mobile-phone:</b></td>
-				<td><?php echo("$row[mobile]"); ?></td>
+				<td><?php echo(stripslashes($row["mobile"])); ?></td>
 			</tr>
 			<tr>
 				<td><b>Homepage:</b></td>
 				<td>
 				<?php
 					if (!empty($row[homepage])) {
-						echo("<a href=\"$row[homepage]\">$row[homepage]</a>");
+						echo("<a href=\"$row[homepage]\">".stripslashes($row["homepage"])."</a>");
 					}
 				?>
 				</td>
@@ -386,23 +359,23 @@ class popper {
 		<table cellpadding="3" cellspacing="3">
 			<tr>
 				<td>Account name:</td>
-				<td><?php echo("$row[name]");?></td>
+				<td><?php echo(stripslashes($row["name"]));?></td>
 			</tr>
 			<tr>
 				<td>From name:</td>
-				<td><?php echo("$row[fromname]");?></td>
+				<td><?php echo(stripslashes($row["fromname"]));?></td>
 			</tr>
 			<tr>
 				<td>Reply to email:</td>
-				<td><?php echo("$row[replyto]");?></td>
+				<td><?php echo(stripslashes($row["replyto"]));?></td>
 			</tr>
 			<tr>
 				<td>POP-Server:</td>
-				<td><?php echo("$row[popserver]");?></td>
+				<td><?php echo(stripslashes($row["popserver"]));?></td>
 			</tr>
 			<tr>
 				<td>POP Loginname:</td>
-				<td><?php echo("$row[poplogin]");?></td>
+				<td><?php echo(stripslashes($row["poplogin"]));?></td>
 			</tr>
 		</table>
 		<br><br><br>
@@ -431,8 +404,8 @@ class popper {
 			echo("<tr><td>\n");
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=accounts&account_id=$row[id]\" title=\"Show details\"");
 			$this->account_selected($row[id]);
-			echo(">$row[name]</a></td>\n");
-			echo("<td>$row[popserver]</td></tr>\n");
+			echo(">".stripslashes($row["name"])."</a></td>\n");
+			echo("<td>".stripslashes($row["popserver"])."</td></tr>\n");
 		}
 		echo("</table>\n");
 	}
@@ -463,7 +436,7 @@ class popper {
 
 		$row = $this->db_tool->fetch_row($res);
 
-		return $row[0];
+		return stripslashes($row[0]);
 	}
 
 	function get_address_name($id = "") {
@@ -482,7 +455,7 @@ class popper {
 
 		$row = $this->db_tool->fetch_row($res);
 
-		return $row[0];
+		return stripslashes($row[0]);
 	}
 
 	function del_address() {
@@ -572,7 +545,6 @@ class popper {
 				echo("</tr>\n");
 			}
 		echo("</table>");
-
 	}
 
 	function count_mails() {
@@ -591,7 +563,7 @@ class popper {
 	}
 
 	function show_folder_content() {
-		global $mail_id, $page;
+		global $mail_id, $page, $col_width;
 		if (empty($this->folder)) {
 			$this->folder = "inbox";
 		}
@@ -600,9 +572,9 @@ class popper {
 		}*/
 
 		while(1) {
-			$col_width = 32;
-			$pageno = $this->get_pageno() * $this->mails_per_page;
-			$query = "SELECT id, tos, IF(LENGTH(froms) > $col_width, CONCAT(LEFT(froms, $col_width), ' ...'), froms) as froms, IF(LENGTH(subject) > $col_width, CONCAT(LEFT(subject, $col_width), ' ...'), subject) as subject, is_mime, date_format(date, 'd.m.Y H:i:s') as date, was_read FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY date DESC LIMIT $pageno, $this->mails_per_page";
+			$pageno = $this->get_pageno() * $this->config["mails_per_page"];
+			$mails = $this->config["mails_per_page"];
+			$query = "SELECT id, tos, froms, IF(LENGTH(subject) > $col_width, CONCAT(LEFT(subject, $col_width), ' ...'), subject) as subject, is_mime, date_format(date, 'd.m.Y H:i:s') as date, date as date_raw, was_read FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY date_raw DESC LIMIT $pageno, $mails";
 			$res = $this->db_tool->db_query($query);
 			if ($res == 0) {
 				$this->report_error($this->db_tool->db_error(), "DB Error");
@@ -613,12 +585,13 @@ class popper {
 				if ($this->get_pageno() > 0) {
 					// The user probably delete the last mail on the page.
 					// Make a new SELECT on the previous page
-					$this->update_pageno("prev");
+					$mail_count = $this->count_mails();
+					$this->update_pageno("prev", $mail_count);
 					continue;
 				}
 				else {
 					echo (" No mails in this folder");
-					echo(str_repeat("<br>", $this->mails_per_page - 1));
+					echo(str_repeat("<br>", $this->config["mails_per_page"] - 1));
 					return;
 				}
 			}
@@ -646,7 +619,8 @@ class popper {
 			}
 			echo(">\n<td style=\"width: 20px; text-align: center;\">\n");
 			if ($row[is_mime]) {
-				echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=$row[id]&att_id=2\" title=\"Get attachment\" target=\"top_\"><img src=\"graphics/attachment_small.gif\" alt=\"Get attachment\" align=\"center\" border=\"0\" style=\"vertical-align: middle;\"></a>\n");
+				//echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=$row[id]&att_id=2\" title=\"Get attachment\" target=\"top_\"><img src=\"graphics/attachment_small.gif\" alt=\"Get attachment\" align=\"center\" border=\"0\" style=\"vertical-align: middle;\"></a>\n");
+				echo("<img src=\"graphics/attachment_small.gif\" alt=\"Get attachment\" align=\"center\" border=\"0\" style=\"vertical-align: middle;\">\n");				
 			}
 			echo("</td><td>\n<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\"\n");
 			$this->mail_selected($row[id]);
@@ -658,15 +632,23 @@ class popper {
 				echo(" style=\"font-weight: normal;\"");
 			}
 			echo(">");
+			$mailer = new mailer(0);
 
 			if ($this->folder == "outbox" || $this->folder == "sent") {
-				echo(htmlspecialchars($this->extract_disp_name($row["tos"])));
+				$out = htmlspecialchars($this->extract_disp_name($row["tos"]));
 			}
 			else {
-				echo(htmlspecialchars($this->extract_disp_name($row["froms"])));
+				$out = htmlspecialchars($this->extract_disp_name($row["froms"]));
 			}
-			$mailer = new mailer(0);
-			$subject = $mailer->charset_decode($row["subject"]);
+
+			// Cut the name if it's too long
+			if (strlen($out) > $col_width) {
+				$out = substr($out, 0, $col_width)."...";
+			}
+			echo($out);
+			
+			//$subject = $mailer->headers->charset_decode($row["subject"]);
+			$subject = $mailer->charset_decode(stripslashes($row["subject"]));
 			echo("</a></td>\n<td>".htmlspecialchars($subject));
 			echo("</td>\n<td>".$row[date]."</td>");
 			echo("</tr>\n");
@@ -675,8 +657,8 @@ class popper {
 
 		// If we have less then $minlines mails, we fill the rest with line-breaks
 
-		if ($count < $this->mails_per_page) {
-			echo(str_repeat("<br>", $this->mails_per_page - $count));
+		if ($count < $this->config["mails_per_page"]) {
+			echo(str_repeat("<br>", $this->config["mails_per_page"] - $count));
 		}
 
 	}
@@ -684,17 +666,28 @@ class popper {
 	function extract_disp_name($name) {
 		// Check for an address like "Foobar" <foo@bar.com>
 		// and only return the Name part to display
+		$name = stripslashes($name);
+		$mail = new mailer(0);
+		// Decode the charset
+		$cont = $mail->charset_decode($name);
+		
+		// Strip out header comments
+		$cont = $mail->strip_comment($cont);
 
-		// First delete all comments (enclosed in brackets)
-		$name = preg_replace("/(\(.*?\))/", "", $name);
+		// Get the parts that are either quoted or in angle brackets
+		preg_match("/(\"(.*?)\"\s*)*<(.*?)>/", $cont, $matches);
 
-		// Get the name between the " "
-		if (preg_match("/^\"(.+)\"\s+<(.+)>/", $name, $matches)) {
-			return $matches[1];
+		// We prefer the quoted representation
+		if (!empty($matches[2])) {
+			return $matches[2];
 		}
-		else {
-			return $name;
+		// Then the string in brackets
+		if (!empty($matches[3])) {
+			return $matches[3];
 		}
+		// If nothing did match, we just return the original header content
+
+		return $cont;
 	}
 
 	function show_sources() {
@@ -820,7 +813,7 @@ class popper {
 		
 		$this->send_confirmation_mail($name, $email);
 		
-		$query = "INSERT INTO conf (user_id, keep) VALUES ('$this->userid', 1)";
+		$query = "INSERT INTO conf (user_id, keep, mails_per_page, mail_rows) VALUES ('$this->userid', 1, 20, 20)";
 		$res = $this->db_tool->db_query($query);
 		
 		return ($this->userid > 0);
@@ -838,7 +831,7 @@ class popper {
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
 			$this->report_error("I could not write your confirmation informations. Please try again later<br><br>".$this->db_tool->db_error(), "DB ERROR");
-			exit;
+			return;
 		}
 
 		$mailer = new mailer($this->userid);
@@ -850,7 +843,7 @@ class popper {
 		
 		if (!$mailer->send()) {
 			$this->report_error("The confirmation mail could not be sent to you. Please try again later", "Mail error");
-			exit;
+			return;
 		}
 	}
 
@@ -937,13 +930,13 @@ class popper {
 		// This is used to show the "Choose recipients" dialog. The current mail then does not get lost
 		if ($backup) {
 			if (isset($to_x)) {
-				$GLOBALS[field] = "TO";
+				$GLOBALS["field"] = "TO";
 			}
 			else if (isset($cc_x)) {
-				$GLOBALS[field] = "CC";
+				$GLOBALS["field"] = "CC";
 			}	
 			else if (isset($bcc_x)) {
-				$GLOBALS[field] = "BCC";
+				$GLOBALS["field"] = "BCC";
 			}						
 			$this->cur_mailer = $mailer;
 
@@ -979,7 +972,7 @@ class popper {
 			$this->cur_mailer = new mailer($this->userid);
 			$this->cur_mailer->load($this->cur_message_id);
 		}		
-		$i = 2;
+		$i = 1;
 		while($this->cur_mailer->extract_part($i)) {
 			$type = $this->cur_mailer->get_attachment_type($i);
 			switch ($type) {
@@ -1010,7 +1003,7 @@ class popper {
 					$type_pic = "unknown.gif";
 			}
 			$att_name = $this->cur_mailer->get_attachment_name($i);
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=$GLOBALS[mail_id]&att_id=$i\" title=\"$att_name\" target=\"top_\" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"float: right; vertical-align: top;\"></a>\n");
+			echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=$GLOBALS[mail_id]&att_id=$i\" title=\"$att_name\" target=\"top_\" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"vertical-align: top;\"></a>\n");
 			$i++;
 		}
 	}
@@ -1019,17 +1012,20 @@ class popper {
 		if ($this->cur_message_id == 0) {
 			return;
 		}
-		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {		
+		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
 			$this->cur_mailer = new mailer($this->userid);
 			$this->cur_mailer->load($this->cur_message_id);
 		}
 
-		echo("<b>From:</b> ".htmlspecialchars($this->cur_mailer->from())."&nbsp;<b>To:</b> ".htmlspecialchars($this->cur_mailer->to()));
+		echo("<b>From:</b> ".htmlspecialchars(stripslashes($this->cur_mailer->from()))."&nbsp;<b>To:</b> ".htmlspecialchars(stripslashes($this->cur_mailer->to())));
+
 		$cc = $this->cur_mailer->cc();
 		if (!empty($cc)) {
 			echo("&nbsp;<b>Cc:</b> ".htmlspecialchars($this->cur_mailer->cc()));
 		}
-		echo("<br><b>Subject:</b> ".htmlspecialchars($this->cur_mailer->subject()));
+		$subject = $this->cur_mailer->charset_decode(stripslashes($this->cur_mailer->subject()));
+		//$subject = $this->cur_mailer->headers->get_decoded("Subject");
+		echo("<br><b>Subject:</b> ".htmlspecialchars($subject));
 	}
 	
 	function get_attachment() {
@@ -1049,8 +1045,8 @@ class popper {
 			$this->report_error("The attachment could not be extracted", "Mail error");
 			exit;
 		}
-		$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers["Content-Disposition"]);
-		$type = "Content-Type: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers["Content-Type"]);
+		$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers->get("Content-Disposition"));
+		$type = "Content-Type: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers->get("Content-Type"));
 
 		$disp = str_replace("attachment;", "inline;", $disp);
 		Header($disp);
@@ -1087,7 +1083,7 @@ class popper {
 			else {
 				$this->cur_message_id = $this->del;
 
-				if (true || $delete_when) {
+				if ($this->config["server_del"] == 1) {
 					if ($this->trash_mail($this->cur_message_id)) {
 						$del_msg = "The mail has been deleted from the server!";
 					}
@@ -1111,45 +1107,54 @@ class popper {
 	}
 
 	function move_to_bin($id) {
-			// Move the mail to the bin folder
-			$query = "UPDATE mails SET folder='bin' WHERE id='$id' AND user_id='$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), "Mail could not be move to the bin folder");
-				return false;
-			}
-			return true;
+		// Move the mail to the bin folder
+		$query = "UPDATE mails SET folder='bin' WHERE id='$id' AND user_id='$this->userid'";
+		$res = $this->db_tool->db_query($query);
+		if ($res == 0) {
+			$this->report_error($this->db_tool->db_error(), "Mail could not be move to the bin folder");
+			return false;
+		}
+		return true;
 	}
 
 	function trash_mail($id) {
-		if ($this->config["server_del"] == 1) {
-			// Delete the mail from the POP server
-
-			// Get the account from this mail
-			$query = "SELECT accounts.*, mails.uidl AS uidl FROM accounts LEFT JOIN mails ON mails.acc_id = accounts.id WHERE mails.id = '$id' AND mails.user_id = '$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), "DB Error");
-				return false;
-			}
+		// Get the account from this mail
+		$query = "SELECT accounts.*, mails.uidl AS uidl FROM accounts LEFT JOIN mails ON mails.acc_id = accounts.id WHERE mails.id = '$id' AND mails.user_id = '$this->userid'";
+		$res = $this->db_tool->db_query($query);
+		if ($res == 0) {
+			$row = 0;
+		}
+		else {
 			$row = $this->db_tool->fetch_array($res);
-			if ($row == 0) {
-				// Maybe the account has been deleted
-				return false;
-			}
-
+		}
+		
+		// Don't try to delete a mail from the server if we don't have the uidl
+		// or the account information
+		
+		$d_uidl = stripslashes($row[uidl]);
+		
+		if ($row == 0 || empty($d_uidl)) {
+			$pop_login = false;
+		}
+		else {
+			// Connect to the server
 			$pop3 = new pop3("$row[popserver]");
-
-			if (($count = $pop3->pop_login($row["poplogin"], $row["poppwd"])) < 0) {
-				$this->report_error($pop3->ERROR, "POP3 ERROR");
-				return false;
+	
+			$pop_login = true;
+			$count = $pop3->pop_login($row["poplogin"], $row["poppwd"]);
+			if ($count < 0 || $count === false) {
+				$pop_login = false;
 			}
+		}
+
+		if ($pop_login && $this->config["server_del"] == 1) {
+			// Delete the mail from the POP server
 
 			$server_uidls = $pop3->uidl();
 			$del_id = 0;
-
+			// Get the mail ID that corresponds the X-UIDL
 			foreach($server_uidls as $sid => $uidl) {
-				if ($uidl == $row["uidl"]) {
+				if ($uidl == $d_uidl) {
 					$del_id = $sid;
 					break;
 				}
@@ -1160,8 +1165,10 @@ class popper {
 				// Now, delete the mail
 				$pop3->delete($del_id);
 			}
-
+			
+			$pop3->quit();
 		}
+		
 		// Delete the mail from the database
 		$query = "DELETE FROM mails WHERE id = '$id' AND user_id = '$this->userid' AND folder='bin'";
 
@@ -1223,7 +1230,7 @@ class popper {
 			}
 			else {
 				$del = $this->del;
-				if ((count($this->del) > 0) && true || $delete_when) {
+				if ((count($this->del) > 0)) {
 					$all_succ = true;
 					foreach($this->del as $d) {
 						$all_succ &= $this->trash_mail($d);
@@ -1256,7 +1263,9 @@ class popper {
 		$this->show_form("main", $del_msg);
 	}
 
+	// List all mails in the current folder
 	function show_del_mails() {
+		$decoder = new mimepart;
 		$query = "SELECT id, tos, froms, subject, date FROM mails WHERE folder='$this->folder' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
@@ -1268,9 +1277,9 @@ class popper {
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr>\n<td>\n");
 			echo('<input type="checkbox" name="del[]" value="'.$row[id].'"></td>');
-			echo("<td>".htmlspecialchars($row[tos])."</td><td>");
-			echo(htmlspecialchars($row[froms])."</td><td>");
-			echo(htmlspecialchars($row[subject])."</td>\n</tr>\n");
+			echo("<td>".htmlspecialchars(stripslashes($decoder->charset_decode($row[tos])))."</td><td>");
+			echo(htmlspecialchars(stripslashes($decoder->charset_decode($row[froms])))."</td><td>");
+			echo(htmlspecialchars(stripslashes($decoder->charset_decode($row[subject])))."</td>\n</tr>\n");
 		}
 		echo('</table>');
 	}
@@ -1302,14 +1311,14 @@ class popper {
 	}
 
 	function get_mails($account = "") {
-		// Make an array with all UIDL we already have
-		$query = "SELECT uidl from mails WHERE user_id = '$this->userid' AND folder != 'outbox' AND folder != 'sent'";
+		// Make an array with all UIDLs we already have
+		$query = "SELECT uidl FROM mails WHERE user_id = '$this->userid' AND folder != 'outbox' AND folder != 'sent'";
 		$res = $this->db_tool->db_query($query);
 		$uidls = array();
 
 		while($row = $this->db_tool->fetch_array($res)) {
 			if (!empty($row["uidl"])) {
-				$uidls[] = $row["uidl"];
+				$uidls[] = stripslashes($row["uidl"]);
 			}
 		}
 
@@ -1327,27 +1336,37 @@ class popper {
 			$this->report_error($this->db_tool->db_error(), "DB Error");
 			return;
 		}
+
 		while($row = $this->db_tool->fetch_array($res)) {
 			$pop3 = new pop3("$row[popserver]");
-
-			if (($count = $pop3->pop_login($row["poplogin"], $row["poppwd"])) < 0) {
-				$this->report_error($pop3->ERROR, "POP3 ERROR");
+			$count = $pop3->pop_login($row["poplogin"], $row["poppwd"]);
+			if ($count < 0 || $count === false) {
+				$error_head = "POP3 ERROR<br>Account $row[name]";
+				$error_msg = "POP3 Error message:<br><br>".$pop3->ERROR;
+				$this->report_error($error_msg, $error_head);
 				continue;
 			}
 
 			// Get the UIDLs from the server
 			$server_uidls = $pop3->uidl();
-
-			// Remove the first entry. It contains the amount of mails on the server
-			// BUT the mail-ids must then be set +1
-			array_shift($server_uidls);
-
-			// Get the difference between the UIDLS on the server and in the DB
-			$get = array_diff($server_uidls, $uidls);
-
+			
+			// If the server doesn't support the X-UIDL header, just get
+			// ALL the mails
+			if ($server_uidls === false) {
+				$get = $pop3->pop_list();
+				array_shift($get);
+			}
+			else {
+				// Remove the first entry. It contains the amount of mails on the server
+				// BUT the mail-ids must then be set +1
+				array_shift($server_uidls);
+	
+				// Get the difference between the UIDLS on the server and in the DB
+				$get = array_diff($server_uidls, $uidls);			
+			}
 			$mailer = new mailer($this->userid, $row[id]);
 			reset($get);
-			//for($num = 0; $num < $count + 1; $num++) {
+
 			foreach($get as $num => $uid) {
 				$get_mail = $num + 1;
 				$mail = $pop3->get_text($get_mail);
@@ -1360,13 +1379,33 @@ class popper {
 					$this->report_error($mailer->db_tool->db_error(), "Mail could not be stored");
 					exit;
 				}
+
 				if ($this->config["keep"] != 1) {
 					$pop3->delete($get_mail);
+				}
+
+				if ($this->config["add_address"]) {
+					$this->add_address($mailer);
 				}
 			}
 			
 			$pop3->quit();
 		}
+	}
+
+	function add_address($mailer) {
+		$from = addslashes($mailer->headers->get("From"));
+		$add = $mailer->get_address($from);
+		if (!empty($add["address"])) {
+			$query = "SELECT name, email FROM addresses WHERE name='$add[name]' AND email='$add[address]' AND user_id='$this->userid'";
+			$res = $this->db_tool->db_query($query);
+			if ($this->db_tool->affected_rows() == 0) {
+				$GLOBALS["name"] = $add["name"];
+				$GLOBALS["email"] = $add["address"];
+				$this->store_address();
+			}
+		}
+		
 	}
 
 	function show_config() {
@@ -1393,7 +1432,14 @@ class popper {
 			echo(' checked');
 		}			
 		echo('> Send mails direcly. Don\'t keep them in the outbox.<br>');		
-		
+
+		echo('<input type="checkbox" name="add_address" value="1"');		
+		if ($this->config[add_address]) {
+			echo(' checked');
+		}			
+		echo('> Add e-mail addresses of incoming e-mails to the address-book.<br>');	
+		echo('<hr>Display <input name="mails_per_page" value="'.$this->config[mails_per_page].'" size="2"> mails per page<br>');
+		echo('Show <input name="mail_rows" value="'.$this->config[mail_rows].'" size="2"> lines in textarea<br>');		
 		echo('<hr>Signature:<br><br><textarea name="signature" cols="50" rows="4">');
 		echo($this->config[signature]);
 		echo('</textarea><br><br>');
@@ -1406,18 +1452,21 @@ class popper {
 	}
 
 	function store_config() {
-		global $conf_submit, $keep, $server_del, $auto_check, $signature, $app_sig, $send_direct;
+		global $conf_submit, $keep, $server_del, $auto_check, $signature, $app_sig, $send_direct, $mail_rows, $mails_per_page, $add_address;
 
 		if (isset($conf_submit) && $conf_submit == "Store") {
-			$query = "UPDATE conf SET send_direct='$send_direct', keep='$keep', server_del='$server_del', auto_check='$auto_check', signature='$signature', app_sig='$app_sig' WHERE user_id = '$this->userid'";
+			$query = "UPDATE conf SET send_direct='$send_direct', keep='$keep', server_del='$server_del', auto_check='$auto_check', signature='$signature', app_sig='$app_sig', mails_per_page='$mails_per_page', mail_rows='$mail_rows', add_address='$add_address' WHERE user_id = '$this->userid'";
 			$res = $this->db_tool->db_query($query);	
 			if ($res != 0) {
-				$this->config["keep"] = "$keep";
+				$this->config["keep"] = $keep;
 				$this->config["server_del"] = $server_del;
 				$this->config["auto_check"] = $auto_check;
 				$this->config["signature"] = $signature;
 				$this->config["app_sig"] = $app_sig;
-				$this->config["send_direct"]  = $send_direct;		
+				$this->config["send_direct"] = $send_direct;	
+				$this->config["mail_rows"] = $mail_rows;
+				$this->config["mails_per_page"] = $mails_per_page;
+				$this->config["add_address"] = $add_address;
 			}
 		}
 	}
@@ -1451,8 +1500,9 @@ class popper {
 		}
 
 		$count = $this->db_tool->affected_rows();
-
-		$width = 110; //500/$count;
+		
+		// Commented the progress stuff out...
+		/*$width = 110; //500/$count;
 		$send_counter = 0;
 		$s = $count > 1 ? "s" : "";
 		echo('<span style="color: #3A6EA5;"><h2>Sending '.$count.' mail'.$s.'</h2><b>Please stand by, this can take a while:</b><br>');
@@ -1462,7 +1512,7 @@ class popper {
 		}
 		echo("</span><br>\n");
   		//$t = $this->start_timer("Sending mail");
-  		flush();
+  		flush();*/
 
 		while($row = $this->db_tool->fetch_array($res)) {
 			$mailer = new mailer($this->userid);
@@ -1470,9 +1520,9 @@ class popper {
 
 
 			//$t = $this->next_timer($t, "Mail: $row[subject]");
-			flush();
+			//flush();
 			$ret = $mailer->send();
-			echo('<span style="border-right: thin solid #3A6EA5; width: '.$width.'px; text-align: right; background-color: #3A6EA5;">&nbsp;</span>');
+			//echo('<span style="border-right: thin solid #3A6EA5; width: '.$width.'px; text-align: right; background-color: #3A6EA5;">&nbsp;</span>');
 			//$mail->print_mail();
 
 			// When the mail could be send, we move the mail to the "sent" folder
@@ -1487,7 +1537,7 @@ class popper {
 			}
 		}
 		//echo('<span style="width: '.$width.'px; background-color: #3A6EA5;">&nbsp;</span>');
-		flush();
+		//flush();
 		//$this->next_timer($t, "fertig");
 		$errors = $count - $send_counter;
 

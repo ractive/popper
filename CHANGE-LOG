@@ -1,0 +1,38 @@
+POPPER
+======
+http://www.ractive.ch/gpl/popper.html
+
+Version 1
+=========
+Initial release
+
+Version 1.1
+===========
+- Faulty popper.mysql file fixed
+- Nicer layout showing the attachments
+- Implemented an own quoted-printable decoder. PHP's built-in decoder is buggy.
+
+Version 1.101
+=============
+- Wrong date field is handled better now
+- The subject listing is beautified
+
+Version 1.102
+=============
+- The decoding was buggy. Fixed
+- The member-object db_tool in the class popper got lost in some configurations. Why?
+  Now it's checked for existence and "newed" if needed.
+- Reply function get the correct reply address now
+
+Version 1.2
+===========
+- Incorrect date sorting fixed.
+- New qpopper X-UIDL header format supported now
+- The noop check for pop3 servers has been removed. Caused a lot of problems :-(
+- Case insensitive mail-header treatment. Multipart messages from Lotus-Notes etc.
+  are not recognized correctly.
+- More user options to set up the look and feel (no. of mails per page and
+  no. of lines shown at once)
+- Sender of incoming mails can be automatically added to the addressbook
+- Some other bug-fixing
+- Help page added

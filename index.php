@@ -1,3 +1,5 @@
+<?php
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,19 +12,27 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
 	function is_logged_in() {
 		global $logged_in;
 		return (isset($logged_in) && session_is_registered("logged_in") && $logged_in == 1);
 	}
 
 	include("class.popper.inc.php");
-
+	
 	session_start();
 	if (!isset($popper)) {
 		$popper = new popper;
 	}
-
+	
+	if (isset($action) && $action == "help") {
+		$popper->show_form("help");
+		exit;
+	}
+	
+	if (!isset($popper->db_tool)) {
+		$popper->db_tool = new db_tool("popper.inc.php");
+	}	
+	
 	if (isset($login)) {
 
 		if (!isset($login) || !isset($pwd)) {
@@ -44,7 +54,10 @@ http://www.gnu.org/copyleft/gpl.html
 		$logged_in = 1;
 		$popper->set_user($name);
 		session_register("popper", "logged_in");
-
+		if (!$popper->has_account()) {
+			$popper->show_in_window("newaccount", "Account", "You first have to enter your account information");		
+			return;
+		}
 		$popper->show();
 	}
 	else if (isset($newuser)) {
@@ -200,10 +213,4 @@ http://www.gnu.org/copyleft/gpl.html
 	$uri = $cururi;
 	session_register("old_uri");
 	session_register("uri");
-	/*echo("URI: $uri<br>");
-	echo("OLD_URI: $old_uri<br>");
-	echo("cur_message_id: $popper->cur_message_id<br>");
-	echo("Page: ".$popper->get_pageno()."<br>");
-	echo("MPP: $popper->mails_per_page");*/
-
 ?>

@@ -1,3 +1,4 @@
+<?php
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -10,9 +11,23 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-<?php
+	// The file which describes the upper part of the HTML code
 	$top_part = "top.inc.php";
+	// The file which describes the bottom part of the HTML code
 	$bottom_part = "bottom.inc.php";
-	$mails_per_page = 20;
-	$mail_rows = 20;
+	
+	// The max. no. of characters to display in the subject and from line in the main view
+	$col_width = 55;
+	
+	// Do you have PHP version 4.0.0 -> true
+	// Do you have PHP version 4.0.1 and above -> false
+	$is_php400 = false;
+	
+	// Allow the access to other mail-servers than localhost? true/false
+	$only_localhost = false;
+	
+	// Allow the access to the mail-servers in the array. Add as much as you like.
+	// i.e. $allowed_server = array("pop.domain.com", "pop.otherdomain.com", "pop.thirddomain.com");
+	// Leave it empty to access ALL mail-servers.
+	$allowed_servers = array();
 ?>
