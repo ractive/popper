@@ -12,6 +12,16 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
+	function dbg($string) {
+		//echo("DEBUG_OUT: $string<br>");
+	}
+	
+
+	// Check for PHP4
+	if (substr(phpversion(), 0, 1) == "3") {
+		die("<h1>PHP3 is not supported!</h1>Install PHP4: http://www.php.net");
+	}
+
 	define("MAIL_UNREAD", 0);
 	define("MAIL_READ", 1);
 	define("MAIL_REPLIED", 2);
@@ -22,7 +32,16 @@ http://www.gnu.org/copyleft/gpl.html
 	define("NORMAL_PRIORITY", 3);
 	define("LOW_PRIORITY", 4);
 	define("LOWEST_PRIORITY", 5);
-
+	
+	define("FULL_VIEW", 0);
+	define("MID_VIEW", 1);
+	define("MIN_VIEW", 2);
+	
+	define("POPUP_VIEW", 0);
+	define("IN_VIEW", 1);
+	define("SEP_VIEW", 2);	
+	define("FRAME_VIEW", 3);			
+	
 	function is_logged_in() {
 		global $logged_in;
 		return (isset($logged_in) && session_is_registered("logged_in") && $logged_in == 1);
@@ -33,7 +52,7 @@ http://www.gnu.org/copyleft/gpl.html
 	@set_time_limit(60);
 
 	include("class.popper.inc.php");
-	
+	include("class.cal.inc.php");	
 	session_start();
 
 	if ($poppercookie["language"]) {
@@ -60,7 +79,19 @@ http://www.gnu.org/copyleft/gpl.html
 		$popper = new popper;
 	}
 	
-	if (isset($action) && $action == "help") {
+	if (!isset($cal) || !is_object($cal)) {
+		$cal = new cal;
+	}	
+	
+	if (isset($action) && $action == "lostpwd") {
+		$popper->show_in_window("lostpwd");
+		exit;
+	}
+	else if (isset($action) && $action == "sendpwd") {
+		$popper->send_pwd();
+		exit;
+	}	
+	else if (isset($action) && $action == "help") {
 		$popper->show_form("help");
 		exit;
 	}
@@ -110,7 +141,9 @@ http://www.gnu.org/copyleft/gpl.html
 			$popper->show_in_window("newaccount", $strings["l_Account"], $strings["l_AccInfo"]);		
 			return;
 		}
-		$popper->show();
+		//$popper->show();
+		// This allows a reload of the page
+		Header("Location: $PHP_SELF");
 	}
 	else if (isset($newuser)) {
 		if ($popper->create_user()) {
@@ -140,26 +173,23 @@ http://www.gnu.org/copyleft/gpl.html
 		// Remove previously created tmp-files
 		$popper->unlink_tmp();
 		
-		if (isset($deluser)) {
-			if (!isset($ans)) {
-				$popper->show_form("deluserack");
-			}
-			if ($ans == "No") {
-				$popper->show_form("main", $strings["l_DelCancel"]);
-			}
-			if (!$popper->delete_user()) {
-				$popper->messagebox($popper->get_user().$strings["l_UserDelFail"]."\n", $strings["l_Error"]);
-			}
-			else {
-				session_destroy();
-				$popper->messagebox($popper->get_user().$strings["l_UserDel"], $strings["l_UserDel2"]);
-			}
-		}
-
 		if (isset($action)) {
+			
+			$popper->pre_frame();
+			
 			if ($action == "showfolder") {
 				$popper->show($folder);
 			}
+			else if ($action == "list") {
+				$popper->show_frame_list();
+			}
+			else if ($action == "mail_cont") {
+				$popper->show_mail_frame();
+			}							
+			else if ($action == "showmail") {
+				$popper->show_popup_mail();
+				//$popper->show_form("newmail", $strings["l_ShowMail"]);
+			}			
 			else if ($action == "showsources") {
 				$popper->show_sources();
 			}
@@ -172,7 +202,7 @@ http://www.gnu.org/copyleft/gpl.html
 				$popper->show_in_window("newmail", $strings["l_NewMail"]);
 			}
 			else if ($action == "printmail") {
-				$popper->show_print();
+				$popper->show_popup_mail();
 			}			
 			else if ($action == "reply") {
 				$popper->show_in_window("newmail", $strings["l_ReplyMail"]);
@@ -184,7 +214,10 @@ http://www.gnu.org/copyleft/gpl.html
 				$popper->show_in_window("newmail", $strings["l_ForwardMail"]);
 			}
 			else if ($action == "showmail") {
-				$popper->show_in_window("newmail", $strings["l_ShowMail"]);
+				$popper->show_popup_mail();
+			}
+			else if ($action == "openmail") {
+				$popper->show_in_window("newmail", $strings["l_ShowMail"]);			
 			}
 			else if ($action == "choosen") {
 				$popper->show_in_window("newmail", $strings["l_Choosen"]);
@@ -212,7 +245,8 @@ http://www.gnu.org/copyleft/gpl.html
 			}
 			else if ($action == "storemail") {
 				$msg = $popper->store_mail();
-				$popper->show_form("main", $msg);
+				Header("Location: $old_uri");
+				//$popper->show_form("main", $msg);
 			}
 			else if ($action == "storeaccount") {
 				$popper->store_account();
@@ -233,7 +267,12 @@ http://www.gnu.org/copyleft/gpl.html
 			}			
 			else if ($action == "sendandreceive") {
 				if (!isset($what)) {
-					$popper->show_in_window("sendreceive", $strings["l_SendReceive"]);
+					if ($popper->config["mailview"] == FRAME_VIEW) {
+						$popper->show_small_window("sendreceive");
+					}
+					else {
+						$popper->show_in_window("sendreceive", $strings["l_SendReceive"]);
+					}
 				}
 				else {
 					$popper->send_and_receive();
@@ -254,28 +293,43 @@ http://www.gnu.org/copyleft/gpl.html
 					
 					$popper->show();
 				}
+				else if (isset($changepwd)) {
+					$popper->show_in_window("changepwd", $strings["l_ChangePwd"]);
+				}
+				else if (isset($deluser) || isset($ack)) {
+					$popper->delete_user();
+				}				
 				else {
 					$popper->show_in_window("config", $strings["l_Config"]);
 				}
-			}			
+			}	
+			else if ($action == "changepwd") {
+				$popper->change_pwd();
+			}					
 			else if ($action == "deletemail") {
 				$popper->delete_mail();
 			}
 			else if ($action == "selected") {
-				if ($selected == "delete") {
+				if (isset($GLOBALS["delete_x"]) || isset($GLOBALS["ack"])) {
 					$popper->delete_mails();
 				}
-				else if ($selected == "add_addr") {
+				else if (isset($GLOBALS["add_addr_x"])) {
 					$popper->add_sel_addr();
-					$popper->show();
+					if ($popper->config["mailview"] == FRAME_VIEW) {
+						$popper->show_frame_list();
+					}
+					else {
+						$popper->show();
+					}
+									
 				}
-				else if ($selected == "block") {
+				else if (isset($GLOBALS["block_x"])) {
 					// Mark the senders as blocked
 					$popper->add_sel_addr(true);
 					// Delete the mails
 					$popper->delete_blocked();					
 				}
-				else if ($selected == "move") {
+				else if (isset($GLOBALS["move"])) {
 					//$popper->move_to();
 					$popper->report_error("Not implemented yet", "Not implemented");
 				}				
@@ -285,7 +339,17 @@ http://www.gnu.org/copyleft/gpl.html
 			}
 			else if ($action == "notification") {
 				$popper->send_notification();
-				Header("Location: ".$GLOBALS[PHP_SELF]."?action=showfolder&folder=".$popper->folder."&mail_id=".$popper->cur_message_id);
+				if ($popper->config["mailview"] == IN_VIEW) {
+					Header("Location: ".$GLOBALS[PHP_SELF]."?action=showfolder&folder=".$popper->folder."&mail_id=".$popper->cur_message_id);
+				}
+				else if ($popper->config["mailview"] == FRAME_VIEW) {
+					$popper->show_mail_frame();
+				}
+				else {
+					Header("Location: ".$GLOBALS[PHP_SELF]."?action=showmail&mail_id=".$popper->cur_message_id);				
+				}
+				
+				
 			}					
 			else {
 				$popper->show();

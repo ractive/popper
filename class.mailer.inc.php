@@ -78,7 +78,7 @@ class mailer extends mail {
 		else {
 			$to = $this->headers->get("From");
 		}
-		$subject = $this->subject();
+		$subject = $this->charset_decode($this->subject());
 		$this->subject("Re: ".$subject);
 
 		if ($to_all) {

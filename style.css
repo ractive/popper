@@ -19,7 +19,6 @@ http://www.gnu.org/copyleft/gpl.html
 body {
 	font-family : Arial, Helvetica, sans-serif;
 	font-size: x-small;
-	echo("color: black;");
 	background-color: #3A6EA5;
 }
 
@@ -151,6 +150,33 @@ Toolbar
 	border-right: 1px solid gray;
 }
 
+
+/*****************************
+
+ Header
+
+*****************************/
+
+.header table {
+	background-color: silver;
+	width=100%;
+	border-bottom: 1px solid gray;
+}
+
+.header tr {
+	width=100%;
+	background-color: silver;
+}
+
+.header hr {
+	width: 100%;
+	text-align: left;
+}
+
+.header p {
+	width: 100%;
+}
+
 /*****************************
 
  Statusbar
@@ -242,6 +268,23 @@ td.scrollbar {
 
 .button {
 	width: 150px;
+}
+
+/*****************************
+
+ Smallbutton
+
+*****************************/
+
+.smallbutton {
+	color: Black;
+	background-color: silver;
+	text-decoration: none;
+	border-top: 1px solid white;
+	border-left: 1px solid white;
+	border-bottom: 1px solid gray;
+	border-right: 1px solid gray;
+	margin: 3px; 3px; 3px; 3px;
 }
 
 /*****************************

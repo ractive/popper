@@ -43,7 +43,6 @@ class mimepart {
 	}
 
 	function quick_from(&$mail) {
-		// The $header now contains a header which we split up into its parts now
 		if (preg_match("/^From: (.*)$/Um", $mail, $matches)) {
 				//if (preg_match("/^(.*?): (.*)$/", $header, $matches)) {			
 			if ($matches) {
@@ -56,36 +55,74 @@ class mimepart {
 		}
 	}
 	
-
-	function get_text_body() {
+	// If $get_html == true and a text/html part is found
+	// the return value is array(htmlpart, true)
+	// If it's text/plain the return value is just the text
+	function get_text_body($get_html = false, $was_multipart = false) {
 		$c_type = $this->get_header("Content-Type");
 		$type = $c_type["CONTENT-TYPE"];
-
+		dbg("Entering get_text_body $get_html");
 		if (strtoupper(substr($type, 0, strlen("MULTIPART/"))) == "MULTIPART/") {
 			$i = 1;
+			$body = "";
+			$text_body = "";
 			while($this->extract_part($i)) {
-				return $this->mimeparts[$i]->get_text_body();
+				dbg("Extracting: $i");
+				$body = $this->mimeparts[$i]->get_text_body($get_html, true);
+				if (is_array($body) && $body[1] == true) {
+					return $body;
+				}
+				if (!$get_html && !empty($body)) {
+					// We got a text/plain body 
+					return $body;
+				}
+				
+				$c_type = $this->mimeparts[$i]->get_header("Content-Type");
+				$type = $c_type["CONTENT-TYPE"];
+				if (strtoupper($type) == "TEXT/PLAIN") {
+					dbg("Found text/plain");
+					if (!$get_html) {
+						return $body;
+					}
+
+					// If we find a text/plain in a multipart mail
+					// We probably have a html mail
+					$found_text_in_multipart = true;
+					// We keep this text-body in case we don't find a html part
+					$text_body = $body;
+				}
+				else if ($found_text_in_multipart && $get_html && strtoupper($type) == "TEXT/HTML") {
+					dbg("Found text/html!!!");					
+					// We already found a text-part in a multipart
+					// If this is text/html we got the HTML mail
+					return array($this->mimeparts[$i]->decode($this->mimeparts[$i]->body), true);
+				}
+				
+				
 				$i++;
 			}
 			
-			return "\r\n   This mail does not contain a plaintext part\r\n\r\n   Please open the attachments to see the content";			
+			if (!empty($text_body)) {
+				return $text_body;
+			}
+			if (!empty($body)) {
+				return $body;	
+			}
 			
-			/*if (!$this->extract_part(1)) {
-				return $this->decode($this->body);
-			}
+			return "\r\n   This mail does not contain a plaintext part\r\n\r\n   Please open the attachments to see the content";			
 
-			$body = $this->mimeparts[1]->get_text_body();
-			$m_type = $this->mimeparts[1]->get_header("Content-Type");
-			if (strcasecmp($m_type["Content-Type"], "text/plain") != 0) {
-				return "\r\n   This mail does not contain a plaintext part\r\n\r\n   Please open the attachments to see the content";
-			}
-			else {
-				return $body;
-			}*/
+		}
+		else if (!empty($type) && strtoupper($type) == "TEXT/HTML" && $get_html) {
+			return array($this->decode($this->body), true);
+		}
+		
+		else if (!empty($type) && strtoupper($type) != "TEXT/PLAIN") {
+			return "";
 		}
 		else {
-			return $this->decode($this->body);
+			return $this->decode($this->body);		
 		}
+		
 	}
 	
 	function charset_decode($string) {
@@ -393,6 +430,10 @@ class mimepart {
 	}
 
 	function get_part($num, $part) {
+		if ($num == 0) {
+			return $this;
+		}
+		
 		if ($part->extract_part($num) === false) {
 			return false;
 		}
@@ -401,7 +442,6 @@ class mimepart {
 	}
 
 	function get_attachment($att_path) {
-		
 		$part = $this;
 		
 		foreach($att_path as $key => $val) {
@@ -421,24 +461,36 @@ class mimepart {
 		}
 		return $part->decode($part->body);
 	}
-
+	
+	// Call this function only after a successfull extract_part($num)
 	function get_attachment_name($num) {
-		if (!$this->extract_part($num)) {
+		/*if (!$this->extract_part($num)) {
 			return false;
+		}*/
+		if ($num == 0) {
+			$c_type = $this->get_header("Content-Type");			
 		}
-
-		$c_type = $this->mimeparts[$num]->get_header("Content-Type");
+		else {
+			$c_type = $this->mimeparts[$num]->get_header("Content-Type");
+		}
+		
 		$att_name = $c_type[strtoupper("name")];
 		
 		return $att_name;
 	}
 
+	// Call this function only after a successfull extract_part($num)
 	function get_attachment_type($num) {
-		if (!$this->extract_part($num)) {
+		/*if (!$this->extract_part($num)) {
 			return false;
+		}*/
+		if ($num == 0) {
+			$c_type = $this->get_header("Content-Type");			
+		}
+		else {
+			$c_type = $this->mimeparts[$num]->get_header("Content-Type");
 		}
 		
-		$c_type = $this->mimeparts[$num]->get_header("Content-Type");	
 		
 		return $c_type["CONTENT-TYPE"];
 	}

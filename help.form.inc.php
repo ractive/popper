@@ -148,10 +148,26 @@ Manage your mail accounts. You can change the settings, delete account or create
 Configure the mail-client
 <br clear=all>
 
+<h3><a name="toolbar">The mail toolbar</a></h3>
+<p><img src="graphics/help_sel_tool.jpg" alt="Toolbar image"></p>
+This small toolbar allows to perform actions on selected mails.<br>
+Select the desired mails by checking the small box in front of them.
+<p>The single functions are described below:</p>
+<img src="graphics/del.gif" alt="Del" style="float: left;">
+The selected mails will be deleted<br>
+<br clear=all>
+<img src="graphics/add_addr.gif" alt="Addressbook" style="float: left;">
+The sender addresses of the selected mails will be put into the addressbook<br>
+<br clear=all>
+<img src="graphics/stop.gif" alt="Ban" style="float: left;">
+Future mails from the senders of the selected mails will be moved automatically to the recycle bin after retrieval.
+This allows you to filter SPAM mails.<br>
+<br clear=all>
+
 <h3><a name="titlebar">The titlebar</a></h3>
 Beside the name of the currently logged in users you also find the logout button
 <img src="graphics/logoff.gif" alt="Logoff button"> in the titlebar<br>
-When you press this button you will be logged off.<br>
+When you press this button you will be logged off. Please logoff if you finished reading your mails!<br>
 <br>
 When you hit the logoff button withing a child window, the current operation is cancelled.<br>
 <br>
@@ -171,14 +187,14 @@ First you have to download the mails from your mailboxes. You can do that by cli
 <img src="graphics/sendandreceive.gif" alt="Send and receive image"> in the toolbar<br>
 See the toolbar section for additional information...<br>
 <br>
-To display the mail content, simply click on the mail. The content will be displayed in the textfield beneath.<br>
+To display the mail content, simply click on the mail. According to your settings in the configuration the mail will
+be either shown in the textbox beneatch or in an own window.<br>
 Additionally you can press the "Read mail" button <img src="graphics/read.gif" alt="Read image"> in the toolbar
 to display the mail in a separate window.<br>
 <br>
-If there's a clip <img src="graphics/attachment_small.gif" alt="Clip image"> in front of a mail entry, the mail contains an attachment. Clicking on this clip opens the
-attachment in a new browserwindow. You also can right-click and choose "Save target as..." to save the attachment.<br>
-Clicking on the clip will only get the first attachment. If the mail contains more than one attachment, you can choose
-them in the header of the mail (just above the mail content on the right hand side) or at the bottom of an opened mail.<br>
+If there's a clip <img src="graphics/attachment_small.gif" alt="Clip image"> in front of a mail entry, the mail contains an attachment.<br>
+The attachments are shown in the header of the mails. Clicking on an attachment opens it in a new browser window. 
+You also can right-click and choose "Save target as..." to save the attachment.<br>
 
 <h3><a name="address">Addressbook</a></h3>
 The simplest way to add an entry to your addressbook is to click "Add contact..." on the left hand side. Alternatively you
@@ -198,7 +214,11 @@ Enter a new contact<br>
 Change the properties of the selected contact<br>
 <br clear=all>
 <img src="graphics/cancel.gif" alt="Delete image" style="float: left;">
-Delete the selected contact
+Delete the selected contact<br>
+<br clear=all>
+<img src="graphics/block_big.gif" alt="Ban image" style="float: left;">
+Show the addresses that are marked as banned addresses. All mails sent from these senders will be put automatically
+in the recycle bin after retrieval.
 <br clear=all>
 
 <h3><a name="accounts">Accounts</a></h3>
@@ -225,8 +245,6 @@ You can configure the behaviour some parts of this mail-client. Press the config
 <center><p><img src="graphics/help_config_en.jpg" alt="Configuration dialg image"></p></center>
 <dl>
 	<dt>Language:</dt>
-	<dd>Choose your preferred language</dd>
-	<dt>Language:</dt>
 	<dd>Choose your preferred language</dd>	
 	<dt>Keep mails on server:</dt>
 	<dd>This option decides if the mails should be delete from the server after they have been received.<br>
@@ -246,6 +264,22 @@ You can configure the behaviour some parts of this mail-client. Press the config
 	<dd>If you choose this option, every new E-Mail address or incoming mails is stored in the address-book</dd>	
 	<dt>Check for new mails every X minutes:</dt>
 	<dd>If you open the auto-fetch window with <img src="graphics/get_rep.gif" alt="Send and receive image">, your account are checked for new mail ever X minutes</dd>
+	<dt>View</dt>
+	<dd>
+	<ul>
+		<li><b>"Folderlist and contacts"</b> shows you the folders and the contacts in the main view</li>
+		<li><b>"Folderlist"</b> only shows you the folderlist in the main view</li>
+		<li><b>"Folders only"</b> just shows the pictures of the folders</li>
+		<li><b>"Show mails in the same window"</b> shows the selected mail in a textarea beneath the list</li>
+		<li><b>"Show mails in an own window"</b> opens the mail in the same browser window</li>
+		<li><b>"Show mails in a popup window"</b> opens the mail in a new browser window</li>
+		<li><b>"Use frames"</b> uses frames to display the maillist and the mail content. This is only recommended
+		if you are using a browser with Version 5 and above.</li>
+	</ul>
+	Be aware that the shown read-status (read/unread etc) of the mails in the mail list is not updated until the page
+	is loaded again. This affects the ""Show mails in a popup window" and "Use frames" views. To reload the page, simply
+	hit the appropriate folder again.
+	</dd>
 	<dt>Show X Mails per page:</dt>
 	<dd>Here you can set how many mails you see in the list at once. Adapt this value to your needs</dd>
 	<dt>Show X lines at once:</dt>

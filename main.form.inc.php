@@ -1,10 +1,27 @@
 <tr class="window">
-	<td width="25%" valign="top">
-		<?php $this->show_folders() ?>
-		<p class="windowtitle">
-			<?php echo("<a href=\"$GLOBALS[PHP_SELF]?action=newaddress\">$strings[l_AddContact]</a>");?>
-		</p>
-		<?php $this->show_addresses() ?>
+<?php
+	if ($this->config["view"] == MIN_VIEW) {
+		$width = "1%";
+		$style = "style=\"background-color: gray;\"";
+	}
+	else {
+		$width = "25%";
+	}
+	
+	echo("<td width=\"$width\" valign=\"top\" $style>");
+
+		$this->show_folders();
+		// Show the addresslist only in FULL_VIEW
+		if ($this->config["view"] == FULL_VIEW) {
+?>
+		
+			<p class="windowtitle">
+				<?php echo("<a href=\"$GLOBALS[PHP_SELF]?action=newaddress\">$strings[l_AddContact]</a>");?>
+			</p>
+			<?php $this->show_addresses() ?>
+<?php
+		}
+?>
 	</td>
 	<td width="75%">
 <?php

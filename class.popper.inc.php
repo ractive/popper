@@ -94,6 +94,46 @@ class popper {
 		$this->folder = "inbox";
 	}
 
+	function pre_frame() {
+		global $mail_id;
+		
+		if ($this->config["mailview"] != FRAME_VIEW) {
+			return;
+		}
+		
+		if (!isset($mail_id) || empty($mail_id)) {
+			$mail_id = $this->cur_message_id;
+		}
+	}
+	
+
+	function set_cur() {
+		global $mail_id, $load;
+		
+		dbg("IN_CUR - MAIL_ID: $mail_id");
+		dbg("IN_CUR - CUR_ID: ".$this->cur_message_id);
+		
+		if (!isset($mail_id) || $mail_id == 0) {
+			dbg("IN_CUR: SET 0");
+			$this->cur_message_id = 0;
+			unset($this->cur_mailer);
+			$this->cur_mailer =0;
+		}		
+		else if ($load == 1 || ($this->cur_mailer == 0 || (substr($mail_id, -3) != "att" && $this->cur_message_id != $mail_id))) {
+			dbg("IN_CUR: LOAD NEW MAILER WITH ID $mail_id");
+			unset($this->att_mailer);
+			$this->att_mailer = array();		
+			unset($this->cur_mailer);
+			$this->cur_mailer = new mailer($this->userid);
+			$this->cur_mailer->load($mail_id);
+			$this->cur_message_id = $mail_id;
+		}
+		
+
+		
+	}
+	
+
 	function unlink_tmp() {
 		foreach($this->tmp_files as $file) {
 			@unlink($file);
@@ -179,23 +219,69 @@ class popper {
 		}
 		
 		$row = $this->db_tool->fetch_array($res);
-		$this->config["keep"] = $row["keep"];
-		$this->config["server_del"] = $row["server_del"];
-		$this->config["auto_check"] = $row["auto_check"];
-		$this->config["signature"] = $row["signature"];
-		$this->config["app_sig"] = $row["app_sig"];								
-		$this->config["send_direct"] = $row["send_direct"];
+		$this->config["keep"]			= $row["keep"];
+		$this->config["server_del"]		= $row["server_del"];
+		$this->config["auto_check"]		= $row["auto_check"];
+		$this->config["signature"]		= $row["signature"];
+		$this->config["app_sig"]		= $row["app_sig"];								
+		$this->config["send_direct"]	= $row["send_direct"];
 		$this->config["mails_per_page"] = $row["mails_per_page"];
-		$this->config["mail_rows"] = $row["mail_rows"];
-		$this->config["add_address"] = $row["add_address"];
-		$this->config["language"] = $row["language"];
-		$this->config["subject_size"] = $row["subject_size"];
-		$this->config["address_size"] = $row["address_size"];
-		$this->config["check_int"] = $row["check_int"];		
+		$this->config["mail_rows"]		= $row["mail_rows"];
+		$this->config["add_address"]	= $row["add_address"];
+		$this->config["language"]		= $row["language"];
+		$this->config["subject_size"]	= $row["subject_size"];
+		$this->config["address_size"]	= $row["address_size"];
+		$this->config["check_int"]		= $row["check_int"];
+		$this->config["view"]			= $row["view"];	
+		$this->config["mailview"]		= $row["mailview"];			
 	}
+
+	function send_pwd() {
+		global $user, $strings;
+		
+		$query = "SELECT users.email as email, users.pwd as pwd, conf.language as lang FROM users LEFT JOIN conf ON conf.user_id = users.id WHERE users.name='$user'";
+		$res = $this->db_tool->db_query($query);
+		if ($this->db_tool->affected_rows($res) != 1) {
+			$this->show_in_window("lostpwd", $strings["l_LostPwd"], $strings["l_UserNotFound"]);
+			return;
+		}
+	
+		$row = $this->db_tool->fetch_array($res);
+
+		$lang_file = "lang/lang.".$row["lang"].".inc.php";
+		if (!file_exists($lang_file)) {
+			$lang_file = "lang/lang.english.inc.php";	
+		}
+	
+		include($lang_file);
+		
+		$server = getenv("SERVER_NAME");
+		
+		$mail = $strings["l_LostPwdMail1"]." ".$server;
+		$mail .= "\r\nhttp://$server".$GLOBALS["PHP_SELF"];
+		$mail .= "\r\n\r\n".$strings["l_UserName"].": ".$user;
+		$mail .= "\r\n".$strings["l_Pwd"].": ".stripslashes($row[pwd]);
+		$mail .= "\r\n\r\n".$strings["l_LostPwdMail2"];
+		
+		if (mail($row[email], $strings["l_LostPwd"], $mail, "From: noreply@".$server)) {		
+			$this->messagebox($strings[l_LostPwdMail3], $strings[l_LostPwdMail4], $strings[l_LostPwdMail4]);
+		}
+		else {
+			$this->messagebox($strings[l_LostPwdMail5], $strings[l_Error], $strings[l_Error]);			
+		}
+		
+	}
+	
 
 	function show_in_window($form, $title="", $status_msg="", $msgboxtext = "", $msgboxhead="") {
 		global $top_part, $bottom_part, $strings;
+		
+		if ($this->config["mailview"] == FRAME_VIEW) {
+			$this->show_small_window($form);
+			return;
+		}
+		
+		$this->set_cur();
 
 		include($top_part);
 		include("titlebar.inc.php");
@@ -203,8 +289,26 @@ class popper {
 		include("statusbar.inc.php");
 		include($bottom_part);
 	}
+	
+	function show_small_window($form, $title = "") {
+		global $strings;
+
+		$this->frame_header();
+		echo("<table class=\"windowborder\" width=\"50%\" border=\"0\" align=\"center\" style=\"margin-top: 2em;\">");
+		echo("<tr class=\"titlebar\"><td>Popper</td></tr>");
+		echo("<tr class=\"childwindow\"><td>");
+		if (file_exists($form.".toolbar.inc.php")) {	
+			include($form.".toolbar.inc.php");
+		}
+				include($form.".form.inc.php");
+		echo("</td></tr></table>");					
+		$this->frame_footer();
+	}
+	
 	function show_form($form, $status_msg = "") {
-		global $account_id, $addr_id, $strings;
+		global $account_id, $addr_id, $strings, $action;
+
+		$this->set_cur();
 
 		if (isset($account_id) && !empty($account_id)) {
 			$this->cur_account_id = $account_id;
@@ -213,26 +317,36 @@ class popper {
 			$this->cur_address_id = $addr_id;
 		}
 		global $top_part, $bottom_part;
-		include($top_part);
-		include("titlebar.inc.php");
+		if ($this->config["mailview"] == FRAME_VIEW && ($action == "addressbook" || $action == "accounts")) {
+			$this->frame_header();
+			echo("<table class=\"windowborder\" width=\"100%\" border=\"0\" align=\"center\">");
+		}
+		else {
+			include($top_part);
+			include("titlebar.inc.php");
+		}
 		if(file_exists($form.".toolbar.inc.php")) {
-			include($form.".toolbar.inc.php");
+			if ($this->folder == "cal") {
+				include("cal.toolbar.inc.php");				
+			}
+			else {
+				include($form.".toolbar.inc.php");
+			}
 		}
 		include($form.".form.inc.php");
-		include("statusbar.inc.php");
-		include($bottom_part);
+		if ($this->config["mailview"] == FRAME_VIEW && ($action == "addressbook" || $action == "accounts")) {
+			echo("</table></form>");
+			$this->frame_footer();
+		}		
+		else {
+			include("statusbar.inc.php");
+			include($bottom_part);
+		}
 	}
 
 	function show($folder = "", $msg = "") {
 		global $mail_id;
-
-		if (isset($mail_id) && !empty($mail_id)) {
-			$this->cur_message_id = $mail_id;
-		}
-		else {
-			$this->cur_message_id = 0;
-			$this->cur_mailer = 0;
-		}
+		
 		if (empty($folder)) {
 			$folder = "inbox";
 		}
@@ -242,13 +356,8 @@ class popper {
 
 	function show_notification_request() {
 		global $strings;
-
-		if ($this->cur_message_id == 0) {
+		if ($this->cur_mailer == 0) {
 			return;
-		}
-		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
-			$this->cur_mailer = new mailer($this->userid);
-			$this->cur_mailer->load($this->cur_message_id);
 		}
 		
 		// Is there a notification header?
@@ -294,7 +403,7 @@ class popper {
 		$msg .= $strings["l_ReadAt"].": ".strftime("%c", time())."\r\n";
 		$msg .= $strings["l_Subject"].": ".$this->cur_mailer->subject()."\r\n\r\n";
 		
-		$not_mailer->create($notify, $from, $strings["l_NotifiSub"].": ".$this->cur_mailer->headers->get("Subject"), $msg);
+		$not_mailer->create($notify, $from, $strings["l_NotiSub"].": ".$this->cur_mailer->headers->get("Subject"), $msg);
 		$boundary = $not_mailer->create_boundary();
 		$not_mailer->headers->put("Content-Type", "multipart/report; report-type=disposition-notification;\tboundary=\"$boundary\"");
 
@@ -396,7 +505,7 @@ class popper {
 			echo("\" title=\"$strings[l_ShowDetails]\"");
 			$this->address_selected($row[id]);
 			echo(">".$this->extract_disp_name(stripslashes($row[name]))."</a></td>\n");
-			echo("<td wrap=\"virtual\"><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"$strings[l_SendMail]\">".stripslashes($row["email"])."</a></td></tr>\n");
+			echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"$strings[l_SendMail]\">".stripslashes($row["email"])."</a></td></tr>\n");
 		}
 		echo("</table>\n");
 	}
@@ -689,21 +798,53 @@ class popper {
 				$folder_info[$row[folder]] = $row[count];
 			}
 		}
-		echo("<table width=\"80%\">");
+		
+		if ($this->config["view"] == MIN_VIEW) {
+			$width = "100%";
+		}
+		else {
+			$width="80%";
+		}
+		
+		echo("<table width=\"$width\">");
 			while(list($key, $val) = each($this->folders)) {
 				echo("<tr>\n");
-					echo("<td width=\"1%\"><img src=\"graphics/$val[pic]\" alt=\"$val[name]\" title=\"$val[name]\" style=\"vertical-align: middle;\"></td>\n");
-					echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$key\"");
-					echo($this->folder_selected($key));
-					if ($folder_info[$key] > 0) {
-						echo("style=\"font-weight: bolder\"");
-					}
-					echo(">$val[name]");
+					if ($this->config["view"] != MIN_VIEW) {
+						echo("<td width=\"1%\"><img src=\"graphics/$val[pic]\" alt=\"$val[name]\" title=\"$val[name]\" style=\"vertical-align: middle;\"></td>\n<td><a href=\"$GLOBALS[PHP_SELF]?action=");
+						if ($this->config["mailview"] == FRAME_VIEW && $key != "cal" && $this->folder != "cal") {
+							echo("list&folder=$key\" target=\"maillist\" ");
+						}
+						else {
+							echo("showfolder&folder=$key\" ");
+							echo($this->folder_selected($key));
+						}
 
-					if ($folder_info[$key] > 0) {
-						echo(" (".$folder_info[$key].")");
+						if ($folder_info[$key] > 0) {
+							echo("style=\"font-weight: bolder\"");
+						}
+
+						
+						echo(">$val[name]");
+	
+						if ($folder_info[$key] > 0) {
+							echo(" (".$folder_info[$key].")");
+						}
+						echo("</a><br></td>\n");
 					}
-					echo("</a><br></td>\n");
+					else {
+						echo("<td align=\"center\"><a href=\"$GLOBALS[PHP_SELF]?action=");
+						if ($this->config["mailview"] == FRAME_VIEW && $key != "cal" && $this->folder != "cal") {
+							echo("list&folder=$key\" target=\"maillist\" ");
+						}
+						else {
+							echo("showfolder&folder=$key\" ");
+							echo($this->folder_selected($key));
+						}
+										
+						echo(">");
+						echo("<img src=\"graphics/$val[pic]\" alt=\"$val[name]\" title=\"$val[name]\" style=\"vertical-align: middle;\" border=\"0\"></a></td>");
+					}
+					
 				echo("</tr>\n");
 			}
 		echo("</table>");
@@ -727,75 +868,40 @@ class popper {
 		exit;
 	}
 
-	function show_folder_content() {
-		global $mail_id, $page, $strings;
-		if (empty($this->folder)) {
-			$this->folder = "inbox";
-		}
+	function show_frame_list() {
+		global $folder;
 		
-		if (isset($GLOBALS[order]) && empty($this->order)) {
-			$desc = false;
+		if (isset($folder) && !empty($folder)) {
+			$this->folder = $folder;
 		}
-		else if (isset($this->order) && isset($GLOBALS[order])) {
-			//echo substr($this->order, -4);
-			if (substr($this->order, -4) == "DESC") {
-				$this->order = $GLOBALS[order];
-				$desc = false;
-			}
-			else {
-				$this->order = $GLOBALS[order]." DESC";
-				$desc = true;
-			}
-			
-		}
+		$this->frame_header();
+		echo("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\"><tr class=\"window\"><td>");
+		$this->show_list_headers();					
+		$this->list_mails();
+		echo("</td></tr></table>");
+		$this->frame_footer();	
+	}
+	
+
+	function show_list_headers() {
+		global $strings;
 		
-		while(1) {
-			$pageno = $this->get_pageno() * $this->config["mails_per_page"];
-			$mails = $this->config["mails_per_page"];
-
-			$query = "SELECT id, tos, from_name as froms, IF(LENGTH(subject) > '".$this->config["subject_size"]."', CONCAT(LEFT(subject, '".$this->config["subject_size"]."'), '...'), subject) as subject, is_mime, date, was_read, priority FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY $this->order LIMIT $pageno, $mails";
-
-			$res = $this->db_tool->db_query($query);
-
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-				return;
-			}
-			// See how much mails we got
-			if (($count = $this->db_tool->affected_rows()) == 0) {
-				if ($this->get_pageno() > 0) {
-					// The user probably delete the last mail on the page.
-					// Make a new SELECT on the previous page
-					$mail_count = $this->count_mails();
-					$this->update_pageno("prev", $mail_count);
-					continue;
-				}
-				else {
-					echo($strings["l_NoMails"]);
-					echo(str_repeat("<br>", $this->config["mails_per_page"] - 1));
-					return;
-				}
-			}
-
-			break;
-		}
-		$height = 21;
 		echo("<form class=\"mail\" action=\"$GLOBALS[PHP_SELF]?action=selected\" method=\"post\">");
-		echo("<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr style=\"border-top: 1px solid white; border-bottom: 2px groove white; border-left: none; border-right: 1px solid gray; background-color: silver;\">\n");
-		echo("<td><input type=\"radio\" name=\"selected\" value=\"delete\"><img src=\"graphics/del.gif\" alt=\"$strings[l_DeleteMultiple]\" title=\"$strings[l_DeleteMultiple]\" border=\"0\" style=\"vertical-align: middle;\"></td>");
-		echo("<td><input type=\"radio\" name=\"selected\" value=\"add_addr\"><img src=\"graphics/add_addr.gif\" alt=\"$strings[l_AddAddr]\" title=\"$strings[l_AddAddr]\" border=\"0\" style=\"vertical-align: middle;\"></td>");		
-		echo("<td><input type=\"radio\" name=\"selected\" value=\"block\"><img src=\"graphics/stop.gif\" alt=\"$strings[l_Block]\" title=\"$strings[l_Block]\" border=\"0\" style=\"vertical-align: middle;\"></td>");		
-		/*echo("<button type=\"submit\" value=\"delete\" name=\"delete\" style=\"width: $height px; height: $height px;\"> <img src=\"graphics/del.gif\" alt=\"$strings[l_DeleteMultiple]\" title=\"$strings[l_DeleteMultiple]\" border=\"0\" style=\"vertical-align: top;\"></button>\n");
-		echo("&nbsp;<button type=\"submit\" value=\"add_addr\" name=\"add_addr\" style=\"width: $height px; height: $height px;\"> <img src=\"graphics/add_addr.gif\" alt=\"$strings[l_AddAddr]\" title=\"$strings[l_AddAddr]\" border=\"0\" style=\"vertical-align: top;\"></button>\n");
-		echo("&nbsp;<button type=\"submit\" value=\"block\" name=\"block\" style=\"width: $height px; height: $height px;\"> <img src=\"graphics/stop.gif\" alt=\"$strings[l_Block]\" title=\"$strings[l_Block]\" border=\"0\" style=\"vertical-align: top;\"></button>\n");*/
-		//echo("<td><input type=\"radio\" name=\"selected\" value=\"move\"><select name=\"move_folder\"><option>$strings[l_MoveTo]</option><option>lajksdlkj</option></select></td>");
-		echo("<td><input type=\"submit\" value=\"Go...\" style=\"height: $height;\"></td>");
-		echo("</tr></table>\n");		
 		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");
+		if ($this->config["mailview"] == FRAME_VIEW) {
+			echo("<tr class=\"windowtitle\"><td>".$this->get_foldername()."</td></tr>");		
+		}
+		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\"><td width=\"100%\" align=\"left\">");
+		echo("<input class=\"smallbutton\" type=\"image\" name=\"delete\" value=\"delete\" src=\"graphics/del.gif\" alt=\"$strings[l_DeleteMultiple]\" title=\"$strings[l_DeleteMultiple]\">");
+		echo("<input class=\"smallbutton\" type=\"image\" name=\"add_addr\" value=\"add_addr\" src=\"graphics/add_addr.gif\" alt=\"$strings[l_AddAddr]\" title=\"$strings[l_AddAddr]\">");
+		echo("<input class=\"smallbutton\" type=\"image\" name=\"block\" value=\"block\" src=\"graphics/stop.gif\" alt=\"$strings[l_Block]\" title=\"$strings[l_Block]\">");
+		//echo("<select name=\"move_folder\" style=\"margin: 0, 0, 0, 0; padding: 0, 0, 0, 0; border: none;\"><option>$strings[l_MoveTo]</option><option>lajksdlkj</option></select>");
+		echo("</td></tr></table>\n");
+		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");		
 		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\">\n");
 		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n&nbsp;</th>\n");
-		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"$strings[l_Order] $strings[l_Attachment]\"><img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Order] $strings[l_Attachment]\" align=\"center\" border=\"0\"></a>\n</th>\n");
-		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=priority\" title=\"$strings[l_Order] $strings[l_Priority]\"><img src=\"graphics/priority.gif\" alt=\"$strings[l_Order] $strings[l_Priority]\" align=\"center\" border=\"0\"></a></th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"$strings[l_Order] $strings[l_Attachment]\"><img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Order] $strings[l_Attachment]\" align=\"middle\" border=\"0\"></a>\n</th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=priority\" title=\"$strings[l_Order] $strings[l_Priority]\"><img src=\"graphics/priority.gif\" alt=\"$strings[l_Order] $strings[l_Priority]\" align=\"middle\" border=\"0\"></a></th>\n");
 		echo("<th style=\"text-align: left; border: thin outset silver;\" width=\"33%\">");
 		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=");
 		if ($this->folder == "outbox" || $this->folder == "sent") {
@@ -833,8 +939,85 @@ class popper {
 				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");			
 			}
 		}			
-		echo("</a></th></tr>\n");
+		echo("</a></th></tr>\n");		
+		
+	}
+	
+	function list_mails() {
+		global $mail_id, $page, $strings, $action;
+		
+		if (empty($this->folder)) {
+			$this->folder = "inbox";
+		}
+		
+		if (isset($GLOBALS[order]) && empty($this->order)) {
+			$desc = false;
+			$order = $this->order;
+		}
+		else if (isset($this->order) && isset($GLOBALS[order])) {
+			if (substr($this->order, -4) == "DESC") {
+				$this->order = $GLOBALS[order];
+				$desc = false;
+			}
+			else {
+				$this->order = $GLOBALS[order]." DESC";
+				$desc = true;
+			}
+			
+			$order = $this->order;
+			
+			if ($GLOBALS[order] != "date") {
+				// The second order options is always the date
+				$order .= ", date DESC";
+			}
+				
+		}
+		
+		// Make sure we have an order expression
+		if (empty($order)) {
+			$this->order = "date DESC";
+			$order = $this->order;
+		}
+		
+		
+		
+		while(1) {
+			$pageno = $this->get_pageno() * $this->config["mails_per_page"];
+			$mails = $this->config["mails_per_page"];
 
+			$query = "SELECT id, tos, from_name as froms, subject, is_mime, date, was_read, priority FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY $order";
+
+			// Show all mails in FRAME view
+			if ($this->config["mailview"] != FRAME_VIEW) {
+				$query .= " LIMIT $pageno, $mails";
+			}
+			
+			$res = $this->db_tool->db_query($query);
+
+			if ($res == 0) {
+				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+				return;
+			}
+			// See how much mails we got
+			if (($count = $this->db_tool->affected_rows()) == 0) {
+				if ($this->get_pageno() > 0) {
+					// The user probably delete the last mail on the page.
+					// Make a new SELECT on the previous page
+					$mail_count = $this->count_mails();
+					$this->update_pageno("prev", $mail_count);
+					continue;
+				}
+				else {
+					echo("</table>\n");
+					echo($strings["l_NoMails"]);
+					echo(str_repeat("<br>", $this->config["mails_per_page"] - 1));
+					return;
+				}
+			}
+
+			break;
+		}
+						
 		// Now fill in the mails
 		while ($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr");
@@ -860,7 +1043,7 @@ class popper {
 			echo("<td style=\"width: 10px; text-align: center;\"><input type=\"checkbox\" name=\"del[]\" value=\"$row[id]\"></td>");
 			echo("<td style=\"width: 20px; text-align: center;\">\n");
 			if ($row[is_mime]) {
-				echo("<img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Attachment]\" align=\"center\" border=\"0\" style=\"vertical-align: middle;\">\n");				
+				echo("<img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Attachment]\" align=\"middle\" border=\"0\" style=\"vertical-align: middle;\">\n");				
 			}
 			echo("</td><td align=\"center\" style=\"vertical-align: middle\">");
 			
@@ -883,9 +1066,25 @@ class popper {
 			}
 						
 			echo("</td><td>\n<img src=\"graphics/$img\" alt=\"\" style=\"float: left;\">");
+			if ($this->config["mailview"] == IN_VIEW) {
+				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\"");
+			}
+			else if ($this->config["mailview"] == FRAME_VIEW) {
+				echo("<a href=\"$GLOBALS[PHP_SELF]?action=mail_cont&mail_id=$row[id]\" target=\"mail\" ");			
+			}
+			else {
+				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showmail&mail_id=$row[id]\"");				
+				if ($this->config["mailview"] == POPUP_VIEW) {
+					echo(" target=\"_blank\" ");
+				}
+				
+			}
 			
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\"\n");
-			$this->mail_selected($row[id]);
+			// Don't highlight a mail in FrameView
+			if ($this->config["mailview"] != FRAME_VIEW) {
+				$this->mail_selected($row[id]);
+			}
+			
 			// If the mail was not read, display it bold (also the link)
 			if ($row["was_read"] == MAIL_UNREAD) {
 				echo(" style=\"font-weight: bolder;\"");
@@ -893,7 +1092,7 @@ class popper {
 			else {
 				echo(" style=\"font-weight: normal;\"");
 			}
-			echo(">");
+			echo(">\n");
 
 			$mailer = new mailer(0);
 
@@ -908,11 +1107,15 @@ class popper {
 			if (strlen($out) > $this->config["subject_size"]) {
 				$out = substr($out, 0, $this->config["subject_size"])."...";
 			}
-			echo($out);
+			echo($out."</a></td>");
 			
-			//$subject = $mailer->headers->charset_decode($row["subject"]);
-			$subject = $mailer->charset_decode(stripslashes($row["subject"]));
-			echo("</a></td>\n<td>".htmlspecialchars($subject));
+			$subject = $mailer->charset_decode($row["subject"]);	
+			// Look that the string isn't too long
+			if (strlen($subject) > $this->config["subject_size"]) {
+				$subject = substr($subject, 0, $this->config["subject_size"])."...";
+			}				
+
+			echo("<td>".htmlspecialchars($subject));
 			$date = mktime(substr($row[date], 8, 2), substr($row[date], 10, 2), substr($row[date], 12, 2), substr($row[date], 4, 2), substr($row[date], 6, 2), substr($row[date], 0, 4));
 			$formatted_date = strftime("%x %X", $date);
 			echo("</td>\n<td>".$formatted_date."</td>");
@@ -920,13 +1123,41 @@ class popper {
 		}
 		echo("</table>\n");
 		echo("</form>\n");
-
 		// If we have less then $minlines mails, we fill the rest with line-breaks
 
-		if ($count < $this->config["mails_per_page"]) {
+		if ($this->config["mailview"] != FRAME_VIEW && $count < $this->config["mails_per_page"]) {
 			echo(str_repeat("<br>", $this->config["mails_per_page"] - $count));
+		}	
+	}
+	
+	function frame_header() {
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+<META NAME="description" CONTENT="mailcontent frame">
+<LINK REL=stylesheet TYPE="text/css" HREF="style.css">
+<style>
+	body {background-color: white; color: black;}
+</style>
+</head>
+<body>
+<?php		
+	}
+	
+	function frame_footer() {
+		echo("</body></html>");	
+	}
+	
+	function show_folder_content() {
+		if ($this->config["mailview"] == FRAME_VIEW) {
+			$height = $this->config["mails_per_page"];
+			echo("<iframe name=\"maillist\" src=\"$GLOBALS[PHP_SELF]?action=list\" width=\"100%\" style=\"height: ".$height."em;\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\"></iframe>");
 		}
-
+		else {
+			$this->show_list_headers();	
+			$count = $this->list_mails();		
+		}
 	}
 
 	function extract_disp_name($name) {
@@ -957,104 +1188,278 @@ class popper {
 	}
 
 	function show_sources() {
-		$GLOBALS[show_sources] = true;
-		$this->show_form("main", "The sources of this E-mail");
+		$this->show_mail_content();
 	}
 
-	function show_mail_content() {
-		global $strings, $action;
+	function show_mail_content($mailer = 0) {
+		global $strings, $action, $mail_id;
 
-		if ($this->cur_message_id == 0) {
-			echo("\r\n\r\n  ======== $strings[l_NoMsgSelected] ========");
+		if ($mailer == 0) {
+			$mailer = $this->cur_mailer;
+		}
+		
+
+		if ($this->cur_message_id == 0 || $this->cur_mailer == 0) {
+			$content = "\r\n\r\n  ======== $strings[l_NoMsgSelected] ========";
+			if ($action == "printmail" || $action == "showmail" || $action == "getattachment" || $action == "mail_cont") {
+				$content = nl2br($content);
+			}
+			if ($this->config["mailview"] == FRAME_VIEW) {
+				return $content;
+			}
+			
+			echo($content);
 			return;
 		}
 		$content = "";
-		if (isset($GLOBALS[show_sources]) && $GLOBALS[show_sources] == true) {
-			$query = "SELECT mail FROM mails WHERE id='$this->cur_message_id' AND user_id='$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$content = "\r\n\r\n  ======== ERROR while trying to get mail! ========";
-			}
-			else {
-				$row = $this->db_tool->fetch_row($res);
-				$content = $row[0];
-				$content = htmlentities($content);
-			}
-		}
-		else {
-			if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
-				$this->cur_mailer = new mailer($this->userid);
-
-				if (!$this->cur_mailer->load($this->cur_message_id)) {
-					$content = "\r\n\r\n  ======== ERROR while trying to get mail! ========";
+		if ($action == "showsources") {
+			if ($mail_id != "att") {
+				$query = "SELECT mail FROM mails WHERE id='$mail_id' AND user_id='$this->userid'";
+				$res = $this->db_tool->db_query($query);
+				if ($res == 0) {
+					$content = "\r\n\r\n  ======== ERROR while trying to get sources! ========";
+				}
+				else {
+					$row = $this->db_tool->fetch_row($res);
+					$content = $row[0];
 				}
 			}
+			else {
+				$m = $this->att_mailer[$mail_id];
+				$content = $m->headers->generate_str(true)."\r\n";
+				$content .= $m->body;
+			}
+			
 		}
 
 		if (empty($content)) {
-			$content = $this->cur_mailer->get_text_body();
+			$get_html = $this->config["mailview"] == FRAME_VIEW && $action == "mail_cont";
+			$content = $mailer->get_text_body($get_html);
+		}
+
+		if ($this->config["mailview"] == FRAME_VIEW && $action == "mail_cont" || $action == "notification") {
+			// We return the content, so that show_mail_frame can handle it correctly
+			// This is needed if $content is a HTML mail
+			return $content;
 		}
 
 		// If we are here, the mail has been read, we tell that the DB
-		if ($action != "printmail") {
+		if ($action != "printmail" ) {
 			$this->set_mail_read($this->cur_message_id);
-		}
+		}		
 
 		$content = stripslashes($content);
-		
-		if ($action == "printmail") {
+
+		if ($action == "printmail" || $action == "showmail" || $action == "getattachment" || $action == "mail_cont") {
+
 			$content = nl2br($content);
 			// Convert http:// entries to hyperlinks
 			$this->make_clickable($content);
 		}
 
+		if ($action == "showsources") {
+			Header("Content-Type: text/plain");
+		}
+		
+
 		echo $content;
 	}
+	
+	function split_html($content) {
+		if (preg_match("|(.*<body.*>)(.*?)|Usi", $content, $matches)) {
+			/*foreach($matches as $key => $val) {
+				dbg(htmlspecialchars($key)." -> ".htmlspecialchars($val));
+			}*/
+			return array($matches[1], $matches[2]);
+		}
+		
+		return array("", $content);
+		
+	}
 
-	function show_print() {
-		global $strings;
+	
+	function show_mail_frame() {
+		global $action;
+		
+		$this->set_cur();
+		
+		$content = $this->show_mail_content();
+		
+		if ($action == "showsources") {
+			Header("Content-Type: text/plain");
+			echo $content;
+		}		
+		if (is_array($content)) {
+			// It's a HTML mail
+			$content = $content[0];
+			$this->handle_related_part("TEXT/HTML", $content, $this->cur_mailer);
+			$split = $this->split_html($content);
+			echo $split[0];
+			$this->show_frame_head();
+			echo $split[1];
+			//echo $content;
+		}
+		else {
+			$this->frame_header();
+			$this->show_frame_head();
+			echo("<span style=\"font-family: courier\">");			
+			$content = nl2br($content);
 
-		if ($this->cur_message_id == 0) {
+			// Convert http:// entries to hyperlinks
+			$this->make_clickable($content);			
+			
+			echo $content;
+			
+			echo("</span>");
+			$this->frame_footer();							
+		}
+
+		// If we are here, the mail has been read, we tell that the DB
+		$this->set_mail_read($this->cur_message_id);
+	}
+	
+	function show_frame_head() {
+		//echo("<div ");
+		echo("<table width=\"100%\" border=\"0\" cellpadding=\"4\" cellspacing=\"0\" class=\"windowtitle\" style=\"color: white; background-color: gray; font-weight: bold; font-family : Arial, Helvetica, sans-serif; margin-left: 0 !important;\">");
+		echo("<tr><td style=\"color: white;\">\n");
+		$this->show_head();
+		echo("</td><td align=\"right\">\n");
+		$this->show_attachments();
+		echo("</td></tr>\n");
+		$this->show_notification_request();
+		echo("</table>\n");
+		//echo("</div>");
+	}
+	
+	
+	function next_prev() {
+		global $goto, $mail_id;
+
+		// Make sure that the parameter is useful
+		if (!isset($goto) || empty($goto)) {
 			return;
 		}
-		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
-			$this->cur_mailer = new mailer($this->userid);
-			$this->cur_mailer->load($this->cur_message_id);
+		
+		if (!($goto == "prev" || $goto == "next")) {
+			return;
 		}
 
+		// Get all mail ids
+		$query = "SELECT id FROM mails WHERE user_id='$this->userid' ORDER BY $this->order";
+		$res = $this->db_tool->db_query($query);
+		if ($res == 0) {
+			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+			exit;	
+		}
+
+		$old = 0;
+		
+		// Look for the current id
+		while($row = $this->db_tool->fetch_row($res)) {
+
+			if ($row[0] == $mail_id) {
+				if ($goto == "next") {
+					// Get the next entry.
+					// This is the new mail_id
+					$row = $this->db_tool->fetch_row($res);
+					$mail_id = $row[0];
+					dbg("NEW MAIL_ID: $mail_id");
+					return;
+				}
+				else if ($goto == "prev") {
+					// The old entry is the new mail id
+					// It it's null, we are at the top
+					if ($old == 0) {
+						return;
+					}
+					$mail_id = $old;
+					return;
+				}
+			}
+			$old = $row[0];
+		}
+		
+		
+		
+	}
+	
+	function show_popup_mail($show_att_mail = false) {
+		global $strings, $action, $mail_id;
+		
+		$this->next_prev();
+		
+		
+		if ($show_att_mail === false) {
+			$this->set_cur();
+		}
+		
+		if (isset($this->att_mailer[$mail_id]) && !empty($this->att_mailer[$mail_id])) {
+			$mailer = $this->att_mailer[$mail_id];
+		}
+		else {
+			$mailer = $this->cur_mailer;
+		}
+				
+		$style_sheet = $action == "printmail" ? "print.css" : "style.css";
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<LINK REL=stylesheet TYPE="text/css" HREF="print.css">
+
+<LINK REL=stylesheet TYPE="text/css" HREF="<?php echo($style_sheet);?>">
 <html>
 
 <head>
-<title>PHP POP3 Client</title>
+<title><?php echo($mailer->charset_decode($mailer->subject()));?></title>
 <body>
 <?php
 
-
-		// Display the headers
-		echo("<table cellspacing=\"3\">\n");
-		echo("<tr><td width=\"15%\"><b>$strings[l_From]:</b></td><td>".htmlspecialchars(stripslashes($this->cur_mailer->headers->get("From")))."</td></tr>");
-		echo("<tr><td><b>$strings[l_To]:</b></td><td>".htmlspecialchars(stripslashes($this->cur_mailer->headers->get("To")))."</td></tr>");
-		$cc = $this->cur_mailer->cc();
-		if (!empty($cc)) {
-			echo("<tr><td><b>Cc:</b></td>".htmlspecialchars($this->cur_mailer->cc())."</td></tr>");
+		if ($action == "showmail" || $action == "getattachment") {
+			include("titlebar.inc.php");
+			//echo("<table style=\"border: none; margin-bottom: 2em;\">");
+			include("popup.toolbar.inc.php");
+			echo("<tr class=\"window\" height=\"200%\"><td>");
 		}
-		echo("<tr><td><b>$strings[l_Date]</b></td><td>".$this->cur_mailer->headers->get("date")."</td></tr>");
-		$subject = $this->cur_mailer->charset_decode(stripslashes($this->cur_mailer->subject()));
-		//$subject = $this->cur_mailer->headers->get_decoded("Subject");
+		
+		// Display the headers
+		echo("<div class=\"header\">");
+		echo("<table cellspacing=\"0\">\n");
+		echo("<tr><td width=\"15%\"><b>$strings[l_From]:</b></td><td>".htmlspecialchars(stripslashes($mailer->headers->get("From")))."</td></tr>");
+		echo("<tr><td><b>$strings[l_To]:</b></td><td>".htmlspecialchars(stripslashes($mailer->headers->get("To")))."</td></tr>");
+		$cc = $mailer->cc();
+		if (!empty($cc)) {
+			echo("<tr><td><b>Cc:</b></td>".htmlspecialchars($mailer->cc())."</td></tr>");
+		}
+		echo("<tr><td><b>$strings[l_Date]</b></td><td>".$mailer->headers->get("date")."</td></tr>");
+		$subject = $mailer->charset_decode(stripslashes($mailer->subject()));
+		//$subject = $mailer->headers->get_decoded("Subject");
 		echo("<tr><td><b>$strings[l_Subject]:</b></td><td>".htmlspecialchars($subject)."</td></tr>");
-	
-		//if (sizeof($this->cur_mailer->mimeparts) > 0) {
+		$priority = $mailer->headers->get("X-Priority");
+		$priority = $priority[0];		
+		if (!empty($priority) && $priority != NORMAL_PRIORITY) {
+			echo("<tr><td><b>$strings[l_Priority]:</b></td><td>");
+			if ($priority == HIGHEST_PRIORITY) {
+				echo("<span style=\"background-color: #ff3333;\">$strings[l_HighestPriority]</span>");
+			}
+			if ($priority == HIGH_PRIORITY) {
+				echo("<span style=\"background-color: #ff6666;\">$strings[l_HighPriority]</span>");
+			}			
+			else if ($priority == LOW_PRIORITY) {
+				echo("<span style=\"background-color: #9999ff; color: white;\">$strings[l_LowPriority]</span>");
+			}
+			else if ($priority == LOWEST_PRIORITY) {
+				echo("<span style=\"background-color: #4444ff; color: white;\">$strings[l_LowestPriority]</span>");
+			}			
+			echo("</td></tr>");
+		}	
+		if ($action == "printmail") {
+			// If the mail should be printed we display the names of the attachments
 			$bShown = false;
 			$i = 1;
-			while($this->cur_mailer->extract_part($i)) {
-				$type = $this->cur_mailer->get_attachment_type($i);
-				$name = $this->cur_mailer->charset_decode($this->cur_mailer->get_attachment_name($i));			
+			while($mailer->extract_part($i)) {
+				$type = $mailer->get_attachment_type($i);
+				$name = $mailer->charset_decode($mailer->get_attachment_name($i));			
 				echo("<tr><td><b>");
 				if (!$bShown) {
-					echo($strings["l_Attachment"]);
+					echo($strings["l_Attachment"].":");
 					$bShown = true;
 				}
 				else {
@@ -1063,27 +1468,44 @@ class popper {
 				echo("</b></td><td>$name &lt;$type&gt;</td></tr>");
 				$i++;
 			}
-		//}
-		
-		echo("</table>\n<hr><br>");
+		}
+		else {
+			// Otherwise we show the links to the attachment
+			if ($mailer->is_mime()) {
+				echo("<tr><td><b>$strings[l_Attachment]:</b></td><td>");
+			}
+			if ($show_att_mail) {
+				$this->show_attachments($mailer);
+			}
+			else {
+				$this->show_attachments();
+			}
+			echo("</td></tr>");
+		}
 
-		echo $this->show_mail_content();
-?>
-</body>
-</html>
-<?php	
+		$this->show_notification_request();
+		echo("</table><br>\n");
+		
+		if ($show_att_mail) {
+			echo $this->show_mail_content($mailer);
+		}
+		else {
+			echo $this->show_mail_content();
+		}
+		
+		if ($action == "showmail") {
+			echo("</tr></td></table>");
+		}
+		echo("</div></body></html>");	
 	}
 
 	function make_clickable(&$content) {
-		echo "sldfjlskjfsj";
-		$content = preg_replace("|\s+(http://.*)\s+|U", "<a href=\"\\1\">\\1</a>", $content);
+		$content = preg_replace("|(\s+)(http://.*)(\s+)|U", "\\1<a href=\"\\2\" target=\"_blank\">\\2</a>\\3", $content);
 	}
 	
 
 	function set_mail_read($mail_id) {
-		$was_read = MAIL_READ;
-		$unread = MAIL_UNREAD;
-		$query = "UPDATE mails SET was_read='$was_read' WHERE id='$mail_id' AND user_id='$this->userid' AND was_read='$unread'";
+		$query = "UPDATE mails SET was_read='".MAIL_READ."' WHERE id='$mail_id' AND user_id='$this->userid' AND was_read='".MAIL_UNREAD."'";
 		$this->db_tool->db_query($query);
 		echo $this->db_tool->db_error();
 	}
@@ -1106,16 +1528,16 @@ class popper {
 			if ($this->db_tool->affected_rows() == 0) {
 				unset($name);
 				unset($pwd);
-				$this->show_in_window("newuser", "The user $name was not found in the database. Please create an account first.");
+				$this->show_in_window("newuser", $strings[l_NewUser], $strings["l_UserNotFound"]);
 			}
 
-			$row = mysql_fetch_array($res)
+			$row = $this->db_tool->fetch_array($res)
 				or die (mysql_error());
 
 			if ($row[pwd] != $pwd) {
 				unset($name);
 				unset($pwd);
-				$this->show_in_window("login", "Login", "Your password was not correct. Please try again");
+				$this->show_in_window("login", $strings["l_Login"], $strings["l_PwdWrong"]);
 			}
 			else {
 				return 1;
@@ -1131,19 +1553,19 @@ class popper {
 		if (!isset($name) && !isset($pwd) && !isset($pwd2)) {
 			// Seems like new user is called for the first time without any info
 			// Just show the form
-			$this->show_in_window("newuser", "Create new user");
+			$this->show_in_window("newuser", $strings[l_NewUser]);
 			exit;
 		}
 
 		// Check if the password and the password confirmation are tha same
 		if ($pwd != $pwd2) {
-			$this->show_in_window("newuser", "Password missmatch", "The passwords did not match, please enter them again");
+			$this->show_in_window("newuser", $strings["l_PwdMismatch1"], $strings["l_PwdMismatch2"]);
 			return;
 		}
 
 		// Don't allow empty passwords
 		if (empty($pwd)) {
-			$this->show_in_window("newuser", "Empty password", "You HAVE to enter a password");
+			$this->show_in_window("newuser", $strings["l_EmptyPwd1"], $strings["l_EmptyPwd1"]);
 			return 0;
 		}
 
@@ -1154,7 +1576,7 @@ class popper {
 		if ($res == 0) {
 			$error = mysql_error();
 			if (ereg("^Duplicate entry", $error)) {
-				$this->show_in_window("newuser", "Username exists", "The username $name already exists. Please choose another one!");
+				$this->show_in_window("newuser", $strings["l_UserExists1"], $strins["l_UserExists2"]." ".$name);
 				return 0;
 			}
 			else {
@@ -1213,11 +1635,14 @@ class popper {
 		$res = $this->db_tool->db_query($query);
 		$row = $this->db_tool->fetch_array($res);
 		$ret = $this->db_tool->affected_rows($res);
-		if ($res && $ret) {
-			$query = "DELETE FROM confirmations WHERE check='$check'";
-			$this->db_tool->db_query($query);
+		if ($res != 0 && $ret != 0) {
 			$query = "UPDATE users SET activated=1 WHERE id='$row[user_id]'";
 			$ret &= $this->db_tool->db_query($query);
+			
+			if ($ret != 0) {
+				$query = "DELETE FROM confirmations WHERE check='$check'";
+				$ret = $this->db_tool->db_query($query);
+			}
 
 			if ($ret == 0) {
 				$this->report_error($strings["l_AccActivation2"], $strings["l_DBError"]);
@@ -1248,7 +1673,7 @@ class popper {
 	}
 
 	function store_mail($backup = false) {
-		global $notification, $to_x, $cc_x, $bcc_x, $tos, $ccs, $bccs, $subject, $body, $submit, $replyaccount, $submit, $attachment, $attachment_name, $attachment_size, $attachment_type, $strings;
+		global $notification, $to_x, $cc_x, $bcc_x, $priority, $tos, $ccs, $bccs, $subject, $body, $replyaccount, $submit, $attachment, $attachment_name, $attachment_size, $attachment_type, $strings;
 
 		$body = stripslashes($body);
 
@@ -1268,6 +1693,7 @@ class popper {
 			$folder = "outbox";
 		}
 		else if ($submit == $strings["l_Store"]) {
+			dbg($submit);
 			$folder = "drafts";
 		}
 		else {
@@ -1283,8 +1709,13 @@ class popper {
 			$mailer->bcc($bccs);
 		}	
 		if (isset($notification) && $notification == "on") {
-			$mailer->headers->put("Disposition-Notification-To",  $froms);
+			$mailer->headers->put("Disposition-Notification-To",  $reply);
 		}
+		
+		if (isset($priority) && $priority != NORMAL_PRIORITY) {
+			$mailer->headers->put("X-Priority", $priority);
+		}
+		
 		
 		if (isset($attachment) && !empty($attachment) && $attachment != "none") {
 			$mailer->attach_file($attachment, $attachment_name, $attachment_type, "", "", "");
@@ -1309,12 +1740,12 @@ class popper {
 		}
 		else {
 			// Does the user want to send it directly?
-			if ($this->config["send_direct"] == 1) {
+			if ($submit == $strings["l_Send"] && $this->config["send_direct"] == 1) {
 				if ($mailer->send()) {
 					// The mail could be sent. Store it in the sent folder
 					$folder = "sent";
 				}
-				else {
+				else if ($submit == $strings["l_Send"]) {
 					// The mail could not be sent, keep it in the outbox folder
 					$folder = "outbox";
 				}
@@ -1329,16 +1760,123 @@ class popper {
 		}
 	}
 	
-	function show_attachments($of_part = 0, $att_path = 0, $level = 1) {
-
-		if ($att_path == 0) {
-			unset($att_path);
-			$att_path = array();
-			$att_path[1] = 1;
+	function pic_from_type ($type) {
+		switch (strtolower($type)) {
+			case "image/gif":
+			case "image/jpeg":
+			case "image/png":			
+			case "image/tiff":			
+			case "image/pjpeg":
+			case "image/bmp":
+			case "image/x-icon":
+				$type_pic = "picture.gif";
+				break;
+			case "video/mpeg":
+			case "video/quicktime":
+				$type_pic = "movie.gif";
+				break;
+			case "application/x-zip-compressed":
+			case "application/x-gzip-compressed":				
+			case "application/zip":			
+				$type_pic = "zip.gif";
+				break;
+			case "message/disposition-notification":
+			case "text/plain":
+				$type_pic = "text.gif";
+				break;
+			case "application/rtf":
+				$type_pic = "doc.gif";
+				break;
+			case "text/html":
+				$type_pic = "html.gif";
+				break;
+			case "application/pdf":
+				$type_pic = "pdf.gif";
+				break;
+			case "application/x-msdownload":
+				$type_pic = "app.gif";
+				break;
+			case "message/rfc822":
+				$type_pic = "email.gif";
+				break;
+			case "audio/wav":
+			case "autio/mp3":
+				$type_pic = "sound.gif";
+				break;
+			default:
+				$type_pic = "unknown.gif";	
 		}
+		
+		return $type_pic;
+	}
+	
+	function pic_from_ending($ending) {
+		switch(strtolower($ending)) {
+			case "zip":
+			case "gzip":
+			case "bz2":
+			case "arj":
+			case "ace":
+			case "rar":
+			case "zoo":
+			case "uha":				
+				$type_pic = "zip.gif";
+				break;
+			case "doc":
+			case "sdw":
+			case "rtf":
+				$type_pic = "doc.gif";
+				break;
+			case "txt":
+			case "diz":
+				$type_pic = "text.gif";
+				break;						
+			case "html":
+			case "htm":
+			case "php":
+			case "asp":
+			case "phtml":
+				$type_pic = "html.gif";
+				break;
+			case "avi":
+			case "mpg":
+			case "mpeg":
+			case "asf":
+			case "wmv":
+			case "mov":
+				$type_pic = "movie.gif";
+				break;	
+			case "exe":
+			case "vbs":
+			case "sh":
+			case "bat":
+				$type_pic = "app.gif";
+				break;
+			case "mp3":
+			case "wav":
+			case "snd":
+			case "au":
+				$type_pic = "sound.gif";
+				break;
+			default:
+				$type_pic = "unknown.gif";						
+		}
+		
+		return $type_pic;
+	}
+		
+	
+	function show_attachments($of_part = 0, $att_path = 0, $level = 1) {
+		global $mail_id;
+		
+		if (!isset($mail_id)) {
+			$mail_id = $this->cur_message_id;
+		}
+
 		if ($this->cur_message_id == 0) {
 			return;
 		}
+		
 		if ($of_part != 0) {
 			$mailer = $of_part;
 		}
@@ -1350,10 +1888,34 @@ class popper {
 		else {
 			$mailer = $this->cur_mailer;
 		}
+		
 		$i = 1;
+				
+		if ($op_part == 0) {
+			$c_type = $mailer->get_header("Content-Type");
+			$type = strtoupper($c_type["CONTENT-TYPE"]);
+			//dbg($type);
+			$is_multipart = (substr($type, 0, strlen("MULTIPART/")) == "MULTIPART/");
+			if (!empty($type) && $type != "TEXT/PLAIN" && !$is_multipart) {
+				//dbg("NOT TEXT/PLAIN");
+				// Grrr. A mail which is only an attachment :-(
+				$mailer->mimeparts[1] = $mailer;
+				$fake = true;
+			}
+		}
+		
+		if ($att_path == 0) {
+			unset($att_path);
+			$att_path = array();
+			$att_path[1] = 1;
+		}
+		
+
+		
 		//echo "BODY:<br><br>".nl2br($mailer->body)."<br><br>";
-		while($mailer->extract_part($i)) {
-			if (sizeof($mailer->mimeparts[$i]->mimeparts) > 0) {
+		while($fake === true || $mailer->extract_part($i)) {
+	
+			if (!$fake && sizeof($mailer->mimeparts[$i]->mimeparts) > 0) {
 				$att_path[$level] = $i;
 				$this->show_attachments($mailer->mimeparts[$i], $att_path, $level + 1);
 				// Don't show an icon for it, since it's a multipart part
@@ -1361,109 +1923,16 @@ class popper {
 				$i++;
 				continue;
 			}
-
+			
 			$type = $mailer->get_attachment_type($i);
-
-			switch (strtolower($type)) {
-				case "image/gif":
-				case "image/jpeg":
-				case "image/png":			
-				case "image/tiff":			
-				case "image/pjpeg":
-				case "image/bmp":
-					$type_pic = "picture.gif";
-					break;
-				case "video/mpeg":
-				case "video/quicktime":
-					$type_pic = "movie.gif";
-					break;
-				case "application/x-zip-compressed":
-				case "application/x-gzip-compressed":				
-				case "application/zip":			
-					$type_pic = "zip.gif";
-					break;
-				case "message/disposition-notification":
-				case "text/plain":
-					$type_pic = "text.gif";
-					break;
-				case "application/rtf":
-					$type_pic = "doc.gif";
-					break;
-				case "text/html":
-					$type_pic = "html.gif";
-					break;
-				case "application/pdf":
-					$type_pic = "pdf.gif";
-					break;
-				case "application/x-msdownload":
-					$type_pic = "app.gif";
-					break;
-				case "message/rfc822":
-					$type_pic = "email.gif";
-					break;
-				case "audio/wav":
-				case "autio/mp3":
-					$type_pic = "sound.gif";
-					break;
-				default:
-					$type_pic = "unknown.gif";
-			}
+			$type_pic = $this->pic_from_type($type);
 
 			$att_name = $mailer->get_attachment_name($i);
 			// Try to get the file-extension to determint the type of the file
 			// if it's only an "octet-stream"
 			if ($type == "application/octet-stream") {
 				$ending = substr($att_name, strrpos($att_name, ".") + 1, strlen($att_name));
-				switch(strtolower($ending)) {
-					case "zip":
-					case "gzip":
-					case "bz2":
-					case "arj":
-					case "ace":
-					case "rar":
-					case "zoo":
-					case "uha":				
-						$type_pic = "zip.gif";
-						break;
-					case "doc":
-					case "sdw":
-					case "rtf":
-						$type_pic = "doc.gif";
-						break;
-					case "txt":
-					case "diz":
-						$type_pic = "text.gif";
-						break;						
-					case "html":
-					case "htm":
-					case "php":
-					case "asp":
-					case "phtml":
-						$type_pic = "html.gif";
-						break;
-					case "avi":
-					case "mpg":
-					case "mpeg":
-					case "asf":
-					case "wmv":
-					case "mov":
-						$type_pic = "movie.gif";
-						break;	
-					case "exe":
-					case "vbs":
-					case "sh":
-					case "bat":
-						$type_pic = "app.gif";
-						break;
-					case "mp3":
-					case "wav":
-					case "snd":
-					case "au":
-						$type_pid = "sound.gif";
-						break;
-					default:
-						$type_pic = "unknown.gif";						
-				}
+				$type_pic = $this->pic_from_ending($ending);
 			}
 			if (!empty($att_name)) {
 				$att_name .= "\r\n";
@@ -1471,19 +1940,27 @@ class popper {
 			$att_name .= "$type";
 			
 			$att_path[$level] = $i;
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=$GLOBALS[mail_id]");
-
+			if ($fake) {
+				$att_path[$level] = 0;		
+			}
+			
+			echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=");
+			
+			echo("$GLOBALS[mail_id]");
+			
 			foreach($att_path as $key => $att_pid) {
 				echo("&att$key=$att_pid");
 			}
+			
 			echo("\" title=\"$att_name\"");
-			if ($type != "message/rfc822") {
-				// Open attachments in a new window.
-				// Attached messages must be opened in the same window, because $this->cur_mailer gets changed
+			// Open attachments in a new window in IN_VIEW AND POPUP_VIEW
+			if ($this->config["mailview"] != SEP_VIEW) {
 				echo(" target=\"_blank\"");
 			}
-			echo(" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"vertical-align: top;\"></a>\n");
+			echo(" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"vertical-align: top; margin: 0, 0, 0, 0;\"></a>\n");
 			$i++;
+			
+			$fake = false;			
 		}
 	}
 	
@@ -1510,14 +1987,15 @@ class popper {
 	}
 	
 	function get_attachment() {
-		global $strings;
+		global $strings, $action, $mail_id;
 		
-		if ($this->cur_mailer == 0 || $this->cur_message_id != $GLOBALS["mail_id"]) {
-			$this->cur_mailer = new mailer($this->userid);
-			if (!$this->cur_mailer->load($GLOBALS["mail_id"])) {
-				$this->report_error($strings["l_AttFail"], $strings["l_Error"]);
-				exit;
-			}
+		$this->set_cur();
+
+		if (isset($this->att_mailer[$mail_id]) && !empty($this->att_mailer[$mail_id])) {
+			$mailer = $this->att_mailer[$mail_id];
+		}
+		else {
+			$mailer = $this->cur_mailer;
 		}
 
 		$i = 1;
@@ -1525,19 +2003,15 @@ class popper {
 			$att_path[$i] = $GLOBALS["att$i"];
 			$i++;
 		}
-		
-		/*foreach($att_path as $key => $val) {
-			echo("$key -> $val<br>");
-		}*/
 
-		$data = $this->cur_mailer->get_attachment_data($att_path);
+		$data = $mailer->get_attachment_data($att_path);
 
 		if ($data === false) {
 			$this->report_error($strings["l_AttFail"], $strings["l_Error"]);
 			exit;
 		}
 		
-		$part = $this->cur_mailer->get_attachment($att_path);
+		$part = $mailer->get_attachment($att_path);
 		
 		$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $part->headers->get("Content-Disposition"));
 		$c_type = $part->get_header("Content-Type");
@@ -1554,14 +2028,48 @@ class popper {
 		$disp = str_replace("attachment;", "inline;", $disp);
 
 		// Check for multipart/related inbound elements
-		if (preg_match_all("/cid:(.[^\">]*)/", $data, $matches)) {
+		$this->handle_related_part(strtoupper($c_type["CONTENT-TYPE"]), $data, $mailer);
+
+
+		// If the attachment is a message, we open it like a mail
+		if (preg_match("|message/rfc822|i", $type)) {
+			// Generate a fake mail_id for the attached mail
+			/*srand((double)microtime()*1000000);
+			$rand = md5(rand());			
+			$mail_id = substr($rand, 0, 4)."att";	*/
+			$mail_id = $mail_id."att";
+			if (!isset($this->att_mailer[$mail_id])) {
+				$m = new mailer($this->userid);
+				$m->from_text($data);
+				$this->att_mailer[$mail_id] = $m;
+				dbg("NEW ATT_MAILER[ $mail_id ]");
+			}
+			$this->show_popup_mail(true);
+			return;
+		}
+
+		/*echo "DISP: $disp<br>";
+		echo "TYPE: $type<br>";*/
+		
+		Header($disp);
+		Header($type);
+
+		echo($data);
+
+		exit;
+	}
+
+	function handle_related_part ($type, &$data, $mailer) {
+
+		if ($type == "TEXT/HTML" && preg_match_all("/cid:(.[^\">]*)/", $data, $matches)) {
 
 			foreach($matches[1] as $cid) {
+
 				// Create for each inbound element a temporary file
 				
 				// Get the data of the object
-				$cid_data = base64_decode($this->cur_mailer->get_cid_body($cid));
-				$cid_type = $this->cur_mailer->get_cid_type($cid);
+				$cid_data = base64_decode($mailer->get_cid_body($cid));
+				$cid_type = $mailer->get_cid_type($cid);
 				
 				// Create a uniqe filename
 				srand((double)microtime()*1000000);
@@ -1600,26 +2108,8 @@ class popper {
 
 			}
 		}
-
-		// If the attachment is a message, we open it like a mail
-		if (preg_match("|message/rfc822|i", $type)) {
-			$this->cur_mailer = new mailer($this->userid);
-			$this->cur_mailer->from_text($data);
-			$GLOBALS["action"] = "showattmail";
-			$this->show_in_window("newmail", $strings["l_AttEmail"]);
-			return;
-		}
-
-		/*echo "DISP: $disp<br>";
-		echo "TYPE: $type<br>";*/
-		
-		Header($disp);
-		Header($type);
-
-		echo($data);
-
-		exit;
 	}
+	
 
 	function delete_mail() {
 		global $ack, $strings;
@@ -1671,13 +2161,20 @@ class popper {
 			$this->cur_mailer = 0;
 		}
 
-		$this->show_form("main", $del_msg);
+		if ($this->config["mailview"] == FRAME_VIEW) {
+			$this->show_frame_list();
+		}
+		else {
+			$this->show_form("main", $del_msg);
+		}
 	}
 
 	function delete_mails($pass_del = 0) {
 		global $ack, $delete, $del, $strings;
 		
-		reset($del);
+		if (is_array($del)) {
+			reset($del);
+		}
 		
 		if ($pass_del != 0) {
 			$this->del = $pass_del;
@@ -1725,8 +2222,12 @@ class popper {
 
 		}
 
-
-		$this->show_form("main", $del_msg);
+		if ($this->config["mailview"] == FRAME_VIEW) {
+			$this->show_frame_list();
+		}
+		else {
+			$this->show_form("main", $del_msg);
+		}
 	}
 	
 	function add_sel_addr($block = false) {
@@ -1986,7 +2487,12 @@ class popper {
 			Header("Location: $GLOBALS[PHP_SELF]?action=checkrep");
 			exit;
 		}
-		$this->show($this->folder, $msg);
+		if ($this->config["mailview"] == FRAME_VIEW) {
+			$this->show_frame_list();			
+		}
+		else {
+			$this->show($this->folder, $msg);
+		}
 	}
 
 	function check_repetitive() {
@@ -2170,6 +2676,65 @@ class popper {
 		
 	}
 
+	function delete_user() {
+		global $ack, $strings;
+		
+		// If $ack is not set, we pop-up the confirmation window
+		if (!isset($ack) || empty($ack) ) {
+			$this->show_in_window("ack", $strings["l_DelUser"], $strings["l_DelUserQuest"]);
+			return;
+		}
+		else if($ack == "No") {
+			// The user said no :-(
+			$msg = $strings["l_DelCancel"];
+		}
+		else {
+			// We remove the user...
+			$query = "DELETE FROM mails WHERE user_id='$this->userid'";
+			$res = $this->db_tool->db_query($query);
+			if ($res == 0) {
+				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+				return false;
+			}
+			
+			// We remove the user...
+			$query = "DELETE FROM conf WHERE user_id='$this->userid'";
+			$res = $this->db_tool->db_query($query);
+			if ($res == 0) {
+				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+				return false;
+			}
+			
+			// We remove the user...
+			$query = "DELETE FROM accounts WHERE user_id='$this->userid'";
+			$res = $this->db_tool->db_query($query);
+			if ($res == 0) {
+				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+				return false;
+			}
+			
+			// We remove the user...
+			$query = "DELETE FROM addresses WHERE user_id='$this->userid'";
+			$res = $this->db_tool->db_query($query);
+			if ($res == 0) {
+				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+				return false;
+			}
+					
+			$query = "DELETE FROM users WHERE id='$this->userid'";
+			$res = $this->db_tool->db_query($query);
+			if ($res == 0) {
+				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+				return false;
+			}
+			
+			session_destroy();
+			$this->messagebox($strings["l_UserDeleted2"], $strings["l_UserDeleted1"], $strings["l_UserDeleted1"]);
+			exit;
+		}	
+	}
+	
+
 	function show_config() {
 		global $strings;
 		
@@ -2186,8 +2751,11 @@ class popper {
 		}		
 		closedir($dirhandle);
 		
-		echo("</select>\n<br><br><hr><br>");
-		
+		echo("</select>\n<br><br><hr>");
+		echo("<center><input type=\"submit\" name=\"changepwd\" value=\"$strings[l_ChangePwd]\">&nbsp;");
+		echo("<input type=\"submit\" name=\"deluser\" value=\"$strings[l_DelUser]\"></center>");
+		echo("<hr><br>");
+
 		echo('<input type="checkbox" name="keep" value="1"');
 		if ($this->config[keep] == 1) {
 			echo(' checked');
@@ -2218,14 +2786,62 @@ class popper {
 		}			
 		echo("> $strings[l_AddAddress]<br><hr>");
 		echo($strings["l_CheckRep"].' <input name="check_int" value="'.$this->config[check_int].'" size="2"> '.$strings[l_Minutes].'<br><hr>');
-		echo('<table cellspacing="1" cellpadding="1" width="100%"><tr>');		
-		echo('<td width="50%">'.$strings[l_Show].' <input name="mails_per_page" value="'.$this->config[mails_per_page].'" size="2"> '.$strings[l_MailsPerPage].'</td>');
+		echo("<b>".$strings["l_View"]."</b><br>\n");
+		
+		
+		echo('<table cellspacing="2" cellpadding="2" width="100%">');	
+
+		echo("\n<tr><td style=\"width: 35%;\"><input type=\"radio\" name=\"view\" value=\"".FULL_VIEW."\"");
+		if ($this->config["view"] == FULL_VIEW) {
+			echo(" checked");
+		}
+		echo("> $strings[l_FullView]</td><td style=\"width: 65%;\">\n");
+		echo("\n<input type=\"radio\" name=\"mailview\" value=\"".IN_VIEW."\"");
+		if ($this->config["mailview"] == IN_VIEW) {
+			echo(" checked");
+		}		
+		echo("> $strings[l_InView]</td></tr><tr>\n");		
+
+		echo("<td><input type=\"radio\" name=\"view\" value=\"".MID_VIEW."\"");
+		if ($this->config["view"] == MID_VIEW) {
+			echo(" checked");
+		}		
+		echo("> $strings[l_MidView]</td><td>\n");
+		
+		echo("\n<input type=\"radio\" name=\"mailview\" value=\"".SEP_VIEW."\"");
+		if ($this->config["mailview"] == SEP_VIEW) {
+			echo(" checked");
+		}		
+		echo("> $strings[l_SepView]</td></tr><tr>\n");
+		
+		echo("<td><input type=\"radio\" name=\"view\" value=\"".MIN_VIEW."\"");
+		if ($this->config["view"] == MIN_VIEW) {
+			echo(" checked");
+		}		
+		echo("> $strings[l_MinView]</td>\n");
+		echo("<td><input type=\"radio\" name=\"mailview\" value=\"".POPUP_VIEW."\"");
+		if ($this->config["mailview"] == POPUP_VIEW) {
+			echo(" checked");
+		}		
+		echo("> $strings[l_PopupView]</td></tr>\n");
+		
+		echo("<tr><td>&nbsp;</td>");
+		echo("<td><input type=\"radio\" name=\"mailview\" value=\"".FRAME_VIEW."\"");
+		if ($this->config["mailview"] == FRAME_VIEW) {
+			echo(" checked");
+		}		
+		echo("> $strings[l_FrameView]</td></tr>");
+			
+		echo("</table><br><table width=\"100%\">");
+
+	
+		echo('<tr><td width="50%">'.$strings[l_Show].' <input name="mails_per_page" value="'.$this->config[mails_per_page].'" size="2"> '.$strings[l_MailsPerPage].'</td>');
 		echo('<td>'.$strings[l_Show].' <input name="mail_rows" value="'.$this->config[mail_rows].'" size="2"> '.$strings[l_Lines].'</td>');
 		echo('</tr><tr>');
 		echo('<td>'.$strings[l_Show].' <input name="subject_size" value="'.$this->config[subject_size].'" size="2"> '.$strings[l_SubjectSize].'<br>');
 		echo('<td>'.$strings[l_Show].' <input name="address_size" value="'.$this->config[address_size].'" size="2"> '.$strings[l_AddressSize].'<br>');		
 		echo('</tr></table>');
-		echo('<hr>'.$strings[l_Singature].'<br><br><textarea name="signature" cols="50" rows="4">');
+		echo('<hr><b>'.$strings[l_Singature].'</b><br><br><textarea name="signature" cols="50" rows="4">');
 		echo($this->config[signature]);
 		echo('</textarea><br><br>');
 		echo('<input type="checkbox" name="app_sig" value="1"');
@@ -2237,10 +2853,10 @@ class popper {
 	}
 
 	function store_config() {
-		global $conf_submit, $keep, $server_del, $auto_check, $signature, $language, $subject_size, $check_int, $address_size, $app_sig, $send_direct, $mail_rows, $mails_per_page, $add_address, $poppercookie, $strings;
+		global $conf_submit, $view, $mailview, $keep, $server_del, $auto_check, $signature, $language, $subject_size, $check_int, $address_size, $app_sig, $send_direct, $mail_rows, $mails_per_page, $add_address, $poppercookie, $strings;
 
 		if (isset($conf_submit) && $conf_submit == $strings["l_Store"]) {
-			$query = "UPDATE conf SET send_direct='$send_direct', keep='$keep', check_int='$check_int', server_del='$server_del', auto_check='$auto_check', signature='$signature', app_sig='$app_sig', mails_per_page='$mails_per_page', mail_rows='$mail_rows', add_address='$add_address', language='$language', subject_size='$subject_size', address_size='$address_size' WHERE user_id = '$this->userid'";
+			$query = "UPDATE conf SET send_direct='$send_direct', keep='$keep', check_int='$check_int', server_del='$server_del', auto_check='$auto_check', signature='$signature', app_sig='$app_sig', mails_per_page='$mails_per_page', mail_rows='$mail_rows', add_address='$add_address', language='$language', subject_size='$subject_size', address_size='$address_size', view='$view', mailview='$mailview' WHERE user_id = '$this->userid'";
 			$res = $this->db_tool->db_query($query);	
 			if ($res != 0) {
 				$this->config["keep"] = $keep;
@@ -2254,7 +2870,9 @@ class popper {
 				$this->config["add_address"] = $add_address;
 				$this->config["subject_size"] = $subject_size;
 				$this->config["address_size"] = $address_size;
-				$this->config["check_int"] = $check_int;							
+				$this->config["check_int"] = $check_int;
+				$this->config["view"] = $view;							
+				$this->config["mailview"] = $mailview;					
 				if ($this->config["language"] != $language) {
 					$this->config["language"] = $language;
 					$this->update_lang();
@@ -2263,6 +2881,35 @@ class popper {
 			}
 		}
 	}
+
+	function change_pwd() {
+		global $pwd, $pwd2, $strings;
+		
+		if (empty($pwd)) {
+			$this->show_in_window("changepwd", $strings["l_EmptyPwd1"], $strings["l_EmptyPwd2"]);
+			return;
+		}
+		if ($pwd != $pwd2) {
+			$this->show_in_window("changepwd", $strings["l_PwdMismatch1"], $strings["l_PwdMismatch2"]);
+			return;
+		}
+		
+		$query = "UPDATE users SET pwd='$pwd' WHERE id='$this->userid'";
+		$res = $this->db_tool->db_query($query);
+
+		if ($res == 0) {
+			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+			return false;
+		}
+		
+		if ($this->config["mailview"] == FRAME_VIEW) {
+			$this->show_frame_list();
+		}
+		else {
+			$this->show_form("main", $strings["l_PwdChanged"]);
+		}		
+	}
+	
 
 	function start_timer($event) {
 		printf("timer: %s\n", $event);
@@ -2323,7 +2970,7 @@ class popper {
 			// When the mail could be send, we move the mail to the "sent" folder
 			if ($ret) {
 				$send_counter++;
-				$query = "UPDATE mails SET folder='sent', was_read = MAIL_READ WHERE id='$row[id]' AND user_id='$this->userid'";
+				$query = "UPDATE mails SET folder='sent', was_read = ".MAIL_READ." WHERE id='$row[id]' AND user_id='$this->userid'";
 				$update_res = $this->db_tool->db_query($query);
 				if ($update_res == 0) {
 					$this->report_error($this->db_tool->db_error(), $strings["l_FolderMoveFail"].": ".$strings["l_Sent"]);

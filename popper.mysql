@@ -1,123 +1,119 @@
-# MySQL dump 6.4
+# MySQL dump 8.12
 #
 # Host: localhost    Database: popper
 #--------------------------------------------------------
-# Server version	3.22.32
+# Server version	3.23.33
 
 #
 # Table structure for table 'accounts'
 #
+
 CREATE TABLE accounts (
-  id int(11) DEFAULT '0' NOT NULL auto_increment,
-  user_id int(11) DEFAULT '0' NOT NULL,
-  popserver varchar(255),
-  poplogin varchar(255),
-  poppwd varchar(255),
-  fromname varchar(255),
-  replyto varchar(255),
-  name varchar(255) DEFAULT '' NOT NULL,
+  id int(11) NOT NULL auto_increment,
+  user_id int(11) NOT NULL default '0',
+  popserver varchar(255) default NULL,
+  poplogin varchar(255) default NULL,
+  poppwd varchar(255) default NULL,
+  fromname varchar(255) default NULL,
+  replyto varchar(255) default NULL,
+  name varchar(255) NOT NULL default '',
   PRIMARY KEY (id)
 );
 
 #
 # Table structure for table 'addresses'
 #
-CREATE TABLE addresses (
-  id int(11) DEFAULT '0' NOT NULL auto_increment,
-  email varchar(255) DEFAULT '' NOT NULL,
-  name varchar(255) DEFAULT '' NOT NULL,
-  address1 varchar(255),
-  address2 varchar(255),
-  town varchar(255),
-  state varchar(255),
-  country varchar(255),
-  phone varchar(255),
-  mobile varchar(255),
-  homepage varchar(255),
-  user_id int(11),
-  nickname varchar(255),
-  lastname varchar(255),
-  zip varchar(16),
-  PRIMARY KEY (id)
-);
 
-#
-# Table structure for table 'app'
-#
-CREATE TABLE app (
-  id int(11) DEFAULT '0' NOT NULL auto_increment,
-  user_id int(11),
-  name varchar(255) DEFAULT '' NOT NULL,
-  description text,
-  start datetime,
-  stop datetime,
+CREATE TABLE addresses (
+  id int(11) NOT NULL auto_increment,
+  email varchar(255) NOT NULL default '',
+  name varchar(255) NOT NULL default '',
+  address1 varchar(255) default NULL,
+  address2 varchar(255) default NULL,
+  town varchar(255) default NULL,
+  state varchar(255) default NULL,
+  country varchar(255) default NULL,
+  phone varchar(255) default NULL,
+  mobile varchar(255) default NULL,
+  homepage varchar(255) default NULL,
+  user_id int(11) default NULL,
+  nickname varchar(255) default NULL,
+  lastname varchar(255) default NULL,
+  zip varchar(16) default NULL,
+  blocked tinyint(4) default '0',
   PRIMARY KEY (id)
 );
 
 #
 # Table structure for table 'conf'
 #
+
 CREATE TABLE conf (
-  id int(11) DEFAULT '0' NOT NULL auto_increment,
-  user_id int(11) DEFAULT '0' NOT NULL,
-  keep tinyint(1),
-  server_del tinyint(1),
-  auto_check tinyint(1),
+  id int(11) NOT NULL auto_increment,
+  user_id int(11) NOT NULL default '0',
+  keep tinyint(1) default NULL,
+  server_del tinyint(1) default NULL,
+  auto_check tinyint(1) default NULL,
   signature text,
-  app_sig tinyint(1),
-  send_direct tinyint(1),
-  add_address tinyint(4),
-  mail_rows int(11) NOT NULL DEFAULT 20,
-  mails_per_page int(11) NOT NULL DEFAULT 20,
-  language varchar(20) NOT NULL DEFAULT 'english',
-  subject_size int(11) NOT NULL DEFAULT 50,
-  address_size int(11) NOT NULL DEFAULT 20,
-  check_int int(11) NOT NULL DEFAULT 15,
+  app_sig tinyint(1) default NULL,
+  send_direct tinyint(1) default NULL,
+  add_address tinyint(4) default NULL,
+  mail_rows int(11) NOT NULL default '20',
+  mails_per_page int(11) NOT NULL default '20',
+  language varchar(20) NOT NULL default 'english',
+  subject_size int(11) NOT NULL default '50',
+  address_size int(11) NOT NULL default '20',
+  check_int int(11) NOT NULL default '15',
+  view tinyint(4) default '0',
+  mailview tinyint(4) default '0',
   PRIMARY KEY (id),
-  UNIQUE user_id (user_id)
+  UNIQUE KEY user_id(user_id)
 );
 
 #
 # Table structure for table 'confirmations'
 #
+
 CREATE TABLE confirmations (
-  id int(11) DEFAULT '0' NOT NULL,
-  user_id int(11) DEFAULT '0' NOT NULL,
-  check char(32)
+  id int(11) NOT NULL default '0',
+  user_id int(11) NOT NULL default '0',
+  check char(32) default NULL
 );
 
 #
 # Table structure for table 'mails'
 #
+
 CREATE TABLE mails (
-  id int(11) DEFAULT '0' NOT NULL auto_increment,
-  folder varchar(255),
-  user_id int(11),
-  uidl varchar(255) DEFAULT '' NOT NULL,
-  priority tinyint DEFAULT 0 NOT NULL,
+  id int(11) NOT NULL auto_increment,
+  folder varchar(255) default NULL,
+  user_id int(11) default NULL,
+  uidl varchar(255) NOT NULL default '',
   tos text,
   froms text,
-  from_name text,
   subject text,
-  is_mime tinyint(1),
-  was_read tinyint(1),
-  acc_id int(11),
+  is_mime tinyint(1) default NULL,
+  was_read tinyint(1) default NULL,
+  acc_id int(11) default NULL,
   mail longtext,
-  date varchar(14),
+  date varchar(14) default NULL,
+  priority tinyint(4) default '0',
+  from_name text,
   PRIMARY KEY (id),
-  KEY uidl (uidl)
+  KEY uidl(uidl)
 );
 
 #
 # Table structure for table 'users'
 #
+
 CREATE TABLE users (
-  id int(11) DEFAULT '0' NOT NULL auto_increment,
-  name varchar(255) DEFAULT '' NOT NULL,
-  pwd varchar(255),
-  email varchar(255),
-  activated tinyint(4),
+  id int(11) NOT NULL auto_increment,
+  name varchar(255) NOT NULL default '',
+  pwd varchar(255) default NULL,
+  email varchar(255) default NULL,
+  activated tinyint(4) default NULL,
   PRIMARY KEY (id),
-  UNIQUE name (name)
+  UNIQUE KEY name(name)
 );
 

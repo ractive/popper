@@ -83,7 +83,7 @@ http://www.gnu.org/copyleft/gpl.html
 		$res = $this->db_tool->db_query($query);		
 
 	}
-	else if (isset($GLOBALS[action]) && $GLOBALS[action] == "showmail") {
+	else if (isset($GLOBALS[action]) && $GLOBALS[action] == "openmail") {
 		if ($this->cur_message_id == 0) {
 			$this->show();
 			return;
@@ -122,18 +122,39 @@ http://www.gnu.org/copyleft/gpl.html
 <form class="mail" action="<?php echo("$GLOBALS[PHP_SELF]")?>" method="post" enctype="multipart/form-data">
 <table style="width: 100%">
 <?php
-		$priority = $mailer->headers->get("X-MSMail-Priority");
-		if (!empty($priority)) {
-			echo("<tr><td><b>$strings[l_Priority]:</b></td><td ");
-			if ($priority == "High") {
-				echo("style=\"background-color: #ff6666;\">$strings[l_HighPriority]");
+		$priority = $mailer->headers->get("X-Priority");
+		$priority = $priority[0];	
+		if ($readonly) {
+			if (!empty($priority) && $priority != NORMAL_PRIORITY) {
+				echo("<tr><td><b>$strings[l_Priority]:</b></td><td ");
+				if ($priority == HIGHEST_PRIORITY) {
+					echo("style=\"background-color: #ff3333;\">$strings[l_HighestPriority]");
+				}
+				if ($priority == HIGH_PRIORITY) {
+					echo("style=\"background-color: #ff6666;\">$strings[l_HighPriority]");
+				}			
+				else if ($priority == LOW_PRIORITY) {
+					echo("style=\"background-color: #9999ff; color: white;\">$strings[l_LowPriority]");
+				}
+				else if ($priority == LOWEST_PRIORITY) {
+					echo("style=\"background-color: #4444ff; color: white;\">$strings[l_LowestPriority]");
+				}			
+				echo("</td></tr>");
 			}
-			else if ($priority == "Low") {
-				echo("style=\"background-color: #9999ff;\">$strings[l_LowPriority]");
-			}
+		}
+		else {
+			echo("<tr><td><b>$strings[l_Priority]:</b></td>\n");
+			echo("<td><select name=\"priority\" style=\"width: 100%;\">");
+			echo("<option value=\"".NORMAL_PRIORITY."\"></option>\n");
+			echo("<option value=\"".HIGHEST_PRIORITY."\" style=\"background-color: #ff3333;\">$strings[l_HighestPriority]</option>\n");	
+			echo("<option value=\"".HIGH_PRIORITY."\" style=\"background-color: #ff6666;\">$strings[l_HighPriority]</option>\n");								
+			echo("<option value=\"".LOW_PRIORITY."\" style=\"background-color: #9999ff;\">$strings[l_LowPriority]</option>\n");				
+			echo("<option value=\"".LOWEST_PRIORITY."\" style=\"background-color: #4444ff;\">$strings[l_LowestPriority]</option>\n");				
+			echo("</select></td>");
 			echo("</td></tr>");
 		}
-?>
+		
+?>		
 	<tr>
 		<td style="width: 15%;"><label for="from" accesskey="F"><?php echo($strings["l_From"]);?>:<label></td>
 <?php
@@ -209,10 +230,10 @@ http://www.gnu.org/copyleft/gpl.html
 		<td><label for="subject" accesskey="S"><?php echo($strings["l_Subject"]); ?>:</label></td>
 <?php
 		if ($readonly) {
-			echo("<td>".htmlspecialchars($mailer->subject())."</td>\n");
+			echo("<td>".htmlspecialchars($mailer->charset_decode($mailer->subject()))."</td>\n");
 		}
 		else {
-			echo("<td><input name=\"subject\" style=\"width: 100%\" value=\"".htmlspecialchars($mailer->subject())."\"></td>");
+			echo("<td><input name=\"subject\" style=\"width: 100%\" value=\"".htmlspecialchars($mailer->charset_decode($mailer->subject()))."\"></td>");
 		}
 ?>
 	</tr>
@@ -262,7 +283,7 @@ http://www.gnu.org/copyleft/gpl.html
 <input class="button" type="submit" value="<?php echo($strings["l_Store"]);?>" name="submit" style="margin-right: 15px;">
 <input class="button" type="reset" value="<?php echo($strings["l_Reset"]);?>"></p>
 <input type="hidden" name="action" value="storemail">
-<input type="hidden" name="update" value="<?php if ($GLOBALS[action] == "showmail") echo("1"); else echo("0");?>">
+<input type="hidden" name="update" value="<?php if ($GLOBALS[action] == "openmail") echo("1"); else echo("0");?>">
 <?php
 	}
 

@@ -1,6 +1,6 @@
 <?
 # phpop RCS version info:
-# $Id: class.pop3.inc.php,v 1.2 2001/02/08 05:41:57 jbergamin Exp $
+# $Id: class.pop3.inc.php,v 1.3 2001/02/11 16:04:35 jbergamin Exp $
 /*
 
 	class.POP3.php3 v1.0	99/03/24 CDI cdi@thewebmasters.net
@@ -12,7 +12,7 @@ class POP3
 {
 	var $ERROR		= "";		//	Error string.
 
-	var $TIMEOUT	= 10;		//	Default timeout before giving up on a
+	var $TIMEOUT	= 60;		//	Default timeout before giving up on a
 								//	network operation.
 
 	var $COUNT		= -1;		//	Mailbox msg count

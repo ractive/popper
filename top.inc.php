@@ -34,8 +34,8 @@ http://www.gnu.org/copyleft/gpl.html
 <META NAME="description" CONTENT="">
 <!--<META HTTP-EQUIV="Refresh" content="10;URL=<?php echo($GLOBALS[PHP_SELF]."?action=sendandreceive&what=getall");?>">-->
 <!--<meta http-equiv="Content-Type" content="text/html; charset=KOI8-R">-->
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="-1">
+<!--<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">-->
 <?php
 // Don't use the style sheet for Netsape. It looks crappy...
 if ($isNS == 0) {

@@ -96,7 +96,7 @@ Version 1.4b6
   * Add the addresses of the selected mails to the addressbook
   * Block the senders of the selected mails
   
-  The was, the toolbar looks like (with the radiobuttons) is ugly. But IE has a bad bug which left
+  The way, the toolbar looks like (with the radiobuttons) is ugly. But IE has a bad bug which left
   me no other coice. IE is not capable to handle <button type="select"> buttons correctly! The sent
   data is crap!
   
@@ -107,3 +107,15 @@ Version 1.4b6
   
 - General tip! Update to MySQL 3.23! I (and others) had problems with MySQL 3.22 when deleting mails.
   The DB crashed sometimes if one tried to delete many mails at once!
+
+Version 1.4
+===========
+- The mail-toolbar looks nice now :-)
+- The user can select different view modes. The frame view is quite cool ;-)
+- The window of opened mails looks better now
+- The "Store draft" feature now works again
+- A user can change his password
+- A useraccount can be deleted
+- "Forgot" password feature added
+- Disposition-Notification requests now work! The notification was sent to the reader itself! 
+  $to and $from is not the same ;-)

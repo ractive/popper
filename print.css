@@ -25,3 +25,54 @@ hr {
 	width: 80%;
 	text-align: left;
 }
+
+p {
+	width: 80%;
+}
+
+/*****************************
+
+Toolbar
+
+*****************************/
+
+.toolbar {
+	color: Black;
+	background-color: silver;
+
+}
+
+.toolbar img {
+	margin-top: 2pt;
+	border: thin solid silver;
+}
+
+.toolbar a {
+	color: Black;
+	background-color: inherit;
+	border : 1px solid Silver;
+	/*padding: 10px, 10px, 10px, 10px; problems with Opera 4.02*/
+	width: auto;
+}
+
+.toolbar a:visited {
+	color: Black;
+	background-color: inherit;
+}
+
+.toolbar a:hover {
+	color: Black;
+	background-color: silver;
+	text-decoration: none;
+	border-top: 1px solid white;
+	border-left: 1px solid white;
+	border-bottom: 1px solid gray;
+	border-right: 1px solid gray;
+}
+
+.toolbar td {
+	border-top: 1px solid white;
+	border-bottom: 2px groove white;
+	border-left: 1px solid white;
+	border-right: 1px solid gray;
+}

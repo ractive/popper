@@ -20,8 +20,12 @@
 			echo(" checked");
 		}
 	?>
-	> <?php echo($strings["l_Remember"]);?><br><br>
-	
+	> 
+	<?php echo($strings["l_Remember"]."<br><br>");
+	if ($status_msg == $strings["l_PwdWrong"]) {
+		echo("<a href=\"$GLOBALS[PHP_SELF]?action=lostpwd\" style=\"color: blue;\">$strings[l_LostPwd]</a><br><br>");
+	}
+	?>
 	<input class="button" type="submit" name="login" value="<?php echo($strings["l_Login"]);?>">
 </form>
 </center>

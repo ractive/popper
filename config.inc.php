@@ -29,6 +29,10 @@ http://www.gnu.org/copyleft/gpl.html
 	// Set it to false if you don't need this
 	$user_confirmation = true;
 
+	// Set this var only to true if you don't have access to the document-root and popper.inc.php
+	// was moved into the document-root
+	$in_docroot = false;
+
 	// Login greeting
 	$greeting = "Willkommen beim Mailservice von Jameslinux";
 	$titlebar = "Weblook - Benutzer ";
