@@ -18,7 +18,8 @@ include("config.inc.php");
 include("class.db_tool.inc.php");
 
 // Include the missing function array_diff for PHP 4.0.0
-if ($GLOBALS["is_php400"]) {
+
+if (substr(phpversion(), 0, 5) == "4.0.0") {
 	include("diff.inc.php");
 }
 
@@ -37,6 +38,7 @@ class popper {
 	var $tmp_files = array();
 	var $del;
 	var $to;
+	var $max_size;
 	var $language;
 	var $folders = array(
 			"inbox" => array(
@@ -73,7 +75,21 @@ class popper {
 	var $config = array();
 
 	function popper() {
+		// Create the db_tool object
 		$this->db_tool = new db_tool("popper.inc.php");
+		
+		// Determine the max size of a mail you can
+		// store in the DB
+
+		$query = "SHOW VARIABLES";
+		$res = $this->db_tool->db_query($query);
+		while($row = $this->db_tool->fetch_array($res)) {
+			if ($row["Variable_name"] == "max_allowed_packet") {
+				$this->max_size = $row["Value"];
+				break;
+			}
+		}
+
 		$this->folder = "inbox";
 	}
 
@@ -129,7 +145,7 @@ class popper {
 	}
 
 	function update_lang() {
-		global $poppercookie;
+		global $poppercookie, $strings, $locale;
 		$lang_file = "lang/lang.".$this->config["language"].".inc.php";
 		
 		if (!file_exists($lang_file)) {
@@ -137,6 +153,9 @@ class popper {
 		}
 		
 		require($lang_file);
+		
+		setlocale(LC_ALL, $locale);
+		
 		$this->folders["inbox"]["name"] = $strings["l_Inbox"];
 		$this->folders["outbox"]["name"] = $strings["l_Outbox"];
 		$this->folders["sent"]["name"] = $strings["l_SentMail"];
@@ -283,7 +302,7 @@ class popper {
 
 		// If we are here, the mail has been read, we tell that the DB
 		$this->set_mail_read($this->cur_message_id);
-
+		
 		echo(nl2br(stripslashes($content)));
 ?>
 </body>
@@ -692,7 +711,7 @@ class popper {
 			$pageno = $this->get_pageno() * $this->config["mails_per_page"];
 			$mails = $this->config["mails_per_page"];
 
-			$query = "SELECT id, tos, froms, IF(LENGTH(subject) > '".$this->config["subject_size"]."', CONCAT(LEFT(subject, '".$this->config["subject_size"]."'), '...'), subject) as subject, is_mime, date_format(date, '%d.%m.%Y %H:%i:%s') as date, date as date_raw, was_read FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY date_raw DESC LIMIT $pageno, $mails";
+			$query = "SELECT id, tos, froms, IF(LENGTH(subject) > '".$this->config["subject_size"]."', CONCAT(LEFT(subject, '".$this->config["subject_size"]."'), '...'), subject) as subject, is_mime, date, was_read FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY date DESC LIMIT $pageno, $mails";
 			$res = $this->db_tool->db_query($query);
 
 			if ($res == 0) {
@@ -709,7 +728,7 @@ class popper {
 					continue;
 				}
 				else {
-					echo ($strings[l_NoMails]);
+					echo($strings["l_NoMails"]);
 					echo(str_repeat("<br>", $this->config["mails_per_page"] - 1));
 					return;
 				}
@@ -772,7 +791,9 @@ class popper {
 			//$subject = $mailer->headers->charset_decode($row["subject"]);
 			$subject = $mailer->charset_decode(stripslashes($row["subject"]));
 			echo("</a></td>\n<td>".htmlspecialchars($subject));
-			echo("</td>\n<td>".$row[date]."</td>");
+			$date = mktime(substr($row[date], 8, 2), substr($row[date], 10, 2), substr($row[date], 12, 2), substr($row[date], 4, 2), substr($row[date], 6, 2), substr($row[date], 0, 4));
+			$formatted_date = strftime("%x %X", $date);
+			echo("</td>\n<td>".$formatted_date."</td>");
 			echo("</tr>\n");
 		}
 		echo("</table></form>\n");
@@ -794,7 +815,7 @@ class popper {
 		$cont = $mail->charset_decode($name);
 		
 		// Strip out header comments
-		$cont = $mail->strip_comment($cont);
+		$cont = $mail->strip_comment($cont, $comment);
 
 		// Get the parts that are either quoted or in angle brackets
 		preg_match("/(\"(.*?)\"\s*)*<(.*?)>/", $cont, $matches);
@@ -834,6 +855,7 @@ class popper {
 			else {
 				$row = $this->db_tool->fetch_row($res);
 				$content = $row[0];
+				$content = htmlentities($content);
 			}
 		}
 		else {
@@ -853,7 +875,7 @@ class popper {
 		// If we are here, the mail has been read, we tell that the DB
 		$this->set_mail_read($this->cur_message_id);
 
-		echo(stripslashes($content));
+		echo(htmlentities(stripslashes($content)));
 	}
 
 	function set_mail_read($mail_id) {
@@ -1134,7 +1156,7 @@ class popper {
 
 			$type = $mailer->get_attachment_type($i);
 
-			switch ($type) {
+			switch (strtolower($type)) {
 				case "image/gif":
 				case "image/jpeg":
 				case "image/png":			
@@ -1148,12 +1170,15 @@ class popper {
 					$type_pic = "movie.gif";
 					break;
 				case "application/x-zip-compressed":
+				case "application/x-gzip-compressed":				
 				case "application/zip":			
 					$type_pic = "zip.gif";
 					break;
 				case "text/plain":
-				case "application/rtf":
 					$type_pic = "text.gif";
+					break;
+				case "application/rtf":
+					$type_pic = "doc.gif";
 					break;
 				case "text/html":
 					$type_pic = "html.gif";
@@ -1161,14 +1186,76 @@ class popper {
 				case "application/pdf":
 					$type_pic = "pdf.gif";
 					break;
+				case "application/x-msdownload":
+					$type_pic = "app.gif";
+					break;
 				case "message/rfc822":
 					$type_pic = "email.gif";
+					break;
+				case "audio/wav":
+				case "autio/mp3":
+					$type_pic = "sound.gif";
 					break;
 				default:
 					$type_pic = "unknown.gif";
 			}
 
 			$att_name = $mailer->get_attachment_name($i);
+			// Try to get the file-extension to determint the type of the file
+			// if it's only an "octet-stream"
+			if ($type == "application/octet-stream") {
+				$ending = substr($att_name, strrpos($att_name, ".") + 1, strlen($att_name));
+				switch(strtolower($ending)) {
+					case "zip":
+					case "gzip":
+					case "bz2":
+					case "arj":
+					case "ace":
+					case "rar":
+					case "zoo":
+					case "uha":				
+						$type_pic = "zip.gif";
+						break;
+					case "doc":
+					case "sdw":
+					case "rtf":
+						$type_pic = "doc.gif";
+						break;
+					case "txt":
+					case "diz":
+						$type_pic = "text.gif";
+						break;						
+					case "html":
+					case "htm":
+					case "php":
+					case "asp":
+					case "phtml":
+						$type_pic = "html.gif";
+						break;
+					case "avi":
+					case "mpg":
+					case "mpeg":
+					case "asf":
+					case "wmv":
+					case "mov":
+						$type_pic = "movie.gif";
+						break;	
+					case "exe":
+					case "vbs":
+					case "sh":
+					case "bat":
+						$type_pic = "app.gif";
+						break;
+					case "mp3":
+					case "wav":
+					case "snd":
+					case "au":
+						$type_pid = "sound.gif";
+						break;
+					default:
+						$type_pic = "unknown.gif";						
+				}
+			}
 			if (!empty($att_name)) {
 				$att_name .= "\r\n";
 			}
