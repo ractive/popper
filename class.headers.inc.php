@@ -33,6 +33,8 @@ class headers {
 	}	
 	
 	function extract($part) {
+		// Clear previous values
+		$this->header_arr = array();
 		@set_time_limit(60);
 		$header_str = $this->get_header_str($part)."\r\n";
 		$line = strtok($header_str, "\n");
