@@ -33,7 +33,7 @@ http://www.gnu.org/copyleft/gpl.html
 			$lang_file = "lang/lang.".$popper->config["language"].".inc.php";
 		}
 		else {
-			$lang_file = "lang/lang.deutsch.inc.php";
+			$lang_file = "lang/lang.english.inc.php";
 		}
 	}
 	
@@ -55,12 +55,11 @@ http://www.gnu.org/copyleft/gpl.html
 	if (isset($login) || ($poppercookie["user"] && !is_logged_in())) {
 		if (!isset($login) || !isset($pwd)) {
 			$popper->show_in_window("login", $strings["l_Login"]);
-			return;
+			exit;
 		}
 
  		if (!$popper->pwd_check($name, $pwd)) {
-			$popper->show_in_window("login", $strings["l_Login"], $strings["l_PwdFail"]);
- 			return;
+ 			exit;
  		}
 
 		if (!$popper->is_activated($name)) {
