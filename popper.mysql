@@ -67,8 +67,12 @@ CREATE TABLE conf (
   app_sig tinyint(1),
   send_direct tinyint(1),
   add_address tinyint(4),
-  mail_rows int(11),
-  mails_per_page int(11),
+  mail_rows int(11) DEFAULT 20,
+  mails_per_page int(11) DEFAULT 20,
+  language varchar(20) DEFAULT 'english',
+  subject_size int(11) DEFAULT 50,
+  address_size int(11) DEFAULT 20,
+  check_int int(11) DEFAULT 15,
   PRIMARY KEY (id),
   UNIQUE user_id (user_id)
 );
