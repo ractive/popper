@@ -50,6 +50,7 @@ class popper {
 			$this->db_tool = new db_tool("popper.inc.php");
 		}
 		
+		$this->load_config();
 		$this->set_folders();
 		
 		// Determine the max size of a mail you can
@@ -68,33 +69,31 @@ class popper {
 	}
 
 	function pre_frame() {
-		global $mail_id;
 		
 		if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 			return;
 		}
 		
-		if (!isset($mail_id) || empty($mail_id)) {
-			$mail_id = $this->cur_message_id;
+		if (!isset($_SESSION['DATA']['mail_id']) || empty($_SESSION['DATA']['mail_id'])) {
+			$_SESSION['DATA']['mail_id'] = $this->cur_message_id;
 		}
 	}
 	
 
 	function set_cur() {
-		global $mail_id, $load;
 		
-		if (!isset($mail_id) || $mail_id == 0) {
+		if (!isset($_SESSION['DATA']['mail_id']) || ($_SESSION['DATA']['mail_id'] == 0)) {
 			$this->cur_message_id = 0;
 			unset($this->cur_mailer);
 			$this->cur_mailer =0;
 		}		
-		else if ($load == 1 || ($this->cur_mailer == 0 || (substr($mail_id, -3) != "att" && $this->cur_message_id != $mail_id))) {
+		else if ($_SESSION['DATA']['load'] == 1 || ($this->cur_mailer == 0 || (substr($_SESSION['DATA']['mail_id'], -3) != "att" && $this->cur_message_id != $_SESSION['DATA']['mail_id']))) {
 			unset($this->att_mailer);
 			$this->att_mailer = array();		
 			unset($this->cur_mailer);
 			$this->cur_mailer = new mailer($this->userid);
-			$this->cur_mailer->load($mail_id);
-			$this->cur_message_id = $mail_id;
+			$this->cur_mailer->load($_SESSION['DATA']['mail_id']);
+			$this->cur_message_id = $_SESSION['DATA']['mail_id'];
 		}
 	}
 	
@@ -129,10 +128,10 @@ class popper {
 	function get_list_db() {
 		$doc_root = getenv("DOCUMENT_ROOT");
 		require("$doc_root/../popper.inc.php");
-		$this->db = mysql_connect($host, $user, $pass)
+		$this->db = mysql_connect($db_host, $db_user, $db_pass)
 			or die ("Could not connect");
 
-		$query = "use $dbname";
+		$query = "use $db_name";
 		mysql_query($query, $this->db)
 			or die ("Could not open mailinglist database");
 
@@ -203,7 +202,7 @@ class popper {
 	}
 
 	function send_pwd() {
-		global $user;
+		
 /*DevNote: roytoo
 Confirming the existence of a user account is very bad security.  A more secure scheme:
 1.  Have the user enter their user name and an associated account's email address
@@ -218,7 +217,7 @@ For extra security:
    Instead, send a "change password link" like the confirmation link.
 2. The email should also state the IP that the request originated from.
 :DevNote*/
-		$query = "SELECT users.email as email, users.pwd as pwd, conf.language as lang FROM users LEFT JOIN conf ON conf.user_id = users.id WHERE users.name='$user'";
+		$query = "SELECT users.email as email, users.pwd as pwd, conf.language as lang FROM users LEFT JOIN conf ON conf.user_id = users.id WHERE users.name='".$_SESSION['DATA']['user']."'";
 		$res = $this->db_tool->db_query($query);
 		if ($this->db_tool->affected_rows($res) != 1) {
 			$this->show_in_window("lostpwd", $_SESSION['strings']['l_LostPwd'], $_SESSION['strings']['l_UserNotFound']);
@@ -241,7 +240,7 @@ For extra security:
 /*DevNote: roytoo
 Masked out for better security.  See prior DevNote.
 :DevNote*/
-//		$mail .= "\r\n\r\n".$_SESSION['strings']['l_UserName'].": ".$user;
+//		$mail .= "\r\n\r\n".$_SESSION['strings']['l_UserName'].": ".$_SESSION['DATA']['user'];
 		$mail .= "\r\n".$_SESSION['strings']['l_Pwd'].": ".stripslashes($row[pwd]);
 		$mail .= "\r\n\r\n".$_SESSION['strings']['l_LostPwdMail2'];
 		
@@ -288,15 +287,14 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 	function show_form($form, $status_msg = "") {
-		global $account_id, $addr_id;
 
 		$this->set_cur();
 
-		if (isset($account_id) && !empty($account_id)) {
-			$this->cur_account_id = $account_id;
+		if (isset($_SESSION['DATA']['account_id']) && !empty($_SESSION['DATA']['account_id'])) {
+			$this->cur_account_id = $_SESSION['DATA']['account_id'];
 		}
-		if (isset($addr_id) && !empty($addr_id)) {
-			$this->cur_address_id = $addr_id;
+		if (isset($_SESSION['DATA']['addr_id']) && !empty($_SESSION['DATA']['addr_id'])) {
+			$this->cur_address_id = $_SESSION['DATA']['addr_id'];
 		}
 		
 		if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && (($form == "addressbook") || ($form == "accounts"))) {
@@ -327,7 +325,6 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show($folder = "", $msg = "") {
-		global $mail_id;
 		
 		if (empty($folder)) {
 			$folder = "inbox";
@@ -452,16 +449,15 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_addresses($blocked = false) {
-		global $addr_id, $show;
 
-		if ($show == "blocked") {
+		if ($_SESSION['DATA']['show'] == "blocked") {
 			$blocked = true;
 			echo("<h3>".$_SESSION['strings']['l_Blocked']."</h3>");
 		}
 		
 
-		if (isset($addr_id) && !empty($addr_id)) {
-			$this->cur_address_id = $addr_id;
+		if (isset($_SESSION['DATA']['addr_id']) && !empty($_SESSION['DATA']['addr_id'])) {
+			$this->cur_address_id = $_SESSION['DATA']['addr_id'];
 		}
 
 		$query = "SELECT id, IF(LENGTH(name) > '".$this->config["address_size"]."', CONCAT(LEFT(name, '".$this->config["address_size"]."'), '...'), name) as name, IF(LENGTH(email) > '".$this->config["address_size"]."', CONCAT(LEFT(email, '".$this->config["address_size"]."'), '...'), email) as email FROM addresses WHERE user_id = '$this->userid' AND blocked='$blocked'";
@@ -492,10 +488,9 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_address() {
-		global $addr_id;
 
-		if (isset($addr_id) && !empty($addr_id)) {
-			$this->cur_address_id = $addr_id;
+		if (isset($_SESSION['DATA']['addr_id']) && !empty($_SESSION['DATA']['addr_id'])) {
+			$this->cur_address_id = $_SESSION['DATA']['addr_id'];
 		}
 		
 		$query = "SELECT * FROM addresses WHERE user_id='$this->userid' AND id='$this->cur_address_id'";
@@ -575,10 +570,8 @@ Masked out for better security.  See prior DevNote.
 
 	function show_account() {
 
-		global $account_id;
-
-		if (isset($account_id) && !empty($account_id)) {
-			$this->cur_account_id = $account_id;
+		if (isset($_SESSION['DATA']['account_id']) && !empty($_SESSION['DATA']['account_id'])) {
+			$this->cur_account_id = $_SESSION['DATA']['account_id'];
 		}
 
 		$query = "SELECT * FROM accounts WHERE user_id = '$this->userid' AND id = '$this->cur_account_id'";
@@ -620,10 +613,9 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_accounts() {
-		global $account_id;
 
-		if (isset($account_id) && !empty($account_id)) {
-			$this->cur_account_id = $account_id;
+		if (isset($_SESSION['DATA']['account_id']) && !empty($_SESSION['DATA']['account_id'])) {
+			$this->cur_account_id = $_SESSION['DATA']['account_id'];
 		}
 
 		$query = "SELECT id, name, popserver FROM accounts WHERE user_id = '$this->userid'";
@@ -712,7 +704,6 @@ Masked out for better security.  See prior DevNote.
 	
 
 	function del_address() {
-		global $ack;
 		
 		// First try to unblock the address
 		$query = "UPDATE addresses SET blocked=0 WHERE id = '$this->cur_address_id' AND user_id = '$this->userid' AND blocked=1";
@@ -725,11 +716,11 @@ Masked out for better security.  See prior DevNote.
 		if ($this->db_tool->affected_rows($res) === false) {
 			// The address was not blocked. Delete it
 			$name = $this->get_address_name();
-			if (!isset($ack) || empty($ack) ) {
+			if (!isset($_SESSION['DATA']['ack']) || empty($_SESSION['DATA']['ack']) ) {
 				$this->show_ack($_SESSION['strings']['l_DelAddress'].": $name", $_SESSION['strings']['l_DelAddressConf']);
 				return;
 			}
-			else if($ack == "No") {
+			else if($_SESSION['DATA']['ack'] == "No") {
 				$del_msg = "Deletion cancelled!";
 			}
 			else {
@@ -754,13 +745,13 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function del_account() {
-		global $ack;
+		
 		$accountname = $this->get_account_name();
-		if (!isset($ack) || empty($ack) ) {
+		if (!isset($_SESSION['DATA']['ack']) || empty($_SESSION['DATA']['ack']) ) {
 			$this->show_ack($_SESSION['strings']['l_DelAccount']." $accountname", $_SESSION['strings']['l_DelAccountConf']);
 			return;
 		}
-		else if($ack == "No") {
+		else if($_SESSION['DATA']['ack'] == "No") {
 			$del_msg = "Deletion cancelled!";
 		}
 		else {
@@ -878,10 +869,9 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_frame_list() {
-		global $folder;
 		
-		if (isset($folder) && !empty($folder)) {
-			$this->folder = $folder;
+		if (isset($_SESSION['DATA']['folder']) && !empty($_SESSION['DATA']['folder'])) {
+			$this->folder = $_SESSION['DATA']['folder'];
 		}
 		$this->frame_header();
 		echo("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\"><tr class=\"window\"><td>");
@@ -952,7 +942,7 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 	function list_mails() {
-		global $mail_id, $page;
+//		global $page;
 		
 		if (empty($this->folder)) {
 			$this->folder = "inbox";
@@ -989,8 +979,6 @@ Masked out for better security.  See prior DevNote.
 			$this->order = "date DESC";
 		}
 		
-		
-		
 		while(1) {
 			$mails = ($this->config["mails_per_page"] ? $this->config["mails_per_page"] : 25);
 			$pageno = $this->get_pageno() * $mails;
@@ -1021,6 +1009,7 @@ Masked out for better security.  See prior DevNote.
 					echo("</table>\n");
 					echo($_SESSION['strings']['l_NoMails']);
 					echo(str_repeat("<br>", $this->config["mails_per_page"] - 1));
+echo "mails_per_page1: ".$this->config["mails_per_page"];
 					return;
 				}
 			}
@@ -1137,6 +1126,7 @@ Masked out for better security.  See prior DevNote.
 
 		if (($this->config["mailview"] != $_SESSION['FRAME_VIEW']) && ($count < $this->config["mails_per_page"])) {
 			echo(str_repeat("<br>", $this->config["mails_per_page"] - $count));
+echo "mails_per_page2: ".$this->config["mails_per_page"];
 		}	
 	}
 	
@@ -1202,7 +1192,6 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_mail_content($mailer = 0) {
-		global $mail_id;
 
 		if ($mailer == 0) {
 			$mailer = $this->cur_mailer;
@@ -1223,8 +1212,8 @@ Masked out for better security.  See prior DevNote.
 		}
 		$content = "";
 		if ($_SESSION['action'] == "showsources") {
-			if ($mail_id != "att") {
-				$query = "SELECT mail FROM mails WHERE id='$mail_id' AND user_id='$this->userid'";
+			if ($_SESSION['DATA']['mail_id'] != "att") {
+				$query = "SELECT mail FROM mails WHERE id='".$_SESSION['DATA']['mail_id']."' AND user_id='$this->userid'";
 				$res = $this->db_tool->db_query($query);
 				if ($res === false) {
 					$content = "\r\n\r\n  ======== ERROR while trying to get sources! ========";
@@ -1235,7 +1224,7 @@ Masked out for better security.  See prior DevNote.
 				}
 			}
 			else {
-				$m = $this->att_mailer[$mail_id];
+				$m = $this->att_mailer[$_SESSION['DATA']['mail_id']];
 				$content = $m->headers->generate_str(true)."\r\n";
 				$content .= $m->body;
 			}
@@ -1277,9 +1266,6 @@ Masked out for better security.  See prior DevNote.
 	
 	function split_html($content) {
 		if (preg_match("|(.*<body.*>)(.*?)|Usi", $content, $matches)) {
-			/*foreach($matches as $key => $val) {
-				dbg(htmlspecialchars($key)." -> ".htmlspecialchars($val));
-			}*/
 			return array($matches[1], $matches[2]);
 		}
 		
@@ -1342,14 +1328,13 @@ Masked out for better security.  See prior DevNote.
 	
 	
 	function next_prev() {
-		global $goto, $mail_id;
 
 		// Make sure that the parameter is useful
-		if (!isset($goto) || empty($goto)) {
+		if (!isset($_SESSION['DATA']['goto']) || empty($_SESSION['DATA']['goto'])) {
 			return;
 		}
 		
-		if (!($goto == "prev" || $goto == "next")) {
+		if (!($_SESSION['DATA']['goto'] == "prev" || $_SESSION['DATA']['goto'] == "next")) {
 			return;
 		}
 
@@ -1366,34 +1351,29 @@ Masked out for better security.  See prior DevNote.
 		// Look for the current id
 		while($row = $this->db_tool->fetch_row($res)) {
 
-			if ($row[0] == $mail_id) {
-				if ($goto == "next") {
+			if ($row[0] == $_SESSION['DATA']['mail_id']) {
+				if ($_SESSION['DATA']['goto'] == "next") {
 					// Get the next entry.
 					// This is the new mail_id
 					$row = $this->db_tool->fetch_row($res);
-					$mail_id = $row[0];
-//					dbg("NEW MAIL_ID: $mail_id");
+					$_SESSION['DATA']['mail_id'] = $row[0];
 					return;
 				}
-				else if ($goto == "prev") {
+				else if ($_SESSION['DATA']['goto'] == "prev") {
 					// The old entry is the new mail id
 					// It it's null, we are at the top
 					if ($old == 0) {
 						return;
 					}
-					$mail_id = $old;
+					$_SESSION['DATA']['mail_id'] = $old;
 					return;
 				}
 			}
 			$old = $row[0];
 		}
-		
-		
-		
 	}
 	
 	function show_popup_mail($show_att_mail = false) {
-		global $mail_id;
 		
 		$this->next_prev();
 		
@@ -1402,8 +1382,8 @@ Masked out for better security.  See prior DevNote.
 			$this->set_cur();
 		}
 		
-		if (isset($this->att_mailer[$mail_id]) && !empty($this->att_mailer[$mail_id])) {
-			$mailer = $this->att_mailer[$mail_id];
+		if (isset($this->att_mailer[$_SESSION['DATA']['mail_id']]) && !empty($this->att_mailer[$_SESSION['DATA']['mail_id']])) {
+			$mailer = $this->att_mailer[$_SESSION['DATA']['mail_id']];
 		}
 		else {
 			$mailer = $this->cur_mailer;
@@ -1514,8 +1494,8 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 
-	function set_mail_read($mail_id) {
-		$query = "UPDATE mails SET was_read='".$_SESSION['MAIL_READ']."' WHERE id='$mail_id' AND user_id='$this->userid' AND was_read='".$_SESSION['MAIL_UNREAD']."'";
+	function set_mail_read($m_id) {
+		$query = "UPDATE mails SET was_read='".$_SESSION['MAIL_READ']."' WHERE id='$m_id' AND user_id='$this->userid' AND was_read='".$_SESSION['MAIL_UNREAD']."'";
 		$this->db_tool->db_query($query);
 		echo $this->db_tool->db_error();
 	}
@@ -1559,9 +1539,8 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function create_user() {
-		global $name, $email, $pwd, $pwd2;
 
-		if (!isset($name) && !isset($pwd) && !isset($pwd2)) {
+		if (!isset($_SESSION['DATA']['name']) && !isset($_SESSION['DATA']['pwd']) && !isset($_SESSION['DATA']['pwd2'])) {
 			// Seems like new user is called for the first time without any info
 			// Just show the form
 			$this->show_in_window("newuser", $_SESSION['strings']['l_NewUser']);
@@ -1569,25 +1548,25 @@ Masked out for better security.  See prior DevNote.
 		}
 
 		// Check if the password and the password confirmation are tha same
-		if ($pwd != $pwd2) {
+		if ($_SESSION['DATA']['pwd'] != $_SESSION['DATA']['pwd2']) {
 			$this->show_in_window("newuser", $_SESSION['strings']['l_PwdMismatch1'], $_SESSION['strings']['l_PwdMismatch2']);
 			return;
 		}
 
 		// Don't allow empty passwords
-		if (empty($pwd)) {
+		if (empty($_SESSION['DATA']['pwd'])) {
 			$this->show_in_window("newuser", $_SESSION['strings']['l_EmptyPwd1'], $_SESSION['strings']['l_EmptyPwd1']);
 			return 0;
 		}
 
 		// Everything is fine. Now we insert the new user into the DB
 		$activated = !$_SESSION['user_confirmation'];
-		$query = "INSERT INTO users (name, pwd, email, activated) VALUES ('$name', '$pwd', '$email', '$activated')";
+		$query = "INSERT INTO users (name, pwd, email, activated) VALUES ('".$_SESSION['DATA']['name']."', '".$_SESSION['DATA']['pwd']."', '".$_SESSION['DATA']['email']."', '".$activated."')";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
 			$error = mysql_error();
 			if (ereg("^Duplicate entry", $error)) {
-				$this->show_in_window("newuser", $_SESSION['strings']['l_UserExists1'], $_SESSION['strings']['l_UserExists2']." ".$name);
+				$this->show_in_window("newuser", $_SESSION['strings']['l_UserExists1'], $_SESSION['strings']['l_UserExists2']." ".$_SESSION['DATA']['name']);
 				return 0;
 			}
 			else {
@@ -1600,10 +1579,10 @@ Masked out for better security.  See prior DevNote.
 		
 		$res = $this->db_tool->db_query($query);
 		$this->load_config();
-		$this->set_user($name);
+		$this->set_user($_SESSION['DATA']['name']);
 		
 		if ($_SESSION['user_confirmation']) {
-			$this->send_confirmation_mail($name, $email);
+			$this->send_confirmation_mail($_SESSION['DATA']['name'], $_SESSION['DATA']['email']);
 		}
 
 		return ($this->userid > 0);
@@ -1663,6 +1642,7 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function is_activated($name) {
+		
 		$id = $this->get_userid($name);
 		$query = "SELECT activated FROM users WHERE id='$id'";
 
@@ -1682,15 +1662,14 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function store_mail($backup = false) {
-		global $notification, $to_x, $cc_x, $bcc_x, $priority, $tos, $ccs, $bccs, $subject, $body, $replyaccount, $submit, $attachment, $attachment_name, $attachment_size, $attachment_type;
 
-		$body = stripslashes($body);
+		$_SESSION['DATA']['body'] = stripslashes($_SESSION['DATA']['body']);
 
-		if (isset($to_x) || isset($cc_x) || isset($bcc_x)) {
+		if (isset($_SESSION['DATA']['to_x']) || isset($_SESSION['DATA']['cc_x']) || isset($_SESSION['DATA']['bcc_x'])) {
 			$backup = true;
 		}
 
-		$query = "SELECT fromname, replyto FROM accounts WHERE id = '$replyaccount' AND user_id='$this->userid'";
+		$query = "SELECT fromname, replyto FROM accounts WHERE id = '".$_SESSION['DATA']['replyaccount']."' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
 			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_AccInfoFail']);
@@ -1698,48 +1677,47 @@ Masked out for better security.  See prior DevNote.
 		}
 		$row = $this->db_tool->fetch_array($res);
 
-		if ($submit == $_SESSION['strings']['l_Send']) {
+		if ($_SESSION['DATA']['submit'] == $_SESSION['strings']['l_Send']) {
 			$folder = "outbox";
 		}
-		else if ($submit == $_SESSION['strings']['l_Store']) {
-//			dbg($submit);
+		else if ($_SESSION['DATA']['submit'] == $_SESSION['strings']['l_Store']) {
 			$folder = "drafts";
 		}
 		else {
 			$folder = "inbox";
 		}
 		$reply = "\"".$row["fromname"]."\" <".$row["replyto"].">";
-		$mailer = new mailer($this->userid, $replyaccount);
-		$mailer->create($tos, $reply, $subject, $body);
-		if (isset($ccs) && !empty($ccs)) {
-			$mailer->cc($ccs);
+		$mailer = new mailer($this->userid, $_SESSION['DATA']['replyaccount']);
+		$mailer->create($_SESSION['DATA']['tos'], $reply, $_SESSION['DATA']['subject'], $_SESSION['DATA']['body']);
+		if (isset($_SESSION['DATA']['ccs']) && !empty($_SESSION['DATA']['ccs'])) {
+			$mailer->cc($_SESSION['DATA']['ccs']);
 		}
-		if (isset($bccs) && !empty($bccs)) {
-			$mailer->bcc($bccs);
+		if (isset($_SESSION['DATA']['bccs']) && !empty($_SESSION['DATA']['bccs'])) {
+			$mailer->bcc($_SESSION['DATA']['bccs']);
 		}	
-		if (isset($notification) && $notification == "on") {
+		if (isset($_SESSION['DATA']['notification']) && $_SESSION['DATA']['notification'] == "on") {
 			$mailer->headers->put("Disposition-Notification-To",  $reply);
 		}
 		
-		if (isset($priority) && $priority != $_SESSION['NORMAL_PRIORITY']) {
-			$mailer->headers->put("X-Priority", $priority);
+		if (isset($_SESSION['DATA']['priority']) && $_SESSION['DATA']['priority'] != $_SESSION['NORMAL_PRIORITY']) {
+			$mailer->headers->put("X-Priority", $_SESSION['DATA']['priority']);
 		}
 		
 		
-		if (isset($attachment) && !empty($attachment) && $attachment != "none") {
-			$mailer->attach_file($attachment, $attachment_name, $attachment_type, "", "", "");
+		if (isset($_SESSION['DATA']['attachment']) && !empty($_SESSION['DATA']['attachment']) && $_SESSION['DATA']['attachment'] != "none") {
+			$mailer->attach_file($_SESSION['DATA']['attachment'], $_SESSION['DATA']['attachment_name'], $_SESSION['DATA']['attachment_type'], "", "", "");
 		}
 
 		// We backup the message to use it later
 		// This is used to show the "Choose recipients" dialog. The current mail then does not get lost
 		if ($backup) {
-			if (isset($to_x)) {
+			if (isset($_SESSION['DATA']['to_x'])) {
 				$_SESSION['DATA']['field'] = "TO";
 			}
-			else if (isset($cc_x)) {
+			else if (isset($_SESSION['DATA']['cc_x'])) {
 				$_SESSION['DATA']['field'] = "CC";
 			}	
-			else if (isset($bcc_x)) {
+			else if (isset($_SESSION['DATA']['bcc_x'])) {
 				$_SESSION['DATA']['field'] = "BCC";
 			}						
 			$this->cur_mailer = $mailer;
@@ -1749,12 +1727,12 @@ Masked out for better security.  See prior DevNote.
 		}
 		else {
 			// Does the user want to send it directly?
-			if ($submit == $_SESSION['strings']['l_Send'] && $this->config["send_direct"] == 1) {
+			if ($_SESSION['DATA']['submit'] == $_SESSION['strings']['l_Send'] && $this->config["send_direct"] == 1) {
 				if ($mailer->send()) {
 					// The mail could be sent. Store it in the sent folder
 					$folder = "sent";
 				}
-				else if ($submit == $_SESSION['strings']['l_Send']) {
+				else if ($_SESSION['DATA']['submit'] == $_SESSION['strings']['l_Send']) {
 					// The mail could not be sent, keep it in the outbox folder
 					$folder = "outbox";
 				}
@@ -1876,10 +1854,9 @@ Masked out for better security.  See prior DevNote.
 		
 	
 	function show_attachments($of_part = 0, $att_path = 0, $level = 1) {
-		global $mail_id;
 		
-		if (!isset($mail_id)) {
-			$mail_id = $this->cur_message_id;
+		if (!isset($_SESSION['DATA']['mail_id'])) {
+			$_SESSION['DATA']['mail_id'] = $this->cur_message_id;
 		}
 
 		if ($this->cur_message_id == 0) {
@@ -1903,10 +1880,8 @@ Masked out for better security.  See prior DevNote.
 		if ($op_part == 0) {
 			$c_type = $mailer->get_header("Content-Type");
 			$type = strtoupper($c_type["CONTENT-TYPE"]);
-//			dbg($type);
 			$is_multipart = (substr($type, 0, strlen("MULTIPART/")) == "MULTIPART/");
 			if (!empty($type) && $type != "TEXT/PLAIN" && !$is_multipart) {
-//				dbg("NOT TEXT/PLAIN");
 				// Grrr. A mail which is only an attachment :-(
 				$mailer->mimeparts[1] = $mailer;
 				$fake = true;
@@ -1995,12 +1970,11 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 	function get_attachment() {
-		global $mail_id;
 		
 		$this->set_cur();
 
-		if (isset($this->att_mailer[$mail_id]) && !empty($this->att_mailer[$mail_id])) {
-			$mailer = $this->att_mailer[$mail_id];
+		if (isset($this->att_mailer[$_SESSION['DATA']['mail_id']]) && !empty($this->att_mailer[$_SESSION['DATA']['mail_id']])) {
+			$mailer = $this->att_mailer[$_SESSION['DATA']['mail_id']];
 		}
 		else {
 			$mailer = $this->cur_mailer;
@@ -2044,13 +2018,12 @@ Masked out for better security.  See prior DevNote.
 			// Generate a fake mail_id for the attached mail
 			/*srand((double)microtime()*1000000);
 			$rand = md5(rand());			
-			$mail_id = substr($rand, 0, 4)."att";	*/
-			$mail_id = $mail_id."att";
-			if (!isset($this->att_mailer[$mail_id])) {
+			$_SESSION['DATA']['mail_id'] = substr($rand, 0, 4)."att";	*/
+			$_SESSION['DATA']['mail_id'] = $_SESSION['DATA']['mail_id']."att";
+			if (!isset($this->att_mailer[$_SESSION['DATA']['mail_id']])) {
 				$m = new mailer($this->userid);
 				$m->from_text($data);
-				$this->att_mailer[$mail_id] = $m;
-//				dbg("NEW ATT_MAILER[ $mail_id ]");
+				$this->att_mailer[$_SESSION['DATA']['mail_id']] = $m;
 			}
 			$this->show_popup_mail(true);
 			return;
@@ -2120,7 +2093,7 @@ Masked out for better security.  See prior DevNote.
 	
 
 	function delete_mail() {
-		global $ack;
+		
 		if ($this->cur_message_id == 0) {
 			$this->show_form("main", $_SESSION['strings']['l_Select']);
 			return 0;
@@ -2131,13 +2104,13 @@ Masked out for better security.  See prior DevNote.
 		// When the mail is in the bin folder we ask the user for a confirmation if the wants to delete
 		//
 		if ($this->folder == "bin") {
-			// If $ack is not set, we pop-up the confirmation window
-			if (!isset($ack) || empty($ack) ) {
+			// If $_SESSION['DATA']['ack'] is not set, we pop-up the confirmation window
+			if (!isset($_SESSION['DATA']['ack']) || empty($_SESSION['DATA']['ack']) ) {
 				$this->del = $this->cur_message_id;
 				$this->show_ack($_SESSION['strings']['l_DelMail'], $_SESSION['strings']['l_DelMailQuest']);
 				return;
 			}
-			else if($ack == "No") {
+			else if($_SESSION['DATA']['ack'] == "No") {
 				$this->del = "";
 				// The user said no :-(
 				$del_msg = "Deletion cancelled!";
@@ -2178,35 +2151,34 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function delete_mails($pass_del = 0) {
-		global $ack, $delete, $del;
 		
-		if (is_array($del)) {
-			reset($del);
+		if (is_array($_SESSION['DATA']['del'])) {
+			reset($_SESSION['DATA']['del']);
 		}
 		
 		if ($pass_del != 0) {
 			$this->del = $pass_del;
 		}
-		else if (isset($del) && !empty($del)) {
-			$this->del = $del;
+		else if (isset($_SESSION['DATA']['del']) && !empty($_SESSION['DATA']['del'])) {
+			$this->del = $_SESSION['DATA']['del'];
 		}
 
 		// Decide if the mail is just moved to the bin or if it is really deleted
 		if ($this->folder == "bin") {
-			// If $ack is not set, we pop-up the confirmation window
-			if (!isset($ack) || empty($ack) ) {
+			// If $_SESSION['DATA']['ack'] is not set, we pop-up the confirmation window
+			if (!isset($_SESSION['DATA']['ack']) || empty($_SESSION['DATA']['ack']) ) {
 				$this->show_ack($_SESSION['strings']['l_DelMails'], $_SESSION['strings']['l_DelMailsQuest']);
 				return;
 			}
-			else if($ack == "No") {
+			else if($_SESSION['DATA']['ack'] == "No") {
 				$this->del = "";
 				// The user said no :-(
 				$del_msg = $_SESSION['strings']['l_DelCancel'];
 			}
 			else {
-				$del = $this->del;
+				$_SESSION['DATA']['del'] = $this->del;
 				if ((count($this->del) > 0)) {
-					$all_succ = $this->trash_mail($del);
+					$all_succ = $this->trash_mail($_SESSION['DATA']['del']);
 
 					if ($all_succ) {
 						$del_msg = $_SESSION['strings']['l_AllDel'];
@@ -2227,7 +2199,6 @@ Masked out for better security.  See prior DevNote.
 			else {
 				$del_msg = $_SESSION['strings']['l_FolderMoveFail'].": ".$_SESSION['strings']['l_RecycleBin'];
 			}
-
 		}
 
 		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
@@ -2239,11 +2210,10 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 	function add_sel_addr($block = false) {
-		global $del;
 		
-		if (is_array($del)) {
+		if (is_array($_SESSION['DATA']['del'])) {
 			$query = "SELECT froms FROM mails WHERE id IN (";
-			foreach($del as $in) {
+			foreach($_SESSION['DATA']['del'] as $in) {
 				$query .= $in.", ";
 			}
 			// Remove the last comma
@@ -2257,7 +2227,7 @@ Masked out for better security.  See prior DevNote.
 		
 		while ($row = $this->db_tool->fetch_array($res)) {
 			// Add the addresses to the DB
-			$this->add_address($row[froms], $block);
+			$this->add_address($row['froms'], $block);
 		}
 	}
 	
@@ -2466,37 +2436,35 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function send_and_receive() {
-		global $show;
 
 		if (!isset($_SESSION['what']) || empty($_SESSION['what'])) {
 			$this->show($this->folder);
 		}
 		
-		switch($_SESSION['what'])
-		{
-		case "sendonly":
-			$this->send_outbox();
-			break;
-		case "sendandreceive":
-			$msg = $this->send_outbox();
-			$this->get_mails();
-			/*$this->show("sent", $msg);
-			return;*/
-			break;
-		case "getall":
-			$this->get_mails();
-			break;
-		default:
-			// Only get the mails from a specified account
-			$this->get_mails($_SESSION['what']);
+		switch($_SESSION['what']) {
+			case "sendonly":
+				$this->send_outbox();
+				break;
+			case "sendandreceive":
+				$msg = $this->send_outbox();
+				$this->get_mails();
+				/*$this->show("sent", $msg);
+				return;*/
+				break;
+			case "getall":
+				$this->get_mails();
+				break;
+			default:
+				// Only get the mails from a specified account
+				$this->get_mails($_SESSION['what']);
 		}
 		
-		if ($show == "no") {
+		if ($_SESSION['DATA']['show'] == "no") {
 			Header("Location: ".$_SERVER['PHP_SELF']."?action=checkrep");
 			exit;
 		}
 		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
-			$this->show_frame_list();			
+			$this->show_frame_list();		
 		}
 		else {
 			$this->show($this->folder, $msg);
@@ -2683,14 +2651,13 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function delete_user() {
-		global $ack;
 		
-		// If $ack is not set, we pop-up the confirmation window
-		if (!isset($ack) || empty($ack) ) {
+		// If $_SESSION['DATA']['ack'] is not set, we pop-up the confirmation window
+		if (!isset($_SESSION['DATA']['ack']) || empty($_SESSION['DATA']['ack']) ) {
 			$this->show_ack($_SESSION['strings']['l_DelUser'], $_SESSION['strings']['l_DelUserQuest']);
 			return;
 		}
-		else if($ack == "No") {
+		else if($_SESSION['DATA']['ack'] == "No") {
 			// The user said no :-(
 			$msg = $_SESSION['strings']['l_DelCancel'];
 		}
@@ -2864,36 +2831,34 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function store_config() {
-		global $conf_submit, $view, $mailview, $keep, $server_del, $auto_check, $signature, $language;
-		global $subject_size, $check_int, $address_size, $app_sig, $send_direct, $mail_rows;
-		global $mails_per_page, $add_address, $folder_view_width;
 
-		if (isset($conf_submit) && $conf_submit == $_SESSION['strings']['l_Store']) {
-			$query  = "UPDATE conf SET send_direct='$send_direct', keep='$keep', check_int='$check_int', ";
-			$query .= "server_del='$server_del', auto_check='$auto_check', signature='$signature', ";
-			$query .= "app_sig='$app_sig', mails_per_page='$mails_per_page', mail_rows='$mail_rows', ";
-			$query .= "add_address='$add_address', language='$language', subject_size='$subject_size', ";
-			$query .= "address_size='$address_size', view='$view', mailview='$mailview', ";
-			$query .= "folder_view_width='$folder_view_width'  WHERE user_id = '$this->userid'";
-			$res = $this->db_tool->db_query($query);	
+		if (isset($_SESSION['DATA']['conf_submit']) && $_SESSION['DATA']['conf_submit'] == $_SESSION['strings']['l_Store']) {
+			$query  = "UPDATE conf SET send_direct='".$_SESSION['DATA']['send_direct']."', keep='".$_SESSION['DATA']['keep']."', check_int='".$_SESSION['DATA']['check_int']."', ";
+			$query .= "server_del='".$_SESSION['DATA']['server_del']."', auto_check='".$_SESSION['DATA']['auto_check']."', signature='".$_SESSION['DATA']['signature']."', ";
+			$query .= "app_sig='".$_SESSION['DATA']['app_sig']."', mails_per_page='".$_SESSION['DATA']['mails_per_page']."', mail_rows='".$_SESSION['DATA']['mail_rows']."', ";
+			$query .= "add_address='".$_SESSION['DATA']['add_address']."', language='".$_SESSION['DATA']['language']."', subject_size='".$_SESSION['DATA']['subject_size']."', ";
+			$query .= "address_size='".$_SESSION['DATA']['address_size']."', view='".$_SESSION['DATA']['view']."', mailview='".$_SESSION['DATA']['mailview']."', ";
+			$query .= "folder_view_width='".$_SESSION['DATA']['folder_view_width']."'  WHERE user_id = '".$this->userid."'";
+			$res = $this->db_tool->db_query($query);
+			
 			if ($res != 0) {
-				$this->config["keep"] = $keep;
-				$this->config["server_del"] = $server_del;
-				$this->config["auto_check"] = $auto_check;
-				$this->config["signature"] = $signature;
-				$this->config["app_sig"] = $app_sig;
-				$this->config["send_direct"] = $send_direct;	
-				$this->config["mail_rows"] = $mail_rows;
-				$this->config["mails_per_page"] = $mails_per_page;
-				$this->config["add_address"] = $add_address;
-				$this->config["subject_size"] = $subject_size;
-				$this->config["address_size"] = $address_size;
-				$this->config["check_int"] = $check_int;
-				$this->config["view"] = $view;							
-				$this->config["mailview"] = $mailview;
-				$this->config["folder_view_width"] = $folder_view_width;
-				if ($this->config["language"] != $language) {
-					$this->config["language"] = $language;
+				$this->config["keep"] = $_SESSION['DATA']['keep'];
+				$this->config["server_del"] = $_SESSION['DATA']['server_del'];
+				$this->config["auto_check"] = $_SESSION['DATA']['auto_check'];
+				$this->config["signature"] = $_SESSION['DATA']['signature'];
+				$this->config["app_sig"] = $_SESSION['DATA']['app_sig'];
+				$this->config["send_direct"] = $_SESSION['DATA']['send_direct'];
+				$this->config["mail_rows"] = $_SESSION['DATA']['mail_rows'];
+				$this->config["mails_per_page"] = $_SESSION['DATA']['mails_per_page'];
+				$this->config["add_address"] = $_SESSION['DATA']['add_address'];
+				$this->config["subject_size"] = $_SESSION['DATA']['subject_size'];
+				$this->config["address_size"] = $_SESSION['DATA']['address_size'];
+				$this->config["check_int"] = $_SESSION['DATA']['check_int'];
+				$this->config["view"] = $_SESSION['DATA']['view'];
+				$this->config["mailview"] = $_SESSION['DATA']['mailview'];
+				$this->config["folder_view_width"] = $_SESSION['DATA']['folder_view_width'];
+				if ($this->config["language"] != $_SESSION['DATA']['language']) {
+					$this->config["language"] = $_SESSION['DATA']['language'];
 					$this->update_lang();
 				}
 
@@ -2902,18 +2867,17 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function change_pwd() {
-		global $pwd, $pwd2;
 		
-		if (empty($pwd)) {
+		if (empty($_SESSION['DATA']['pwd'])) {
 			$this->show_in_window("changepwd", $_SESSION['strings']['l_EmptyPwd1'], $_SESSION['strings']['l_EmptyPwd2']);
 			return;
 		}
-		if ($pwd != $pwd2) {
+		if ($pwd != $_SESSION['DATA']['pwd2']) {
 			$this->show_in_window("changepwd", $_SESSION['strings']['l_PwdMismatch1'], $_SESSION['strings']['l_PwdMismatch2']);
 			return;
 		}
 		
-		$query = "UPDATE users SET pwd='$pwd' WHERE id='$this->userid'";
+		$query = "UPDATE users SET pwd='".$_SESSION['DATA']['pwd']."' WHERE id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 
 		if ($res === false) {
@@ -2926,6 +2890,7 @@ Masked out for better security.  See prior DevNote.
 	
 
 	function start_timer($event) {
+		
 		printf("timer: %s\n", $event);
 		list($low, $high) = split(" ", microtime());
 		$t = $high + $low;
@@ -2935,6 +2900,7 @@ Masked out for better security.  See prior DevNote.
  	}
 
 	function next_timer($start, $event) {
+		
 		list($low, $high) = split(" ", microtime());
 		$t    = $high + $low;
     	$used = $t - $start;
