@@ -12,7 +12,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-	$query = "SELECT id, name FROM accounts WHERE user_id = '$this->userid'";
+	$query = "SELECT id, name FROM accounts WHERE user_id = '".$this->userid."'";
 	$res = $this->db_tool->db_query($query);
 	if ($res === false) {
 		$this->report_error($this->db_tool->db_error(), "DB Error");
@@ -20,22 +20,22 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 ?>
 <center>
-<h2><?php echo($_SESSION["strings"]["l_SendReceive"]);?></h2>
+<h2><?php echo($_SESSION['strings']['l_SendReceive']);?></h2>
 
-<form method="post" action="<?php echo("$GLOBALS[REQUEST_URI]");?>">
-	<h4><?php echo($_SESSION["strings"]["l_Action"]);?></h4>
+<form method="post" action="<?php echo($_SERVER['REQUEST_URI']);?>">
+	<h4><?php echo($_SESSION['strings']['l_Action']);?></h4>
 	<p>
 	<select name="what" class="button">
-		<option value="getall"><?php echo($_SESSION["strings"]["l_GetAll"]);?></option>
-		<option value="sendonly"><?php echo($_SESSION["strings"]["l_SendOnly"]);?></option>
-		<option value="sendandreceive"><?php echo($_SESSION["strings"]["l_SendRecvAll"]);?></option>
+		<option value="getall"><?php echo($_SESSION['strings']['l_GetAll']);?></option>
+		<option value="sendonly"><?php echo($_SESSION['strings']['l_SendOnly']);?></option>
+		<option value="sendandreceive"><?php echo($_SESSION['strings']['l_SendRecvAll']);?></option>
 <?php
 		while($row = $this->db_tool->fetch_array($res)) {
-			echo("<option value=\"$row[id]\">".stripslashes($row["name"])."</option>");
+			echo("<option value=\"$row[id]\">".stripslashes($row['name'])."</option>");
 		}
 ?>
 	</select>
 	</p>
-	<p><input class="button" type="submit" value="<?php echo($_SESSION["strings"]["l_Go"]);?>"></p>
+	<p><input class="button" type="submit" value="<?php echo($_SESSION['strings']['l_Go']);?>"></p>
 </form>
 </center>

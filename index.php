@@ -24,18 +24,18 @@ http://www.gnu.org/copyleft/gpl.html
 	// Set the session
 	setup_session();
 	
-/*DevNote: roytoo
-This is very insecure!  Need to validate input and screen for PHP [htmlspecialchars()]
-and MySQL [mysql_real_escape_string()] injection attacks.
-:DevNote*/
-	$_SESSION['action']    = (!isset($_REQUEST['action']) ? "" : strtolower(htmlspecialchars($_REQUEST['action'])));
-	$_SESSION['confirm_code']     = (!isset($_REQUEST['confirm_code']) ? "" : htmlspecialchars($_REQUEST['confirm_code']));
-	$_SESSION['ok'] 		  = (!isset($_REQUEST['ok']) ? "" : strtolower(htmlspecialchars($_REQUEST['ok'])));
-	$_SESSION['what']		  = (!isset($_REQUEST['what']) ? "" : htmlspecialchars($_REQUEST['what']));
-	$_SESSION['order']		  = (!isset($_REQUEST['order']) ? "" : htmlspecialchars($_REQUEST['order']));
-	$_SESSION['name']		  = (!isset($_REQUEST['name']) ? "" : htmlspecialchars($_REQUEST['name']));
-	$_SESSION['pwd']		  = (!isset($_REQUEST['pwd']) ? "" : htmlspecialchars($_REQUEST['pwd']));
-	$_SESSION['set_cookie']		  = (!isset($_REQUEST['set_cookie']) ? "" : htmlspecialchars($_REQUEST['set_cookie']));
+	// Clear any prior $_SESSION['DATA']
+	if (isset($_SESSION['DATA'])) {
+		$_SESSION['DATA'] = "";
+	}
+	
+  // Process POST last, so that those settings will take precedence
+	// Process GET variables
+	process_get_vars();
+	// Process POST variables
+	process_post_vars();
+	
+	$_SESSION['action'] = ($_SESSION['DATA']['action'] ? $_SESSION['DATA']['action'] : "");
 	
 	@set_time_limit(60);
 
@@ -58,11 +58,11 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 	case "process_login":
 		process_login();
 		break;
-	case $_SESSION["strings"]["l_NewUser"]:
+	case $_SESSION['strings']['l_NewUser']:
 		process_new_user();
 		break;
 	case "confirm":
-		process_confirmation($_SESSION['confirm_code']);
+		process_confirmation($_SESSION['DATA']['confirm_code']);
 		break;
 	default:
 		process_action();
@@ -93,27 +93,52 @@ function setup_session() {
 	}
 }
 
+/*DevNote: roytoo
+This is very insecure!  Need to validate input and screen for PHP [htmlspecialchars()]
+and MySQL [mysql_real_escape_string()] injection attacks.
+:DevNote*/
+function process_post_vars() {
+	
+	foreach ( $_POST as $post => $pvar) {
+		$_SESSION['DATA'][strtolower($post)] = htmlspecialchars($pvar);
+	}
+}
+
+/*DevNote: roytoo
+This is very insecure!  Need to validate input and screen for PHP [htmlspecialchars()]
+and MySQL [mysql_real_escape_string()] injection attacks.
+:DevNote*/
+function process_get_vars() {
+	
+/*DevNote: roytoo
+As a security precaution, need to limit to a know list.
+:DevNote*/
+	foreach ( $_GET as $get => $gvar) {
+		$_SESSION['DATA'][strtolower($get)] = htmlspecialchars($gvar);
+	}
+}
+
 function set_language() {
 	$lang_file = language_get();
 	require($lang_file);
-	setlocale(LC_ALL, $_SESSION["locale"]);
+	setlocale(LC_ALL, $_SESSION['locale']);
 }
 
 function process_login() {
 	
-	if (!isset($_SESSION['name']) || !isset($_SESSION['pwd'])) {
-		$msg = $_SESSION["strings"]["l_FillInAll"];
-		$_SESSION['popper']->show_in_window("login", $_SESSION["strings"]["l_Login"], $_SESSION["strings"]["l_FillInAll"]);
+	if (!isset($_SESSION['DATA']['name']) || !isset($_SESSION['DATA']['pwd'])) {
+		$msg = $_SESSION['strings']['l_FillInAll'];
+		$_SESSION['popper']->show_in_window("login", $_SESSION['strings']['l_Login'], $_SESSION['strings']['l_FillInAll']);
 		exit_popper();
 	}
 	
-	if (!$_SESSION['popper']->pwd_check($_SESSION['name'], $_SESSION['pwd'])) {
-		$_SESSION['popper']->show_in_window("login", $_SESSION["strings"]["l_Login"], $_SESSION["strings"]["l_LoginFail"]);
+	if (!$_SESSION['popper']->pwd_check($_SESSION['DATA']['name'], $_SESSION['DATA']['pwd'])) {
+		$_SESSION['popper']->show_in_window("login", $_SESSION['strings']['l_Login'], $_SESSION['strings']['l_LoginFail']);
 		exit_popper();
 	}
 	
-	if (!$_SESSION['popper']->is_activated($_SESSION['name'])) {
-		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_AccActivation1"], $_SESSION["strings"]["l_AccActivation2"], $_SESSION["strings"]["l_AccActivation2"], $_SESSION["strings"]["l_Welcome"]);		
+	if (!$_SESSION['popper']->is_activated($_SESSION['DATA']['name'])) {
+		$_SESSION['popper']->messagebox($_SESSION['strings']['l_AccActivation1'], $_SESSION['strings']['l_AccActivation2'], $_SESSION['strings']['l_AccActivation2'], $_SESSION['strings']['l_Welcome']);		
 		return;			
 	}
 	
@@ -122,25 +147,25 @@ function process_login() {
 /*DevNote: roytoo
 Setting $_SESSION['logged_in'] = 1 is a security hole since it is easy to guess and gain access 
 to a valid user's accounts.  It is better to set $_SESSION['logged_in'] to a hash composed of 
-the PHPSESSID, users name and password [i.e. md5($_SESSION['PHPSESSID']+$_SESSION['name']+$_SESSION['pwd'])].  
+the PHPSESSID, users name and password [i.e. md5($_SESSION['PHPSESSID']+$_SESSION['DATA']['name']+$_SESSION['DATA']['pwd'])].  
 Even this is not completely secure if an attacker has access to the server's session
 save path and popper is not on an https:// server.
 
 Need to add info about this topic to INSTALL?
 :DevNote*/
 	$_SESSION['logged_in'] = 1;	
-	$_SESSION['popper']->set_user($_SESSION['name']);
+	$_SESSION['popper']->set_user($_SESSION['DATA']['name']);
 	
-	if ($_COOKIE["poppercookie"] && ($_SESSION['set_cookie'] != "on")) {
+	if ($_COOKIE['poppercookie'] && ($_SESSION['DATA']['set_cookie'] != "on")) {
 		cookie_unset();
 	}
 
-	if (isset($_SESSION['set_cookie']) && $_SESSION['set_cookie'] && !$_COOKIE["poppercookie"]) {
+	if (isset($_SESSION['DATA']['set_cookie']) && $_SESSION['DATA']['set_cookie'] && !$_COOKIE['poppercookie']) {
 		cookie_set();
 	}
 	
 	if (!$_SESSION['popper']->has_account()) {
-		$_SESSION['popper']->show_in_window("newaccount", $_SESSION["strings"]["l_Account"], $_SESSION["strings"]["l_AccInfo"]);		
+		$_SESSION['popper']->show_in_window("newaccount", $_SESSION['strings']['l_Account'], $_SESSION['strings']['l_AccInfo']);		
 		return;
 	}
 	$_SESSION['popper']->show();
@@ -149,11 +174,11 @@ Need to add info about this topic to INSTALL?
 function process_new_user() {
 	
 	if ($_SESSION['popper']->create_user()) {
-		if ($_SESSION['user_confirmation']) {
-			$_SESSION['popper']->messagebox($_SESSION["strings"]["l_AccCreated1"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_Welcome"]);		
+		if ($_SESSION['DATA']['user_confirmation']) {
+			$_SESSION['popper']->messagebox($_SESSION['strings']['l_AccCreated1'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_Welcome']);		
 		}
 		else {
-			$_SESSION['popper']->messagebox($_SESSION["strings"]["l_ConfSucc1"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_Welcome"]);
+			$_SESSION['popper']->messagebox($_SESSION['strings']['l_ConfSucc1'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_Welcome']);
 		}
 	}
 }
@@ -163,11 +188,11 @@ function process_confirmation($code) {
 	// The user called the confirmation link
 	if ($_SESSION['popper']->check_confirmation($code)) {
 		// The check was successful
-		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_ConfSucc1"], $_SESSION["strings"]["l_ConfSucc2"], $_SESSION["strings"]["l_ConfSucc2"], $_SESSION["strings"]["l_Welcome"]);
+		$_SESSION['popper']->messagebox($_SESSION['strings']['l_ConfSucc1'], $_SESSION['strings']['l_ConfSucc2'], $_SESSION['strings']['l_ConfSucc2'], $_SESSION['strings']['l_Welcome']);
 	}
 	else {
 		// Could not be confirmed
-		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_ConfFail1"], $_SESSION["strings"]["l_ConfFail2"], $_SESSION["strings"]["l_ConfFail2"], $_SESSION["strings"]["l_TryAgain"]);
+		$_SESSION['popper']->messagebox($_SESSION['strings']['l_ConfFail1'], $_SESSION['strings']['l_ConfFail2'], $_SESSION['strings']['l_ConfFail2'], $_SESSION['strings']['l_TryAgain']);
 	}
 }
 
@@ -181,8 +206,8 @@ Temporarily masked out the 'ok' functionality since it now interfers with $_SESS
 Will need to be re-implemented, most likely by dynamically changing the value of $_SESSION['action'] based 
 upon the contents of $_SESSION['last_action'].
 :DevNote*/
-	/*if ($_SESSION['ok'] == "ok") {
-		if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
+	if ($_SESSION['DATA']['ok'] == "ok") {
+		if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
 			$_SESSION['popper']->show_frame_list();
 		}
 		else {
@@ -190,7 +215,7 @@ upon the contents of $_SESSION['last_action'].
 		}
 		return;
 	}
-	*/
+	
 	
 	$_SESSION['popper']->pre_frame();
 	
@@ -207,7 +232,7 @@ upon the contents of $_SESSION['last_action'].
 		break;
 	case "showmail":
 		$_SESSION['popper']->show_popup_mail();
-		//$_SESSION['popper']->show_form("newmail", $_SESSION["strings"]["l_ShowMail"]);
+		//$_SESSION['popper']->show_form("newmail", $_SESSION['strings']['l_ShowMail']);
 		break;
 	case "showsources":
 		$_SESSION['popper']->show_sources();
@@ -215,37 +240,37 @@ upon the contents of $_SESSION['last_action'].
 	case "logoff":
 		cookie_unset();
 		session_destroy();
-		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_LogoffMsg"], $_SESSION["strings"]["l_Logoff"], $_SESSION['popper']->name." ".$_SESSION["strings"]["l_LoggedOff"], $_SESSION["strings"]["l_GoodBye"]);
+		$_SESSION['popper']->messagebox($_SESSION['strings']['l_LogoffMsg'], $_SESSION['strings']['l_Logoff'], $_SESSION['popper']->name." ".$_SESSION['strings']['l_LoggedOff'], $_SESSION['strings']['l_GoodBye']);
 		break;
 	case "newmail":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_NewMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_NewMail']);
 		break;
 	case "printmail":
 		$_SESSION['popper']->show_popup_mail();
 		break;
 	case "reply":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_ReplyMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ReplyMail']);
 		break;
 	case "replytoall":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_ReplyAllMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ReplyAllMail']);
 		break;
 	case "forward":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_ForwardMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ForwardMail']);
 		break;
 	case "showmail":
 		$_SESSION['popper']->show_popup_mail();
 		break;
 	case "openmail":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_ShowMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ShowMail']);
 		break;
 	case "choosen":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_Choosen"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_Choosen']);
 		break;
 	case "cancel":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		if (isset($_SESSION['old_uri']) && ($_SESSION['popper']->config["mailview"] != $_SESSION['FRAME_VIEW'])) {
+		if (isset($_SESSION['old_uri']) && ($_SESSION['popper']->config['mailview'] != $_SESSION['FRAME_VIEW'])) {
 			Header("Location: ".$_SESSION['old_uri']);
 		}
 		else {
@@ -259,17 +284,17 @@ Functionalize this one.
 		$_SESSION['popper']->show_form("addressbook");
 		break;
 	case "newaccount":
-		$_SESSION['popper']->show_in_window("newaccount", $_SESSION["strings"]["l_Account"], $_SESSION["strings"]["l_FillInAll"]);
+		$_SESSION['popper']->show_in_window("newaccount", $_SESSION['strings']['l_Account'], $_SESSION['strings']['l_FillInAll']);
 		break;
 	case "newaddress":
-		$_SESSION['popper']->show_in_window("newaddress", $_SESSION["strings"]["l_Address"]);
+		$_SESSION['popper']->show_in_window("newaddress", $_SESSION['strings']['l_Address']);
 		break;
 	case "storemail":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
 		$msg = $_SESSION['popper']->store_mail();
-		if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
+		if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
 			$_SESSION['popper']->show_form("main");
 		}
 		else {
@@ -298,12 +323,12 @@ Functionalize this one.
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		if (!isset($_SESSION['what'])) {
-			if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
-				$_SESSION['popper']->show_small_window("sendreceive", $_SESSION["strings"]["l_SendReceive"]);
+		if (!isset($_SESSION['DATA']['what'])) {
+			if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
+				$_SESSION['popper']->show_small_window("sendreceive", $_SESSION['strings']['l_SendReceive']);
 			}
 			else {
-				$_SESSION['popper']->show_in_window("sendreceive", $_SESSION["strings"]["l_SendReceive"]);
+				$_SESSION['popper']->show_in_window("sendreceive", $_SESSION['strings']['l_SendReceive']);
 			}
 		}
 		else {
@@ -317,25 +342,25 @@ Functionalize this one.
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		if (isset($GLOBALS['conf_submit'])) {
+		if (isset($_SESSION['DATA']['conf_submit'])) {
 			$_SESSION['popper']->store_config();
 			
-			$lang_file = "lang/lang.".$_SESSION['popper']->config["language"].".inc.php";
+			$lang_file = "lang/lang.".$_SESSION['popper']->config['language'].".inc.php";
 			
 			include($lang_file);
 			
-			setlocale(LC_ALL, $_SESSION["locale"]);	
+			setlocale(LC_ALL, $_SESSION['locale']);	
 			
 			$_SESSION['popper']->show();
 		}
 		else if (isset($changepwd)) {
-			$_SESSION['popper']->show_in_window("changepwd", $_SESSION["strings"]["l_ChangePwd"]);
+			$_SESSION['popper']->show_in_window("changepwd", $_SESSION['strings']['l_ChangePwd']);
 		}
 		else if (isset($deluser) || isset($ack)) {
 			$_SESSION['popper']->delete_user();
 		}
 		else {
-			$_SESSION['popper']->show_in_window("config", $_SESSION["strings"]["l_Config"]);
+			$_SESSION['popper']->show_in_window("config", $_SESSION['strings']['l_Config']);
 		}
 		break;
 	case "changepwd":
@@ -348,25 +373,25 @@ Functionalize this one.
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		if (isset($GLOBALS["delete_x"]) || isset($GLOBALS["ack"])) {
+		if (isset($_SESSION['DATA']['delete_x']) || isset($_SESSION['DATA']['ack'])) {
 			$_SESSION['popper']->delete_mails();
 		}
-		else if (isset($GLOBALS["add_addr_x"])) {
+		else if (isset($_SESSION['DATA']['add_addr_x'])) {
 			$_SESSION['popper']->add_sel_addr();
-			if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
+			if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
 				$_SESSION['popper']->show_frame_list();
 			}
 			else {
 				$_SESSION['popper']->show();
 			}
 		}
-		else if (isset($GLOBALS["block_x"])) {
+		else if (isset($_SESSION['DATA']['block_x'])) {
 			// Mark the senders as blocked
 			$_SESSION['popper']->add_sel_addr(true);
 			// Delete the mails
 			$_SESSION['popper']->delete_blocked();					
 		}
-		else if (isset($GLOBALS["move"])) {
+		else if (isset($_SESSION['DATA']['move'])) {
 			//$_SESSION['popper']->move_to();
 			$_SESSION['popper']->report_error("Not implemented yet", "Not implemented");
 		}
@@ -379,18 +404,18 @@ Functionalize this one.
 Functionalize this one.
 :DevNote*/
 		$_SESSION['popper']->send_notification();
-		if ($_SESSION['popper']->config["mailview"] == $_SESSION['IN_VIEW']) {
-			Header("Location: ".$GLOBALS['PHP_SELF']."?action=showfolder&folder=".$_SESSION['popper']->folder."&mail_id=".$_SESSION['popper']->cur_message_id);
+		if ($_SESSION['popper']->config['mailview'] == $_SESSION['IN_VIEW']) {
+			Header("Location: ".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$_SESSION['popper']->folder."&mail_id=".$_SESSION['popper']->cur_message_id);
 		}
-		else if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
+		else if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
 			$_SESSION['popper']->show_mail_frame();
 		}
 		else {
-			Header("Location: ".$GLOBALS['PHP_SELF']."?action=showmail&mail_id=".$_SESSION['popper']->cur_message_id);				
+			Header("Location: ".$_SERVER['PHP_SELF']."?action=showmail&mail_id=".$_SESSION['popper']->cur_message_id);				
 		}
 		break;
-	case "login":
-		$_SESSION['popper']->show_in_window("login", $_SESSION["strings"]["l_Login"]);
+	case $_SESSION['strings']['l_Login']:
+		$_SESSION['popper']->show_in_window("login", $_SESSION['strings']['l_Login']);
 		break;		
 	case "lostpwd":
 		$_SESSION['popper']->show_in_window("lostpwd");
@@ -402,7 +427,7 @@ Functionalize this one.
 		$_SESSION['popper']->show_form("help");
 		exit_popper();
 	default:
-		$_SESSION['popper']->show_in_window("home", $_SESSION["strings"]["l_Welcome"]);
+		$_SESSION['popper']->show_in_window("home", $_SESSION['strings']['l_Welcome']);
 		break;
 	}
 }
@@ -410,9 +435,9 @@ Functionalize this one.
 function cookie_set() {
 	
 	// Set the cookies if the user wants that and if it's not set yet.
-	setcookie("poppercookie['user']", $_SESSION['name'], time() + 365 * 24 * 3600);
-	setcookie("poppercookie['language']", $_SESSION['popper']->config["language"], time() + 365 * 24 * 3600);
-	$_SESSION["poppercookie"] = $_COOKIE["poppercookie"];
+	setcookie("poppercookie['user']", $_SESSION['DATA']['name'], time() + 365 * 24 * 3600);
+	setcookie("poppercookie['language']", $_SESSION['popper']->config['language'], time() + 365 * 24 * 3600);
+	$_SESSION['poppercookie'] = $_COOKIE['poppercookie'];
 }
 
 function cookie_unset() {
@@ -421,17 +446,17 @@ function cookie_unset() {
 	// not want to have it anymore.  So, we delete the cookies
 	setcookie ("poppercookie['user']", "", time() - 3600);		
 	setcookie ("poppercookie['language']", "", time() - 3600);
-	$_SESSION["poppercookie"] = false;
+	$_SESSION['poppercookie'] = false;
 }
 
 function language_get() {
 	
-	if (isset($_SESSION["poppercookie"]["language"])) {
-		$langfile = "lang/lang.".$_SESSION["poppercookie"]["language"].".inc.php";
+	if (isset($_SESSION['poppercookie']['language'])) {
+		$langfile = "lang/lang.".$_SESSION['poppercookie']['language'].".inc.php";
 	}
 	else {
-		if (isset($_SESSION['popper']->config["language"]) && !empty($_SESSION['popper']->config["language"])) {
-			$langfile = "lang/lang.".$_SESSION['popper']->config["language"].".inc.php";
+		if (isset($_SESSION['popper']->config['language']) && !empty($_SESSION['popper']->config['language'])) {
+			$langfile = "lang/lang.".$_SESSION['popper']->config['language'].".inc.php";
 		}
 		else {
 			$langfile = "lang/lang.english.inc.php";

@@ -98,7 +98,7 @@ class db_tool {
 		for($i = 1; $i < $num_args; $i++) {
 			$var_name = func_get_arg($i);
 			$col_names .= $var_name." ";
-			$values .= $GLOBALS["$var_name"]." ";
+			$values .= $_SESSION['DATA']["$var_name"]." ";
 		}
 
 		$col_names = str_replace(" ", ", ", trim($col_names));
@@ -120,7 +120,7 @@ class db_tool {
 		// Skip the table name and the WHERE clause arguments
 		for($i = 2; $i < $num_args; $i++) {
 			$var_name = func_get_arg($i);
-			$update .= $var_name."=".$GLOBALS["$var_name"]." ";
+			$update .= $var_name."=".$_SESSION['DATA']["$var_name"]." ";
 		}
 		$update = str_replace(" ", ", ", trim($update));
 
@@ -147,8 +147,8 @@ class db_tool {
 			// Skip the table name and the WHERE clause arguments
 			for($i = 1; $i < $num_args - 1; $i++) {
 				$var_name = func_get_arg($i);
-				if (isset($GLOBALS[$var_name])) {
-					$update_str .= $var_name."='".$GLOBALS["$var_name"]."', ";
+				if (isset($_SESSION['DATA'][$var_name])) {
+					$update_str .= $var_name."='".$_SESSION['DATA']["$var_name"]."', ";
 				}
 			}
 
@@ -171,9 +171,9 @@ class db_tool {
 			// Skip the table name as argument
 			for($i = 1; $i < $num_args; $i++) {
 				$var_name = func_get_arg($i);
-				if (isset($GLOBALS[$var_name])) {
-					$col_names .= $var_name." ";
-					$values .= "'".addslashes($GLOBALS[$var_name])."' ";
+				if (isset($_SESSION['DATA']["$var_name"])) {
+					$col_names .= $_SESSION['DATA']["$var_name"]." ";
+					$values .= "'".addslashes($_SESSION['DATA']["$var_name"])."' ";
 				}
 			}
 

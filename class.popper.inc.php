@@ -237,7 +237,7 @@ For extra security:
 		$server = getenv("SERVER_NAME");
 		
 		$mail = $_SESSION['strings']['l_LostPwdMail1']." ".$server;
-		$mail .= "\r\nhttp://$server".$GLOBALS["PHP_SELF"];
+		$mail .= "\r\nhttp://$server".$_SERVER['PHP_SELF'];
 /*DevNote: roytoo
 Masked out for better security.  See prior DevNote.
 :DevNote*/
@@ -357,7 +357,7 @@ Masked out for better security.  See prior DevNote.
 					}
 					
 					echo("<tr class=\"childwindow\"><td>".$_SESSION['strings']['l_NotifyQuest']."<br>".$_SESSION['strings']['l_NotifyQuest2']."</td>\n");
-					echo("<td><form action=\"$GLOBALS[PHP_SELF]\" method=\"GET\">\n<input type=\"submit\" name=\"submit\" value=\"".$_SESSION['strings']['l_SendNot']."\">");
+					echo("<td><form action=\"".$_SERVER['PHP_SELF']."\" method=\"GET\">\n<input type=\"submit\" name=\"submit\" value=\"".$_SESSION['strings']['l_SendNot']."\">");
 					echo("<input type=\"hidden\" name=\"action\" value=\"notification\"></form>\n</td>\n</tr>\n");
 				}
 			}
@@ -479,14 +479,14 @@ Masked out for better security.  See prior DevNote.
 		echo("<tr><th align=\"left\" width=\"50%\">Name</th><th align=\"left\">E-Mail</th></tr>\n");
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr><td>\n");
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=addressbook&addr_id=$row[id]");
+			echo("<a href=\"".$_SERVER['PHP_SELF']."?action=addressbook&addr_id=".$row['id']);
 			if ($blocked) {
 				echo("&show=blocked");
 			}
 			echo("\" title=\"".$_SESSION['strings']['l_ShowDetails']."\"");
 			$this->address_selected($row[id]);
 			echo(">".$this->extract_disp_name(stripslashes($row[name]))."</a></td>\n");
-			echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"".$_SESSION['strings']['l_SendMail']."\" target=\"_parent\">".stripslashes($row["email"])."</a></td></tr>\n");
+			echo("<td><a href=\"".$_SERVER['PHP_SELF']."?action=newmail&addr_id=".$row['id']."\" title=\"".$_SESSION['strings']['l_SendMail']."\" target=\"_parent\">".stripslashes($row["email"])."</a></td></tr>\n");
 		}
 		echo("</table>\n");
 	}
@@ -639,8 +639,8 @@ Masked out for better security.  See prior DevNote.
 		echo("<th align=\"left\">".$_SESSION['strings']['l_Name']."</th><th align=\"left\">".$_SESSION['strings']['l_Server']."</th></tr>\n");
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr><td>\n");
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=accounts&account_id=$row[id]\" title=\"".$_SESSION['strings']['l_ShowDetails']."\"");
-			$this->account_selected($row[id]);
+			echo("<a href=\"".$_SERVER['PHP_SELF']."?action=accounts&account_id=".$row['id']."\" title=\"".$_SESSION['strings']['l_ShowDetails']."\"");
+			$this->account_selected($row['id']);
 			echo(">".stripslashes($row["name"])."</a></td>\n");
 			echo("<td>".stripslashes($row["popserver"])."</td></tr>\n");
 		}
@@ -648,12 +648,12 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function store_address() {
-		$GLOBALS["user_id"] = $this->userid;
+		$_SESSION['DATA']['user_id'] = $this->userid;
 		$this->db_tool->store("addresses", "user_id", "email", "name", "lastname", "nickname", "address1", "address2", "zip", "town", "state", "country", "phone", "mobile", "homepage", "blocked", "id='$this->cur_address_id' AND user_id='$this->userid'");
 	}
 
 	function store_account() {
-		$GLOBALS["user_id"] = $this->userid;
+		$_SESSION['DATA']['user_id'] = $this->userid;
 		$this->db_tool->store("accounts", "user_id", "name", "fromname", "replyto", "popserver", "poplogin" ,"poppwd", "id='$this->cur_account_id' AND user_id='$this->userid'");
 	}
 
@@ -806,7 +806,7 @@ Masked out for better security.  See prior DevNote.
 				echo("<tr>\n");
 					if ($this->config["view"] != $_SESSION['MIN_VIEW']) {
 						echo("<td width=\"1%\">");
-						echo("<a href=\"$GLOBALS[PHP_SELF]?action=");
+						echo("<a href=\"".$_SERVER['PHP_SELF']."?action=");
 						if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && ($key != "cal") && ($this->folder != "cal")) {
 							echo("list&folder=$key\" target=\"maillist\" ");
 						}
@@ -820,7 +820,7 @@ Masked out for better security.  See prior DevNote.
 						}
 						echo(">");
 						echo("<img src=\"graphics/$val[pic]\" alt=\"$val[name]\" title=\"$val[name]\" border=\"0\" ");
-						echo("style=\"vertical-align: middle;\"></a></td>\n<td><a href=\"$GLOBALS[PHP_SELF]?action=");
+						echo("style=\"vertical-align: middle;\"></a></td>\n<td><a href=\"".$_SERVER['PHP_SELF']."?action=");
 						if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && ($key != "cal") && ($this->folder != "cal")) {
 							echo("list&folder=$key\" target=\"maillist\" ");
 						}
@@ -841,7 +841,7 @@ Masked out for better security.  See prior DevNote.
 						echo("</a><br></td>\n");
 					}
 					else {
-						echo("<td align=\"center\"><a href=\"$GLOBALS[PHP_SELF]?action=");
+						echo("<td align=\"center\"><a href=\"".$_SERVER['PHP_SELF']."?action=");
 						if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && ($key != "cal") && ($this->folder != "cal")) {
 							echo("list&folder=$key\" target=\"maillist\" ");
 						}
@@ -894,7 +894,7 @@ Masked out for better security.  See prior DevNote.
 
 	function show_list_headers() {
 		
-		echo("<form class=\"mail\" action=\"$GLOBALS[PHP_SELF]?action=selected\" method=\"post\">");
+		echo("<form class=\"mail\" action=\"".$_SERVER['PHP_SELF']."?action=selected\" method=\"post\">");
 		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");
 		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			echo("<tr class=\"windowtitle\"><td>".$this->get_foldername()."</td></tr>");		
@@ -908,10 +908,10 @@ Masked out for better security.  See prior DevNote.
 		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");		
 		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\">\n");
 		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n&nbsp;</th>\n");
-		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Attachment']."\"><img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Attachment']."\" align=\"middle\" border=\"0\"></a>\n</th>\n");
-		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=priority\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Priority']."\"><img src=\"graphics/priority.gif\" alt=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Priority']."\" align=\"middle\" border=\"0\"></a></th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Attachment']."\"><img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Attachment']."\" align=\"middle\" border=\"0\"></a>\n</th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&order=priority\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Priority']."\"><img src=\"graphics/priority.gif\" alt=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Priority']."\" align=\"middle\" border=\"0\"></a></th>\n");
 		echo("<th style=\"text-align: left; border: thin outset silver;\" width=\"33%\">");
-		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=");
+		echo("<a style=\"font-weight: bolder;\" href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&order=");
 		if ($this->folder == "outbox" || $this->folder == "sent") {
 			echo("tos\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_From']."\">".$_SESSION['strings']['l_To']);
 		}
@@ -928,7 +928,7 @@ Masked out for better security.  See prior DevNote.
 			}
 		}		
 		echo("</a></th><th style=\"text-align: left; border: thin outset silver;\" width=\"40%\">\n");
-		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=subject\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Subject']."\">".$_SESSION['strings']['l_Subject']);
+		echo("<a style=\"font-weight: bolder;\" href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&order=subject\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Subject']."\">".$_SESSION['strings']['l_Subject']);
 		if ($_SESSION['order'] == "subject") {
 			if ($desc) {
 				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
@@ -938,7 +938,7 @@ Masked out for better security.  See prior DevNote.
 			}
 		}			
 		echo("</a></th>\n");
-		echo("<th style=\"text-align: left; border: thin outset silver;\"><a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=date\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Date']."\">".$_SESSION['strings']['l_Date']);
+		echo("<th style=\"text-align: left; border: thin outset silver;\"><a style=\"font-weight: bolder;\" href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&order=date\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Date']."\">".$_SESSION['strings']['l_Date']);
 		if ($_SESSION['order'] == "date") {
 			if ($desc) {
 				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
@@ -1077,13 +1077,13 @@ Masked out for better security.  See prior DevNote.
 						
 			echo("</td><td>\n<img src=\"graphics/$img\" alt=\"\" style=\"float: left;\">");
 			if ($this->config["mailview"] == $_SESSION['IN_VIEW']) {
-				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\"");
+				echo("<a href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&mail_id=".$row['id']."\"");
 			}
 			else if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
-				echo("<a href=\"$GLOBALS[PHP_SELF]?action=mail_cont&mail_id=$row[id]\" target=\"mail\" ");			
+				echo("<a href=\"".$_SERVER['PHP_SELF']."?action=mail_cont&mail_id=".$row['id']."\" target=\"mail\" ");			
 			}
 			else {
-				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showmail&mail_id=$row[id]\"");				
+				echo("<a href=\"".$_SERVER['PHP_SELF']."?action=showmail&mail_id=".$row['id']."\"");				
 				if ($this->config["mailview"] == $_SESSION['POPUP_VIEW']) {
 					echo(" target=\"_blank\" ");
 				}
@@ -1161,8 +1161,8 @@ Masked out for better security.  See prior DevNote.
 	
 	function show_folder_content() {
 		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
-			$height = $this->config["mails_per_page"];
-			echo("<iframe name=\"maillist\" src=\"$GLOBALS[PHP_SELF]?action=list\" width=\"100%\" style=\"height: ".$height."em;\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\"></iframe>");
+			$height = $this->config['mails_per_page'];
+			echo("<iframe name=\"maillist\" src=\"".$_SERVER['PHP_SELF']."?action=list\" width=\"100%\" style=\"height: ".$height."em;\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\"></iframe>");
 		}
 		else {
 			$this->show_list_headers();	
@@ -1510,7 +1510,7 @@ Masked out for better security.  See prior DevNote.
 
 	function make_clickable(&$content) {
 		$content = preg_replace("|(\s+)(http://.*)(\s+)|U", "\\1<a href=\"\\2\" target=\"_blank\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2</a>\\3", $content);
-		$content = preg_replace("|(\s*)([a-zA-Z0-9.-_]*@[a-zA-Z0-9.-_]*)(\s+)|U", "\\1<a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr=\\2\" target=\"_parent\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2</a>\\3", $content);
+		$content = preg_replace("|(\s*)([a-zA-Z0-9.-_]*@[a-zA-Z0-9.-_]*)(\s+)|U", "\\1<a href=\"".$_SERVER['PHP_SELF']."?action=newmail&addr=\\2\" target=\"_parent\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2</a>\\3", $content);
 	}
 	
 
@@ -1614,8 +1614,8 @@ Masked out for better security.  See prior DevNote.
 		srand((double)microtime()*1000000);
 		$confirm_code = md5(rand());
 		$server = "http://".getenv("SERVER_NAME");
-		$href  = $server.$GLOBALS[PHP_SELF];
-		$href .= "?confirm_code=$confirm_code";
+		$href  = $server.$_SERVER['PHP_SELF'];
+		$href .= "?confirm_code=".$confirm_code;
 
 		// Save it in the database
 		$query = "INSERT INTO confirmations (user_id, confirm_code) VALUES ('$this->userid', '$confirm_code')";
@@ -1734,17 +1734,17 @@ Masked out for better security.  See prior DevNote.
 		// This is used to show the "Choose recipients" dialog. The current mail then does not get lost
 		if ($backup) {
 			if (isset($to_x)) {
-				$GLOBALS["field"] = "TO";
+				$_SESSION['DATA']['field'] = "TO";
 			}
 			else if (isset($cc_x)) {
-				$GLOBALS["field"] = "CC";
+				$_SESSION['DATA']['field'] = "CC";
 			}	
 			else if (isset($bcc_x)) {
-				$GLOBALS["field"] = "BCC";
+				$_SESSION['DATA']['field'] = "BCC";
 			}						
 			$this->cur_mailer = $mailer;
 
-			$this->show_in_window("choose", "$GLOBALS[field]: ".$_SESSION['strings']['l_ChooseRec']);			
+			$this->show_in_window("choose", $_SESSION['DATA']['field'].": ".$_SESSION['strings']['l_ChooseRec']);			
 			exit;
 		}
 		else {
@@ -1889,7 +1889,7 @@ Masked out for better security.  See prior DevNote.
 		if ($of_part != 0) {
 			$mailer = $of_part;
 		}
-		else if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {		
+		else if ($this->cur_mailer == 0 || $this->cur_mailer->id != $_SESSION['DATA']['mail_id']) {		
 			$this->cur_mailer = new mailer($this->userid);
 			$this->cur_mailer->load($this->cur_message_id);
 			$mailer = $this->cur_mailer;
@@ -1953,9 +1953,9 @@ Masked out for better security.  See prior DevNote.
 				$att_path[$level] = 0;		
 			}
 			
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=");
+			echo("<a href=\"".$_SERVER['PHP_SELF']."?action=getattachment&mail_id=");
 			
-			echo("$GLOBALS[mail_id]");
+			echo($_SESSION['DATA']['mail_id']);
 			
 			foreach($att_path as $key => $att_pid) {
 				echo("&att$key=$att_pid");
@@ -1978,7 +1978,7 @@ Masked out for better security.  See prior DevNote.
 		if ($this->cur_message_id == 0) {
 			return;
 		}
-		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
+		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $_SESSION['DATA']['mail_id']) {
 			$this->cur_mailer = new mailer($this->userid);
 			$this->cur_mailer->load($this->cur_message_id);
 		}
@@ -2007,8 +2007,8 @@ Masked out for better security.  See prior DevNote.
 		}
 
 		$i = 1;
-		while(isset($GLOBALS["att$i"])) {
-			$att_path[$i] = $GLOBALS["att$i"];
+		while(isset($_SESSION['DATA']["att$i"])) {
+			$att_path[$i] = $_SESSION['DATA']["att$i"];
 			$i++;
 		}
 
@@ -2492,7 +2492,7 @@ Masked out for better security.  See prior DevNote.
 		}
 		
 		if ($show == "no") {
-			Header("Location: $GLOBALS[PHP_SELF]?action=checkrep");
+			Header("Location: ".$_SERVER['PHP_SELF']."?action=checkrep");
 			exit;
 		}
 		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
@@ -2508,7 +2508,7 @@ Masked out for better security.  See prior DevNote.
 		$interval = $this->config["check_int"] * 60;
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<META HTTP-EQUIV="Refresh" content="<?php echo($interval); ?>;URL=<?php echo($GLOBALS[PHP_SELF]."?action=sendandreceive&what=getall&show=no");?>">
+<META HTTP-EQUIV="Refresh" content="<?php echo($interval); ?>;URL=<?php echo($_SERVER['PHP_SELF']."?action=sendandreceive&what=getall&show=no");?>">
 <html>
 <head>
 <title><?php echo($_SESSION['strings']['l_MinWndTitle']);?></title>
@@ -2661,13 +2661,13 @@ Masked out for better security.  See prior DevNote.
 			$name = addslashes($add[name]);
 			$addr = addslashes($add[address]);
 			// Let's see if this entry already exists
-			$query = "SELECT name, email FROM addresses WHERE name='$name' AND email='$addr' AND user_id='$this->userid'";
+			$query = "SELECT name, email FROM addresses WHERE name='$name' AND email='$addr' AND user_id='".$this->userid."'";
 			$res = $this->db_tool->db_query($query);
 			if ($this->db_tool->affected_rows() == 0) {
 				// Add the new entry
-				$GLOBALS["name"] = $add["name"];
-				$GLOBALS["email"] = $add["address"];
-				$GLOBALS["blocked"] = $block ? 1: 0;
+				$_SESSION['DATA']['name'] = $add["name"];
+				$_SESSION['DATA']['email'] = $add["address"];
+				$_SESSION['DATA']['blocked'] = $block ? 1: 0;
 				$this->store_address();
 			}
 			

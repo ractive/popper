@@ -12,8 +12,8 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-	if ($GLOBALS[update]) {
-		$query = "SELECT * FROM addresses WHERE id = '$this->cur_address_id' AND user_id='$this->userid'";
+	if ($_SESSION['DATA']['update']) {
+		$query = "SELECT * FROM addresses WHERE id = '$this->cur_address_id' AND user_id='".$this->userid."'";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
 			$this->report_error($this->db_tool->db_error(), "DB Error");
@@ -25,69 +25,69 @@ http://www.gnu.org/copyleft/gpl.html
 <br>
 <center>
 <h2>
-<?php echo $_SESSION["strings"]["l_NewAddress"];?>
+<?php echo $_SESSION['strings']['l_NewAddress'];?>
 </h2>
 
-<form action="<?php echo("$GLOBALS[PHP_SELF]");?>" method="post">
+<form action="<?php echo($_SERVER['PHP_SELF']);?>" method="post">
 	<table cellpadding="3" cellspacing="3">
 		<tr>
-			<td style="background-color: inherit; color: Red;"><?php echo $_SESSION["strings"]["l_Name"];?>:</td>
-			<td><input name="name" size="25" value="<?php echo(stripslashes($row["name"]));?>"></td>
+			<td style="background-color: inherit; color: Red;"><?php echo $_SESSION['strings']['l_Name'];?>:</td>
+			<td><input name="name" size="25" value="<?php echo(stripslashes($row['name']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_LastName"];?>:</td>
-			<td><input name="lastname" size="25" value="<?php echo(stripslashes($row["lastname"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_LastName'];?>:</td>
+			<td><input name="lastname" size="25" value="<?php echo(stripslashes($row['lastname']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_NickName"];?>:</td>
-			<td><input name="nickname" size="25" value="<?php echo(stripslashes($row["nickname"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_NickName'];?>:</td>
+			<td><input name="nickname" size="25" value="<?php echo(stripslashes($row['nickname']));?>"></td>
 		</tr>
 		<tr>
 			<td>E-Mail:</td>
-			<td><input name="email" size="25" value="<?php echo(stripslashes($row["email"]));?>"></td>
+			<td><input name="email" size="25" value="<?php echo(stripslashes($row['email']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_Address"];?> 1:</td>
-			<td><input name="address1" size="25" value="<?php echo(stripslashes($row["address1"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_Address'];?> 1:</td>
+			<td><input name="address1" size="25" value="<?php echo(stripslashes($row['address1']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_Address"];?> 2:</td>
-			<td><input name="address2" size="25" value="<?php echo(stripslashes($row["address2"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_Address'];?> 2:</td>
+			<td><input name="address2" size="25" value="<?php echo(stripslashes($row['address2']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_ZIP"];?>:</td>
-			<td><input name="zip" size="16" value="<?php echo(stripslashes($row["zip"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_ZIP'];?>:</td>
+			<td><input name="zip" size="16" value="<?php echo(stripslashes($row['zip']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_Town"];?>:</td>
-			<td><input name="town" size="25" value="<?php echo(stripslashes($row["town"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_Town'];?>:</td>
+			<td><input name="town" size="25" value="<?php echo(stripslashes($row['town']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_State"];?>:</td>
-			<td><input name="state" size="25" value="<?php echo(stripslashes($row["state"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_State'];?>:</td>
+			<td><input name="state" size="25" value="<?php echo(stripslashes($row['state']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_Country"];?>:</td>
-			<td><input name="country" size="25" value="<?php echo(stripslashes($row["country"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_Country'];?>:</td>
+			<td><input name="country" size="25" value="<?php echo(stripslashes($row['country']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_Phone"];?>:</td>
-			<td><input name="phone" size="25" value="<?php echo(stripslashes($row["phone"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_Phone'];?>:</td>
+			<td><input name="phone" size="25" value="<?php echo(stripslashes($row['phone']));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $_SESSION["strings"]["l_MobilePhone"];?>:</td>
-			<td><input name="mobile" size="25" value="<?php echo(stripslashes($row["mobile"]));?>"></td>
+			<td><?php echo $_SESSION['strings']['l_MobilePhone'];?>:</td>
+			<td><input name="mobile" size="25" value="<?php echo(stripslashes($row['mobile']));?>"></td>
 		</tr>
 		<tr>
 			<td>Homepage:</td>
-			<td><input name="homepage" size="25" value="<?php echo(stripslashes($row["homepage"]));?>"></td>
+			<td><input name="homepage" size="25" value="<?php echo(stripslashes($row['homepage']));?>"></td>
 		</tr>
 	</table>
 	<br><hr><br>
 	&nbsp;
-	<input class="button" type="submit" value="<?php echo $_SESSION["strings"]["l_Store"];?>">
-	<input class="button" type="reset" value="<?php echo $_SESSION["strings"]["l_Reset"];?>">
-	<input type="hidden" name="update" value="<?php echo($GLOBALS["update"]);?>">
+	<input class="button" type="submit" value="<?php echo $_SESSION['strings']['l_Store'];?>">
+	<input class="button" type="reset" value="<?php echo $_SESSION['strings']['l_Reset'];?>">
+	<input type="hidden" name="update" value="<?php echo($_SESSION['DATA']['update']);?>">
 	<input type="hidden" name="action" value="storeaddress">
 </form>
 </center>

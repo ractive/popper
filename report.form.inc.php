@@ -7,7 +7,7 @@
 ?>
 <br>
 <br>
-<form action=<?php echo($GLOBALS[PHP_SELF]);?> method="get">
+<form action=<?php echo($_SERVER['PHP_SELF']);?> method="get">
 <input class="button" type="submit" name="ok" value="OK">
 </form>
 </center>

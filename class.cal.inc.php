@@ -21,13 +21,13 @@ class cal {
 	
 
 	function show() {
-		if ($GLOBALS[show] == "next") {
+		if ($_SESSION['DATA']['show'] == "next") {
 			$this->month++;
 		}
-		else if ($GLOBALS[show] == "prev") {
+		else if ($_SESSION['DATA']['show'] == "prev") {
 			$this->month--;
 		}
-		else if ($GLOBALS[show] == "current") {
+		else if ($_SESSION['DATA']['show'] == "current") {
 			$this->month = 0;
 		}	
 		
@@ -88,17 +88,17 @@ class cal {
 			</tr>
 			<tr class="calcontrol">
 				<td>
-					 <a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=prev">&lt;&lt;&lt; <?php echo($_SESSION["strings"]["l_Previous"]);?></a>
+					 <a href="<?php echo($_SERVER['PHP_SELF']);?>?action=showfolder&folder=cal&show=prev">&lt;&lt;&lt; <?php echo($_SESSION["strings"]["l_Previous"]);?></a>
 				</td>
 				<td colspan="2">
 				</td>
 				<td>
-					<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=current"><?php echo($_SESSION["strings"]["l_Current"]);?></a>
+					<a href="<?php echo($_SERVER['PHP_SELF']);?>?action=showfolder&folder=cal&show=current"><?php echo($_SESSION["strings"]["l_Current"]);?></a>
 				</td>
 				<td colspan="2">
 				</td>
 				<td>
-					<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=next"><?php echo($_SESSION["strings"]["l_Next"]);?> &gt;&gt;&gt;</a>
+					<a href="<?php echo($_SERVER['PHP_SELF']);?>?action=showfolder&folder=cal&show=next"><?php echo($_SESSION["strings"]["l_Next"]);?> &gt;&gt;&gt;</a>
 				</td>
 			</tr>
 		</table>	
@@ -159,17 +159,17 @@ class cal {
 			</tr>
 			<tr class="calcontrol">
 				<td>
-					 <a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=prev">&lt;&lt;&lt; <?php echo($_SESSION["strings"]["l_Previous"]);?></a>
+					 <a href="<?php echo($_SERVER['PHP_SELF']);?>?action=showfolder&folder=cal&show=prev">&lt;&lt;&lt; <?php echo($_SESSION["strings"]["l_Previous"]);?></a>
 				</td>
 				<td colspan="2">
 				</td>
 				<td>
-					<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=current"><?php echo($_SESSION["strings"]["l_Current"]);?></a>
+					<a href="<?php echo($_SERVER['PHP_SELF']);?>?action=showfolder&folder=cal&show=current"><?php echo($_SESSION["strings"]["l_Current"]);?></a>
 				</td>
 				<td colspan="2">
 				</td>
 				<td>
-					<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=next"><?php echo($_SESSION["strings"]["l_Next"]);?> &gt;&gt;&gt;</a>
+					<a href="<?php echo($_SERVER['PHP_SELF']);?>?action=showfolder&folder=cal&show=next"><?php echo($_SESSION["strings"]["l_Next"]);?> &gt;&gt;&gt;</a>
 				</td>
 			</tr>
 		</table>	
