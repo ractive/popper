@@ -60,3 +60,12 @@ Version 1.31
 - French language-file added (thanx to Pierre Laden for the translation)
 - Bug fixes (esp. for "Create new user")
 - New option in config.inc.php that let's you switch off the user confirmation
+
+Version 1.32
+============
+- PHP versions >= 4.0.3 were not able to send attachments. Fixed! (thanks to Kai Brandt)
+- More MIME-types are recognized and displayed with the correct icon
+- Norwegian language file added (thanx to Stian Lindhom for the translation)
+- Calendar "localized"
+- Date/Time localized
+- Grrr. update131.mysql was missing :-(
