@@ -1,4 +1,6 @@
 <?php
+	$locale = "french";
+
 	$strings["l_Inbox"]		= "Inbox";
 	$strings["l_Outbox"]		= "Outbox";	
 	$strings["l_SentMail"]		= "Sent mail";		
@@ -9,7 +11,7 @@
 	$strings["l_ShowDetails"]	= "Voir détails";
 	$strings["l_SendMail"]		= "Envoyer";	
 	$strings["l_ClickName"]		= "Choisissez un nom pour des details...";
-	$strings["l_NoMails"]		= " Pas de messages dans ce dossier";
+	$strings["l_NoMails"]		= "Pas de messages dans ce dossier";
 	$strings["l_To"]		= "A";
 	$strings["l_From"]		= "De";
 	$strings["l_Date"]		= "Date";
@@ -167,4 +169,7 @@
 	$strings["l_MinWnd"]		= "Laisser cette fenêtre ouverte pour la vérification automatique";
 	$strings["l_MinWndTitle"]	= "popper - Vérification automatique";	
 	$strings["l_MinWndInfo"]	= "Intervalle";	
+	$strings["l_Previous"]		= "Retour";
+	$strings["l_Current"]		= "Aujoud'hui";
+	$strings["l_Next"]			= "Suivante";		
 ?>

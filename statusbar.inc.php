@@ -14,7 +14,7 @@
 					</td>
 					<td width="10%">
 						<p style="text-align: right; font-size: x-small; color: black;">
-							<?php echo(date("d.m.Y"));?>
+							<?php echo(strftime("%x"));?>
 						</p>
 					</td>
 				</tr>

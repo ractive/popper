@@ -17,7 +17,7 @@ http://www.gnu.org/copyleft/gpl.html
 		return (isset($logged_in) && session_is_registered("logged_in") && $logged_in == 1);
 	}
 	
-	global $strings;
+	global $strings, $locale;
 	
 	@set_time_limit(60);
 
@@ -42,7 +42,8 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 	
 	include($lang_file);
-
+	setlocale(LC_ALL, $locale);
+		
 	if (!isset($popper) || !is_object($popper)) {
 		$popper = new popper;
 	}
@@ -235,7 +236,9 @@ http://www.gnu.org/copyleft/gpl.html
 					$lang_file = "lang/lang.".$popper->config["language"].".inc.php";
 
 					include($lang_file);
-									
+					
+					setlocale(LC_ALL, $locale);	
+					
 					$popper->show();
 				}
 				else {

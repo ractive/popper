@@ -1,4 +1,6 @@
 <?php
+	$locale = "english";
+
 	$strings["l_Inbox"]			= "Inbox";
 	$strings["l_Outbox"]		= "Outbox";	
 	$strings["l_SentMail"]		= "Sent mail";		
@@ -9,7 +11,7 @@
 	$strings["l_ShowDetails"]	= "Show details";
 	$strings["l_SendMail"]		= "Send mail";	
 	$strings["l_ClickName"]		= "Click on a name to see the details...";
-	$strings["l_NoMails	"]		= " No mails in this folder";
+	$strings["l_NoMails"]		= "No mails in this folder";
 	$strings["l_To"]			= "To";
 	$strings["l_From"]			= "From";
 	$strings["l_Date"]			= "Date";
@@ -167,4 +169,7 @@
 	$strings["l_MinWnd"]		= "Keep this window open to auto-check for new mails";
 	$strings["l_MinWndTitle"]	= "popper - Auto fetch";	
 	$strings["l_MinWndInfo"]	= "Interval";	
+	$strings["l_Previous"]		= "Previous";
+	$strings["l_Current"]		= "Current";
+	$strings["l_Next"]			= "Next";	
 ?>
