@@ -23,26 +23,8 @@ http://www.gnu.org/copyleft/gpl.html
 	
 	// Set the session
 	setup_session();
-
-	$_SESSION['CONSTS']['MAIL_UNREAD'] = 0;
-	$_SESSION['CONSTS']['MAIL_READ'] = 1;
-	$_SESSION['CONSTS']['MAIL_REPLIED'] = 2;
-	$_SESSION['CONSTS']['MAIL_FORWARDED'] = 3;
 	
-	$_SESSION['CONSTS']['HIGHEST_PRIORITY'] = 1;
-	$_SESSION['CONSTS']['HIGH_PRIORITY'] = 2;
-	$_SESSION['CONSTS']['NORMAL_PRIORITY'] = 3;
-	$_SESSION['CONSTS']['LOW_PRIORITY'] = 4;
-	$_SESSION['CONSTS']['LOWEST_PRIORITY'] = 5;
-	
-	$_SESSION['CONSTS']['FULL_VIEW'] = 0;
-	$_SESSION['CONSTS']['MID_VIEW'] = 1;
-	$_SESSION['CONSTS']['MIN_VIEW'] = 2;
-	
-	$_SESSION['CONSTS']['POPUP_VIEW'] = 0;
-	$_SESSION['CONSTS']['IN_VIEW'] = 1;
-	$_SESSION['CONSTS']['SEP_VIEW'] = 2;
-	$_SESSION['CONSTS']['FRAME_VIEW'] = 3;
+	require_once("config.inc.php");
 	
 /*DevNote: roytoo
 This is very insecure!  Need to validate input and screen for PHP [htmlspecialchars()]
@@ -186,7 +168,6 @@ Need to add info about this topic to INSTALL?
 function process_new_user() {
 	
 	if ($_SESSION['popper']->create_user()) {
-		require("config.inc.php");
 		echo $GLOBALS['user_confirmation'];
 		if ($GLOBALS['user_confirmation']) {
 			$_SESSION['popper']->messagebox($_SESSION["strings"]["l_AccCreated1"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_Welcome"]);		

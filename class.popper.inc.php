@@ -14,7 +14,6 @@ http://www.gnu.org/copyleft/gpl.html
 
 include("class.pop3.inc.php");
 include("class.mailer.inc.php");
-include("config.inc.php");
 include("class.db_tool.inc.php");
 
 // Include the missing function array_diff for PHP 4.0.0

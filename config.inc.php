@@ -40,4 +40,25 @@ http://www.gnu.org/copyleft/gpl.html
 	$greeting = "Welcome to TestMail @ roytoo.org";
 	$titlebar = "TestMail - Welcome ";
 	$browsertitle = "TestMail";
+	
+	// Application wide constants
+	define('MAIL_UNREAD', 0);
+	define('MAIL_READ', 1);
+	define('MAIL_REPLIED', 2);
+	define('MAIL_FORWARDED', 3);
+	
+	define('HIGHEST_PRIORITY', 1);
+	define('HIGH_PRIORITY', 2);
+	define('NORMAL_PRIORITY', 3);
+	define('LOW_PRIORITY', 4);
+	define('LOWEST_PRIORITY', 5);
+	
+	define('FULL_VIEW', 0);
+	define('MID_VIEW', 1);
+	define('MIN_VIEW', 2);
+	
+	define('POPUP_VIEW', 0);
+	define('IN_VIEW', 1);
+	define('SEP_VIEW', 2);
+	define('FRAME_VIEW', 3);
 ?>
