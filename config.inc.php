@@ -16,9 +16,6 @@ http://www.gnu.org/copyleft/gpl.html
 	// The file which describes the bottom part of the HTML code
 	$bottom_part = "bottom.inc.php";
 	
-	// The max. no. of characters to display in the subject and from line in the main view
-	$col_width = 55;
-	
 	// Do you have PHP version 4.0.0 -> true
 	// Do you have PHP version 4.0.1 and above -> false
 	$is_php400 = false;
@@ -31,6 +28,11 @@ http://www.gnu.org/copyleft/gpl.html
 	// Leave it empty to access ALL mail-servers.
 	$allowed_servers = array();
 	
-	// Login greeting string
+	// Login greeting
 	$greeting = "Willkommen beim Mailservice von Jameslinux";
+	
+	// If this value is set to true, the user needs to confirm the creation of the account
+	// He'll receive an E-mail with a link to activate it.
+	// Set it to false if you don't need this
+	$user_confirmation = false;
 ?>

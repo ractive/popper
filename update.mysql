@@ -1,4 +1,3 @@
 ALTER TABLE conf ADD add_address tinyint;
-ALTER TABLE conf ADD mail_rows int;
-ALTER TABLE conf ADD mails_per_page int;
-UPDATE conf SET mail_rows=20, mails_per_page=20;
+ALTER TABLE conf ADD mail_rows int DEFAULT 20 NOT NULL;
+ALTER TABLE conf ADD mails_per_page int DEFAULT 20 NOT NULL;

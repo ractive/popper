@@ -1,6 +1,6 @@
 <?
 # phpop RCS version info:
-# $Id: class.pop3.inc.php,v 1.1.1.1 2001/02/05 01:00:12 jbergamin Exp $
+# $Id: class.pop3.inc.php,v 1.2 2001/02/08 05:41:57 jbergamin Exp $
 /*
 
 	class.POP3.php3 v1.0	99/03/24 CDI cdi@thewebmasters.net
@@ -54,7 +54,7 @@ class POP3
 		if(!empty($timeout)) {
 			settype($timeout,"integer");
 			$this->TIMEOUT = $timeout;
-			set_time_limit($timeout);
+			@set_time_limit($timeout);
 		}
 
 		return true;
@@ -80,7 +80,7 @@ class POP3
 
 	function update_timer ()
 	{
-		set_time_limit($this->TIMEOUT);
+		@set_time_limit($this->TIMEOUT);
 		return true;
 	}
 

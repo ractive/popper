@@ -19,7 +19,7 @@ http://www.gnu.org/copyleft/gpl.html
 	
 	global $strings;
 	
-	set_time_limit(60);
+	@set_time_limit(60);
 
 	include("class.popper.inc.php");
 	
@@ -35,6 +35,10 @@ http://www.gnu.org/copyleft/gpl.html
 		else {
 			$lang_file = "lang/lang.english.inc.php";
 		}
+	}
+	
+	if (!file_exists($lang_file)) {
+		$lang_file = "lang/lang.english.inc.php";	
 	}
 	
 	include($lang_file);

@@ -1,4 +1,4 @@
-ALTER TABLE conf ADD language varchar(20) DEFAULT 'english';
-ALTER TABLE conf ADD subject_size int DEFAULT 55;
-ALTER TABLE conf ADD address_size int DEFAULT 22;
-ALTER TABLE conf ADD check_int int DEFAULT 30;
+ALTER TABLE conf ADD language varchar(20) NOT NULL DEFAULT 'english';
+ALTER TABLE conf ADD subject_size int NOT NULL DEFAULT 55;
+ALTER TABLE conf ADD address_size int NOT NULL DEFAULT 22;
+ALTER TABLE conf ADD check_int int NOT NULL DEFAULT 30;

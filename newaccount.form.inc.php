@@ -35,7 +35,7 @@ http://www.gnu.org/copyleft/gpl.html
 			<td><input name="name" size="25" value="<?php echo(stripslashes($row["name"]));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $strings["l_FromName"]."-".$strings["l_Name"];?>:</td>
+			<td><?php echo $strings["l_From"]."-".$strings["l_Name"];?>:</td>
 			<td><input name="fromname" size="25" value="<?php echo(stripslashes($row["fromname"]));?>"></td>
 		</tr>
 		<tr>

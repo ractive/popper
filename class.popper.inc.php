@@ -130,8 +130,13 @@ class popper {
 
 	function update_lang() {
 		global $poppercookie;
+		$lang_file = "lang/lang.".$this->config["language"].".inc.php";
 		
-		require("lang/lang.".$this->config["language"].".inc.php");
+		if (!file_exists($lang_file)) {
+			$lang_file = "lang/lang.english.inc.php";	
+		}
+		
+		require($lang_file);
 		$this->folders["inbox"]["name"] = $strings["l_Inbox"];
 		$this->folders["outbox"]["name"] = $strings["l_Outbox"];
 		$this->folders["sent"]["name"] = $strings["l_SentMail"];
@@ -894,7 +899,7 @@ class popper {
 	}
 
 	function create_user() {
-		global $name, $email, $pwd, $pwd2, $strings;
+		global $name, $email, $pwd, $pwd2, $strings, $user_confirmation;
 
 		if (!isset($name) && !isset($pwd) && !isset($pwd2)) {
 			// Seems like new user is called for the first time without any info
@@ -916,7 +921,8 @@ class popper {
 		}
 
 		// Everything is fine. Now we insert the new user into the DB
-		$query = "INSERT INTO users (name, pwd, email) VALUES ('$name', '$pwd', '$email')";
+		$activated = !$user_confirmation;
+		$query = "INSERT INTO users (name, pwd, email, activated) VALUES ('$name', '$pwd', '$email', '$activated')";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
 			$error = mysql_error();
@@ -929,13 +935,17 @@ class popper {
 			}
 		}
 		$this->userid = $this->db_tool->insert_id();
+		
+		$query = "INSERT INTO conf (user_id, keep) VALUES ('$this->userid', 1)";
+		
+		$res = $this->db_tool->db_query($query);
+		$this->load_config();
 		$this->set_user($name);
 		
-		$this->send_confirmation_mail($name, $email);
-		
-		$query = "INSERT INTO conf (user_id, keep, mails_per_page, mail_rows) VALUES ('$this->userid', 1, 20, 20)";
-		$res = $this->db_tool->db_query($query);
-		
+		if ($user_confirmation) {
+			$this->send_confirmation_mail($name, $email);
+		}
+
 		return ($this->userid > 0);
 	}
 
