@@ -1,21 +1,25 @@
 <tr class="window">
-	<td width="35%" valign="top">
-		<?php $this->show_addresses()?>
-	</td>
+	<td valign="top" width="240">
+<?php 
+	
+	include "lib/cls.panel.php";
+	$panel = new Panel();
+	$panel->setWidth( '240px' );
+	$panel->setHeight( '540px' );
+	
+	$panel->setTitleCSSClass( "windowtitle" );
+	
+	$panel->addPanel( "folders", $strings['l_Folders'],  array( $this, "show_folders" ) );
+	
+	$panel->addPanel( "abook", $strings['l_AddressBook'],  array( $this, "show_addresses" ) );
 
+	$panel->setOpenPanel( "abook" );
+	$panel->Display();
+?>	
+	</td>
 	<td>
-	<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
-		<tr>
-			<td class="windowtitle">
-				<?php echo($strings["l_AddressDetails"]);?>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<?php $this->show_address(); ?>
-			</td>
-		</tr>
-	</table>
+<?php
+	$this->show_address();
+?>
 	</td>
-
 </tr>

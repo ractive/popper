@@ -1,12 +1,23 @@
 <tr class="window">
-	<td width="25%" valign="top">
-		<?php $this->show_folders() ?>
-		<p class="windowtitle">
-			<?php echo("<a href=\"$GLOBALS[PHP_SELF]?action=newaddress\">$strings[l_AddContact]</a>");?>
-		</p>
-		<?php $this->show_addresses() ?>
+	<td valign="top" width="240">
+<?php 
+	
+	include "lib/cls.panel.php";
+	$panel = new Panel();
+	$panel->setWidth( '240px' );
+	$panel->setHeight( '540px' );
+	
+	$panel->setTitleCSSClass( "windowtitle" );
+	
+	$panel->addPanel( "folders", $strings['l_Folders'],  array( $this, "show_folders" ) );
+	
+	$panel->addPanel( "abook", $strings['l_AddressBook'],  array( $this, "show_addresses" ) );
+
+	$panel->setOpenPanel( "folders" );
+	$panel->Display();
+?>	
 	</td>
-	<td width="75%">
+	<td>
 <?php
 	if ($this->folder == "cal") {
 		include("cal.form.inc.php");

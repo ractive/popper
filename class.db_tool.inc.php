@@ -1,5 +1,7 @@
 <?php
 
+//dl( "mysql.so" );
+
 /*========================================================================
 A POP3 web mail-client written in PHP
 Copyright (C) 2000 by Jean-Pierre Bergamin
@@ -28,7 +30,7 @@ class db_tool {
 	}
 
 	function db_connect($host, $user, $pwd) {
-		return @mysql_connect($host, $user, $pwd);
+		return mysql_connect($host, $user, $pwd);
 	}
 
 	function fetch_array($res) {
@@ -72,7 +74,8 @@ class db_tool {
 	function link_db() {
 		global $strings;
 		$doc_root = getenv("DOCUMENT_ROOT");
-		require("$doc_root/../$this->db_data_inc");
+//		require("$doc_root/../$this->db_data_inc");
+		require("./$this->db_data_inc");
 		$this->db_link = $this->db_connect($host, $user, $pass)
 			or die ($strings["l_ServerConnect"]."<br>".$this->db_error());
 

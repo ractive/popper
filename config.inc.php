@@ -31,4 +31,5 @@ http://www.gnu.org/copyleft/gpl.html
 	// He'll receive an E-mail with a link to activate it.
 	// Set it to false if you don't need this
 	$user_confirmation = false;
+	
 ?>

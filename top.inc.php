@@ -39,7 +39,7 @@ http://www.gnu.org/copyleft/gpl.html
 // Don't use the style shee for Netsape. It looks crappy...
 if ($isNS == 0) {
 ?>
-<LINK REL=stylesheet TYPE="text/css" HREF="style.css">
+<LINK REL=stylesheet TYPE="text/css" HREF="css/style_user.php">
 <?php
 }
 ?>

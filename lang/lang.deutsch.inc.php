@@ -1,6 +1,7 @@
 <?php
 	$locale = "german";
 
+	$strings["l_Folders"]		= "Ordner";
 	$strings["l_Inbox"]			= "Posteingang";
 	$strings["l_Outbox"]		= "Postausgang";	
 	$strings["l_SentMail"]		= "Gesendete Objekte";		

@@ -44,32 +44,38 @@ class popper {
 			"inbox" => array(
 				"name" => "Inbox",
 				"pic" => "inbox.gif",
-				"cur_page" => 0
+				"cur_page" => 0,
+				"is_mail_folder" => 1,
 			),
 			"outbox" => array(
 				"name" => "Outbox",
 				"pic" => "outbox.gif",
-				"cur_page" => 0
+				"cur_page" => 0,
+				"is_mail_folder" => 1,
 			),
 			"sent" => array(
 				"name" => "Sent mail",
 				"pic" => "sent.gif",
-				"cur_page" => 0
+				"cur_page" => 0,
+				"is_mail_folder" => 1,
 			),
 			"bin" => array(
 				"name" => "Recycle bin",
 				"pic" => "bin.gif",
-				"cur_page" => 0
+				"cur_page" => 0,
+				"is_mail_folder" => 1,
 			),
 			"drafts" => array(
 				"name" => "Drafts",
 				"pic" => "drafts.gif",
-				"cur_page" => 0
+				"cur_page" => 0,
+				"is_mail_folder" => 1,
 			),
 			"cal" => array(
 				"name" => "Calendar",
 				"pic" => "cal.gif",
-				"cur_page" => 0
+				"cur_page" => 0,
+				"is_mail_folder" => 0,
 			)
 		);
 	var $config = array();
@@ -342,12 +348,13 @@ class popper {
 			echo(" style=\"background-color: Blue; color: White;\" ");
 		}
 	}
-	function mail_selected($message) {
+/* now unused - replaced by TR style $rowStyle in show_folder() */	
+/*	function mail_selected($message) {
 		if ($this->cur_message_id == $message) {
 			echo(" style=\"background-color: Blue; color: White;\" ");
 		}
 	}
-
+*/
 	function account_selected($acc_id) {
 		if ($this->cur_account_id == $acc_id) {
 			echo(" style=\"background-color: Blue; color: White;\" ");
@@ -699,7 +706,8 @@ class popper {
 	}
 
 	function show_folder_content() {
-		global $mail_id, $page, $strings;
+		global $mail_id, $page, $strings, $theme;
+		
 		if (empty($this->folder)) {
 			$this->folder = "inbox";
 		}
@@ -729,50 +737,55 @@ class popper {
 				}
 				else {
 					echo($strings["l_NoMails"]);
-					echo(str_repeat("<br>", $this->config["mails_per_page"] - 1));
+//					echo(str_repeat("<br>", $this->config["mails_per_page"] - 1));
 					return;
 				}
 			}
 
 			break;
 		}
+				
 		echo("<form class=\"mail\" action=\"$GLOBALS[PHP_SELF]?action=deletemails\" method=\"post\">");
-		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");
+		echo("<table width=100% cellspacing=\"0\" cellpadding=\"0\">");
 		echo("<tr style=\"text-align: left; background-color: silver; color: inherit;\">\n");
 		echo("<th style=\"border: thin outset silver; width: 10px; text-align: center;\"><button type=\"submit\" value=\"delete\" name=\"delete\" style=\"width: 15px; height: 15px; border: none; background-color: silver;\"><img src=\"graphics/del.gif\" alt=\"$strings[l_DeleteMultiple]\" title=\"$strings[l_DeleteMultiple]\"></button></th>");
-		echo("<th style=\"border: thin outset silver; width: 20px; text-align: center;\"><img src=\"graphics/attachment_small.gif\" alt=\"Att.\" align=\"center\"></th><th style=\"border: thin outset silver;\" width=\"33%\">");
+		echo("<th style=\"border: thin outset silver; width: 20px; text-align: center;\"><img src=\"graphics/attachment_small.gif\" alt=\"Att.\" align=\"center\"></th><th style=\"border: thin outset silver;\">");
 		if ($this->folder == "outbox" || $this->folder == "sent") {
 			echo($strings[l_To]);
 		}
 		else {
 			echo($strings[l_From]);
 		}
-		echo("</th><th style=\"border: thin outset silver;\" width=\"40%\">$strings[l_Subject]</th><th style=\"border: thin outset silver;\">$strings[l_Date]</th></tr>\n");
+		echo("</th><th style=\"border: thin outset silver;\">$strings[l_Subject]</th><th style=\"border: thin outset silver;\">$strings[l_Date]</th></tr>\n");
 
 		// Now fill in the mails
 		while ($row = $this->db_tool->fetch_array($res)) {
-			echo("<tr");
-			// If the mail was not read, display it bold
-			if (!$row["was_read"]) {
-				echo(" style=\"font-weight: bolder;\"");
-			}
-			echo(">\n");
+
+			// If the mail is the current selected hightlight Row
+			if($this->cur_message_id == $row[id] )
+					$rowStyle= 'background-color: ' . $theme['highlight-background-color'] . '; color:white;';
+
+			// If the mail was not read, display it bold (also the link)
+			elseif( $row[was_read] ) 
+					$rowStyle= "font-style: bolder;";
+
+			// otherwise, no specific style
+			else 
+				$rowStyle= "";
+				
+			echo("<tr style=\"$rowStyle\">\n");
 
 			echo("<td style=\"width: 10px; text-align: center;\"><input type=\"checkbox\" name=\"del[]\" value=\"$row[id]\"></td>");
 			echo("<td style=\"width: 20px; text-align: center;\">\n");
+
 			if ($row[is_mime]) {
-				echo("<img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Attachment]\" align=\"center\" border=\"0\" style=\"vertical-align: middle;\">\n");				
+				echo("<img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Attachment]\" align=\"center\" border=\"0\" style=\"vertical-align: middle;\">\n");
+			} else {
+				echo "&nbsp;"; // better : use a CSS property (whitespace or something like that) on td style
 			}
-			echo("</td><td>\n<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\"\n");
-			$this->mail_selected($row[id]);
-			// If the mail was not read, display it bold (also the link)
-			if (!$row["was_read"]) {
-				echo(" style=\"font-weight: bolder;\"");
-			}
-			else {
-				echo(" style=\"font-weight: normal;\"");
-			}
-			echo(">");
+			echo("</td>\n" );
+			echo "<td>", "<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\">";
+
 			$mailer = new mailer(0);
 
 			if ($this->folder == "outbox" || $this->folder == "sent") {
@@ -786,23 +799,26 @@ class popper {
 			if (strlen($out) > $this->config["subject_size"]) {
 				$out = substr($out, 0, $this->config["subject_size"])."...";
 			}
-			echo($out);
+			echo $out, "</a></td>\n";
 			
-			//$subject = $mailer->headers->charset_decode($row["subject"]);
+			// $subject = $mailer->headers->charset_decode($row["subject"]);
 			$subject = $mailer->charset_decode(stripslashes($row["subject"]));
-			echo("</a></td>\n<td>".htmlspecialchars($subject));
+			echo "<td>",
+				"<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\">",
+				htmlspecialchars($subject), 
+				"</a></td>\n";
 			$date = mktime(substr($row[date], 8, 2), substr($row[date], 10, 2), substr($row[date], 12, 2), substr($row[date], 4, 2), substr($row[date], 6, 2), substr($row[date], 0, 4));
 			$formatted_date = strftime("%x %X", $date);
-			echo("</td>\n<td>".$formatted_date."</td>");
-			echo("</tr>\n");
+			echo "<td>", $formatted_date, "</td>\n";
+			echo( "</tr>\n" );
 		}
 		echo("</table></form>\n");
 
 		// If we have less then $minlines mails, we fill the rest with line-breaks
-
+/* commented Leo 
 		if ($count < $this->config["mails_per_page"]) {
 			echo(str_repeat("<br>", $this->config["mails_per_page"] - $count));
-		}
+		}*/
 
 	}
 
@@ -1546,21 +1562,22 @@ class popper {
 		return true;
 	}
 
+	// under work : a "move mail" to folder $folder
+	function move_mail( $ids, $folder ) {
+	
+	}
+	
+	
 	function trash_mail($id) {
 		// If it's just a singel ID, we create an array of size 1
 		if (!is_array($id)) {
-			$tmp = $id;
-			$id = array();
-			$id[] = $tmp;	
+			$lstIds = $id;
+		} else {
+			$lstIds = implode( ",", $id );
 		}
 		// Get the account information about the mails
-		$query = "SELECT accounts.*, mails.uidl AS uidl FROM accounts LEFT JOIN mails ON mails.acc_id = accounts.id WHERE mails.id IN (";
-		foreach($id as $in) {
-			$query .= $in.", ";
-		}
-		// Remove the last comma
-		$query = substr($query, 0, strlen($query) - 2);
-		$query .= ") AND mails.user_id = '$this->userid' ORDER BY accounts.id";
+		$query = "SELECT accounts.*, mails.uidl AS uidl FROM accounts LEFT JOIN mails ON mails.acc_id = accounts.id";
+		$query .= " WHERE mails.id IN( $lstIds ) AND mails.user_id = '$this->userid' ORDER BY accounts.id";
 		$res = $this->db_tool->db_query($query);
 
 		$row = 0;
@@ -1865,13 +1882,29 @@ class popper {
 				if ($match[1] == $this->config["language"]) {
 					echo(" selected");
 				}
-				echo(">$match[1]</option>");
+				echo(">$match[1]</option>\n");
+			}
+		}		
+		closedir($dirhandle);
+		
+		echo("</select>\n");
+		
+		echo($strings["l_Language"].": <select name=\"theme\">");
+		$dirhandle = opendir("./themes");
+		while ($filename = readdir($dirhandle)) {
+			if (preg_match("/^themes\.(.*)\.inc\.php$/", $filename, $match)) {
+				echo("<option value=\"$match[1]\"");
+				if ($match[1] == $this->config["theme"]) {
+					echo(" selected");
+				}
+				include($filename);
+				echo(">$theme[name]</option>");
 			}
 		}		
 		closedir($dirhandle);
 		
 		echo("</select>\n<br><br><hr><br>");
-		
+				
 		echo('<input type="checkbox" name="keep" value="1"');
 		if ($this->config[keep] == 1) {
 			echo(' checked');

@@ -12,6 +12,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
+
 	function is_logged_in() {
 		global $logged_in;
 		return (isset($logged_in) && session_is_registered("logged_in") && $logged_in == 1);
@@ -40,10 +41,14 @@ http://www.gnu.org/copyleft/gpl.html
 	if (!file_exists($lang_file)) {
 		$lang_file = "lang/lang.english.inc.php";	
 	}
-	
 	include($lang_file);
 	setlocale(LC_ALL, $locale);
-		
+	
+// added Leo - themes groups colors/fonts... options - they are stored under shared/themes
+// TODO : get it from user config
+	$themeid = "leofav";
+	include "shared/themes/$themeid.php";
+	
 	if (!isset($popper) || !is_object($popper)) {
 		$popper = new popper;
 	}
@@ -124,6 +129,7 @@ http://www.gnu.org/copyleft/gpl.html
 		}
 	}
 	else if (is_logged_in()) {
+	
 		// Remove previously created tmp-files
 		$popper->unlink_tmp();
 		
@@ -143,40 +149,40 @@ http://www.gnu.org/copyleft/gpl.html
 			}
 		}
 
-		if (isset($action)) {
-			if ($action == "showfolder") {
+		switch( $action) {
+			case "showfolder":
 				$popper->show($folder);
-			}
-			else if ($action == "showsources") {
+				break;
+			case "showsources":
 				$popper->show_sources();
-			}
-			else if ($action == "logoff") {
+				break;
+			case "logoff":
 				session_destroy();
 				$popper->messagebox($strings["l_LogoffMsg"], $strings["l_Logoff"], "$popper->name ".$strings["l_LoggedOff"], $strings["l_GoodBye"]);
 				return;
-			}
-			else if ($action == "newmail") {
+				break;
+			case "newmail":
 				$popper->show_in_window("newmail", $strings["l_NewMail"]);
-			}
-			else if ($action == "printmail") {
+				break;
+			case "printmail":
 				$popper->show_print();
-			}			
-			else if ($action == "reply") {
+				break;			
+			case "reply":
 				$popper->show_in_window("newmail", $strings["l_ReplyMail"]);
-			}
-			else if ($action == "replytoall") {
+				break;
+			case "replytoall":
 				$popper->show_in_window("newmail", $strings["l_ReplyAllMail"]);
-			}
-			else if ($action == "forward") {
+				break;
+			case "forward":
 				$popper->show_in_window("newmail", $strings["l_ForwardMail"]);
-			}
-			else if ($action == "showmail") {
+				break;
+			case "showmail":
 				$popper->show_in_window("newmail", $strings["l_ShowMail"]);
-			}
-			else if ($action == "choosen") {
+				break;
+			case "choosen":
 				$popper->show_in_window("newmail", $strings["l_Choosen"]);
-			}			
-			else if ($action == "cancel") {
+				break;			
+			case "cancel":
 				if (isset($old_uri)) {
 					Header("Location: $old_uri");
 				}
@@ -184,52 +190,52 @@ http://www.gnu.org/copyleft/gpl.html
 					$popper->show_form("main");
 				}
 				return;
-			}
-			else if ($action == "accounts") {
+				break;
+			case "accounts":
 				$popper->show_form("accounts");
-			}
-			else if ($action == "addressbook") {
+				break;
+			case "addressbook":
 				$popper->show_form("addressbook");
-			}
-			else if ($action == "newaccount") {
+				break;
+			case "newaccount":
 				$popper->show_in_window("newaccount", $strings["l_Account"], $strings["l_FillInAll"]);
-			}
-			else if ($action == "newaddress") {
+				break;
+			case "newaddress":
 				$popper->show_in_window("newaddress", $strings["l_Address"]);
-			}
-			else if ($action == "storemail") {
+				break;
+			case "storemail":
 				$msg = $popper->store_mail();
 				$popper->show_form("main", $msg);
-			}
-			else if ($action == "storeaccount") {
+				break;
+			case "storeaccount":
 				$popper->store_account();
 				$popper->show_form("accounts");
-			}
-			else if ($action == "storeaddress") {
+				break;
+			case "storeaddress":
 				$popper->store_address();
 				$popper->show_form("addressbook");
-			}
-			else if ($action == "deladdress") {
+				break;
+			case "deladdress":
 				$popper->del_address();
-			}
-			else if ($action == "delaccount") {
+				break;
+			case "delaccount":
 				$popper->del_account();
-			}
-			else if ($action == "checkrep") {
+				break;
+			case "checkrep":
 				$popper->check_repetitive();
-			}			
-			else if ($action == "sendandreceive") {
+				break;			
+			case "sendandreceive":
 				if (!isset($what)) {
 					$popper->show_in_window("sendreceive", $strings["l_SendReceive"]);
 				}
 				else {
 					$popper->send_and_receive();
 				}
-			}
-			else if ($action == "getattachment") {
+				break;
+			case "getattachment":
 				$popper->get_attachment();
-			}
-			else if ($action == "config") {
+				break;
+			case "config":
 				if (isset($GLOBALS[conf_submit])) {
 					$popper->store_config();
 		
@@ -244,23 +250,23 @@ http://www.gnu.org/copyleft/gpl.html
 				else {
 					$popper->show_in_window("config", $strings["l_Config"]);
 				}
-			}			
-			else if ($action == "deletemail") {
+				break;			
+			case "deletemail":
 				$popper->delete_mail();
-			}
-			else if ($action == "deletemails") {
+				break;
+			case "deletemails":
 				$popper->delete_mails();
-			}
-			else if ($action == "deleteall") {
+				break;
+			case "deleteall":
 				$popper->delete_all();
-			}			
-			else {
+				break;			
+			default:
 				$popper->show();
-			}
+				break;
 		}
-		else {
+/*		else {
 			$popper->show();
-		}
+		}*/
 	}
 	else {
 		$popper->show_in_window("home", $strings["l_Welcome"]);

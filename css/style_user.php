@@ -1,0 +1,339 @@
+/*========================================================================
+A POP3 web mail-client written in PHP
+Copyright (C) 2000 by Jean-Pierre Bergamin
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License.
+
+For more information see the file gpl.txt or go to
+http://www.gnu.org/copyleft/gpl.html
+
+==========================================================================*/
+<?
+
+	if( empty($themeid) )
+		$themeid = "leofav";
+
+	include "../shared/themes/$themeid.php";
+
+?>
+/*****************************
+
+ General styles
+
+*****************************/
+
+body {
+	font-family : <?echo $theme['font-family'] ?>;
+	font-size: <?echo $theme['font-size'] ?>;
+	color: <?echo $theme['text-color'] ?>;
+	background-color: <?echo $theme['page-background-color'] ?>;
+}
+
+table {
+	font-size: <?echo $theme['font-size'] ?>;
+}
+
+
+button,
+input, 
+select, 
+textarea
+ {
+	font-family: <?echo $theme['font-family'] ?>;
+	font-size: <?echo $theme['font-size'] ?>;
+}
+
+input[type="file"] > input[type="button"] {
+	font-family: <?echo $theme['font-family'] ?>;
+	font-size: <?echo $theme['font-size'] ?>;
+}
+
+
+/*****************************
+
+ Window table border
+
+*****************************/
+
+.windowborder {
+	color: White;
+	background-color: silver;
+	border: thin outset silver;
+}
+
+/*****************************
+
+ Window
+
+*****************************/
+
+.window {
+/*	color: <?echo $theme['text-color'] ?>; */
+	background-color: <? echo $theme['background-color'] ?>;
+}
+
+.window a {
+	color: <?echo $theme['text-color'] ?>;
+	background-color: inherit;
+	text-decoration: none;
+	width: 100%;
+}
+
+.window a:hover {
+	color: inherit;
+	background-color: silver;
+	text-decoration: underline;
+}
+
+.window form {
+	margin: 0, 0, 0, 0;
+	padding: 0, 0, 0, 0;
+}
+
+/*****************************
+
+ Mailwindow
+
+*****************************/
+
+.mailwindow a {
+	font-weight: bolder;
+}
+
+.mailwindow a:visited {
+	font-weight: normal;
+}
+
+/*****************************
+
+ Titlebar
+
+*****************************/
+
+.titlebar {
+	color: white;
+	background-color: <? echo $theme['title-background-color'] ?>;
+	border: 1px outset silver;
+}
+
+.titlebar a {
+	width: auto;
+}
+
+/*****************************
+
+Toolbar
+
+*****************************/
+
+.toolbar {
+	color: <?echo $theme['text-color'] ?>;
+	background-color: silver;
+
+}
+
+.toolbar img {
+	margin-top: 2pt;
+	border: thin solid silver;
+}
+
+.toolbar a {
+	color: <?echo $theme['text-color'] ?>;
+	background-color: inherit;
+	border : 1px solid Silver;
+	/*padding: 10px, 10px, 10px, 10px; problems with Opera 4.02*/
+	width: auto;
+}
+
+.toolbar a:visited {
+	color: <?echo $theme['text-color'] ?>;
+	background-color: inherit;
+}
+
+.toolbar a:hover {
+	color: <?echo $theme['text-color'] ?>;
+	background-color: silver;
+	text-decoration: none;
+	border-top: 1px solid white;
+	border-left: 1px solid white;
+	border-bottom: 1px solid gray;
+	border-right: 1px solid gray;
+}
+
+.toolbar td {
+	border-top: 1px solid white;
+	border-bottom: 2px groove white;
+	border-left: 1px solid white;
+	border-right: 1px solid gray;
+}
+
+/*****************************
+
+ Statusbar
+
+*****************************/
+
+.statusbar {
+	color: Red;
+	background-color: silver;
+	font-weight: bold;
+	font-size: normal;
+}
+
+.statusbar td {
+	border: thin inset silver;
+}
+
+/*****************************
+
+ Window title
+
+*****************************/
+
+.windowtitle {
+	color: white;
+	background-color: Gray;
+	font-weight: bold;
+	margin-bottom: 0;
+	padding: 3px 10px 3px 10px;
+	border: 1px outset silver;
+}
+
+.windowtitle a {
+	color: white;
+	background-color: inherit;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.windowtitle a:hover {
+	color: white;
+	background-color: inherit;
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+/*****************************
+
+ Child window
+
+*****************************/
+
+.childwindow {
+/*	color: <?echo $theme['text-color'] ?>; */
+	background-color: silver;
+	border: thin outset silver;
+	width: 50%;
+	margin-top: 5%;
+	margin-bottom: 5%;
+}
+
+.childwindow form {
+	margin-top: 10pt;
+	margin-bottom: 10pt;
+}
+
+.childwindow form td {
+	text-align: left;
+}
+
+/*****************************
+
+ Button
+
+*****************************/
+
+.button {
+	width: 150px;
+}
+
+/*****************************
+
+ Calendar control
+
+*****************************/
+
+.calcontrol {
+
+}
+
+.calcontrol a {
+	color: red;
+	background-color: inherit;
+	text-decoration: none;
+}
+
+.calcontrol a:hover {
+	color: white;
+	background-color: blue;
+}
+
+.calcontrol td {
+	border: thin none white;
+	text-align: center;
+}
+
+/*****************************
+
+ Mail window
+
+*****************************/
+
+.mail {
+
+}
+
+.mail label {
+	font-weight: bolder;
+}
+
+.mail img {
+	vertical-align: middle;
+}
+
+/*****************************
+
+ Help window
+
+*****************************/
+
+.help {
+
+}
+
+.help dt {
+	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-weight : bolder;
+	padding-bottom : 1ex;
+	padding-top : 2ex;
+}
+
+.help h3 {
+	padding-top: 1ex;
+	border-top: medium solid silver;
+}
+
+.help li {
+	margin-top: 3pt;
+	margin-bottom: 3pt;
+}
+
+.help a {
+	width: auto;
+}
+
+.help img {
+	vertical-align: middle;
+}
+
+.scrollingPanel {
+	overflow: auto;
+/*	width: 800px; */
+	height: 300px;
+	margin: 0;
+}
+
+tr.gridRow:hover {
+	background-color: silver;		
+}

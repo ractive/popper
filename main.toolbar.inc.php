@@ -58,14 +58,15 @@
 <?php
 			}
 ?>
-		<img src="graphics/spacing.gif" alt="|">
-		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=sendandreceive");?>"><img src="graphics/sendandreceive.gif" alt="<?php echo($strings["l_SendReceive"]);?>" title="<?php echo($strings["l_SendReceive"]);?>" border="0"></a>
-		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=checkrep");?>" target="_blank"><img src="graphics/get_rep.gif" alt="<?php echo($strings["l_GetRep"]);?>" title="<?php echo($strings["l_GetRep"]);?>" border="0"></a>		
-		<img src="graphics/spacing.gif" alt="|">
-		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=addressbook");?>"><img src="graphics/address.gif" alt="<?php echo($strings["l_AddressBook"]);?>" title="<?php echo($strings["l_AddressBook"]);?>" border="0"></a>
-		<img src="graphics/spacing.gif" alt="|">
-		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=accounts");?>"><img src="graphics/account.gif" alt="<?php echo($strings["l_Accounts"]);?>" title="<?php echo($strings["l_ManageAcc"]);?>" border="0"></a>
-		<img src="graphics/spacing.gif" alt="|">
-		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=config");?>"><img src="graphics/config.gif" alt="<?php echo($strings["l_Config"]);?>" title="<?php echo($strings["l_Config"]);?>" border="0"></a>		
-		</td>
-	</tr>
+	<img src="graphics/spacing.gif" alt="|">
+	<a href="<?php echo("$GLOBALS[PHP_SELF]?action=sendandreceive");?>"><img src="graphics/sendandreceive.gif" alt="<?php echo($strings["l_SendReceive"]);?>" title="<?php echo($strings["l_SendReceive"]);?>" border="0"></a>
+	<a href="<?php echo("$GLOBALS[PHP_SELF]?action=checkrep");?>" target="_blank"><img src="graphics/get_rep.gif" alt="<?php echo($strings["l_GetRep"]);?>" title="<?php echo($strings["l_GetRep"]);?>" border="0"></a>		
+	<img src="graphics/spacing.gif" alt="|">
+	<a href="<?php echo("$GLOBALS[PHP_SELF]?action=addressbook");?>"><img src="graphics/address.gif" alt="<?php echo($strings["l_AddressBook"]);?>" title="<?php echo($strings["l_AddressBook"]);?>" border="0"></a>
+	<a href="<?php echo("$GLOBALS[PHP_SELF]?action=newaddress");?>"><img src="graphics/address.gif" alt="<?php echo($strings["l_AddressBook"]);?>" title="<?php echo($strings["l_AddContact"]);?>" border="0"></a>
+	<img src="graphics/spacing.gif" alt="|">
+	<a href="<?php echo("$GLOBALS[PHP_SELF]?action=accounts");?>"><img src="graphics/account.gif" alt="<?php echo($strings["l_Accounts"]);?>" title="<?php echo($strings["l_ManageAcc"]);?>" border="0"></a>
+	<img src="graphics/spacing.gif" alt="|">
+	<a href="<?php echo("$GLOBALS[PHP_SELF]?action=config");?>"><img src="graphics/config.gif" alt="<?php echo($strings["l_Config"]);?>" title="<?php echo($strings["l_Config"]);?>" border="0"></a>		
+	</td>
+</tr>

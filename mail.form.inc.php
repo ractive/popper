@@ -1,10 +1,19 @@
-<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" style="border-bottom: medium solid silver;">
-	<tr>
-		<td class="windowtitle">
-			<?php echo($this->get_foldername()); ?>
-		</td>
-		<td class="scrollbar" valign="top">
-<?php
+<?
+/* 
+	this page displays the mail list panel ?
+*/
+
+// div added Leo
+?>
+<div class="windowtitle">
+<?php echo($this->get_foldername()); ?>
+</div>
+<?
+
+// commented Leo - unused since we use the scrollingPanel, a CSS simulated iFrame
+
+//		<td class="scrollbar" valign="top">
+/* <?php
 			// update the page_no.
 			$mail_count = $this->count_mails();
 			if (isset($GLOBALS[page])) {
@@ -22,14 +31,21 @@
 			else {
 				echo('<img src="graphics/arrowup_dis.gif" alt="" border="0">');
 			}
+
 ?>
 
 		</td>
-	</tr>
+*/
+?>
+<div class="scrollingPanel">
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+	<tr>
 	<tr>
 		<td class="mailwindow">
 			<?php $this->show_folder_content(); ?>
 		</td>
+<?
+/*
 		<td class="scrollbar" valign="bottom">
 <?php
 			$fromto = "Show mails ";
@@ -49,11 +65,23 @@
 			}
 ?>
 		</td>
+	*/
+?>
 	</tr>
 </table>
-<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" class="windowtitle">
-<tr>
-	<td>
+</div>
+<?php
+
+/*************************************************
+ *
+ *	current mail panel
+ *
+ **************************************************/
+?>
+<div class="windowtitle" style="height: 40px;">
+<table width="100%">
+	<tr>
+		<td>
 <?php
 		$this->show_head();
 ?>
@@ -65,6 +93,7 @@
 	</td>
 </tr>
 </table>
+</div>
 <form>
 <textarea readonly rows="<?php echo($this->config["mail_rows"]);?>" cols="80" style="width: 100%;">
 <?php
