@@ -83,7 +83,7 @@ class mimepart {
 		$string = preg_replace("/(=\s*\r\n)/m", "", $string);
 		// Replace the =XY encoded parts with the correct character
 		$string = preg_replace("/(=([0-9A-F]){1,1}([0-9A-F]){1,1})/e", "chr(hexdec('\\2'.'\\3'))", $string);
-		return str_replace("_", " ", $string);
+		return $string;
 	}
 	
 	function decode($data = "", $encoding = "") {
@@ -146,8 +146,7 @@ class mimepart {
 	
 	function get_address($address) {
 		$address = $this->strip_comment($address);
-		preg_match("/([\"\'](.*?)[\"\']\s*)*<(.*?)>/", $address, $matches);
-		//$this->print_array($matches);
+		preg_match("/(\"(.*?)\"\s*)*<(.*?)>/", $address, $matches);
 		$ret["name"] = $matches[2];
 		if (!empty($matches[3])) {
 			$ret["address"] = $matches[3];

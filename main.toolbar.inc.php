@@ -39,7 +39,22 @@
 <?php
 			}
 ?>
-		<img src="graphics/spacing.gif" alt="|">
+			<img src="graphics/spacing.gif" alt="|">
+			<a href="<?php echo("$GLOBALS[PHP_SELF]?action=newfolder&parent=$this->folder");?>"><img src="graphics/newfolder.gif" alt="New Folder" title="New Folder" border="0"></a>
+<?php
+			$disable = ($this->cur_message_id == 0);
+			if ($disable) {
+?>
+				<img style="margin: 0px, 1px, 0px, 1px;" src="graphics/move_dis.gif" alt="Move to folder" title="Select a mail first" border="0">
+<?php
+			}
+			else {
+?>
+				<a href="<?php echo("$GLOBALS[PHP_SELF]?action=move");?>"><img src="graphics/move.gif" alt="Move to folder" title="Move to folder" border="0"></a>
+<?php
+			}
+?>
+			<img src="graphics/spacing.gif" alt="|">
 <?php
 			// Enable the delete button only when a message is selected
 			$disable = ($this->cur_message_id == 0);
@@ -63,6 +78,6 @@
 		<img src="graphics/spacing.gif" alt="|">
 		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=accounts");?>"><img src="graphics/account.gif" alt="Accounts" title="Manage your accounts" border="0"></a>
 		<img src="graphics/spacing.gif" alt="|">
-		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=config");?>"><img src="graphics/config.gif" alt="Accounts" title="Configuration" border="0"></a>		
+		<a href="<?php echo("$GLOBALS[PHP_SELF]?action=config");?>"><img src="graphics/config.gif" alt="Accounts" title="Configuration" border="0"></a>
 		</td>
 	</tr>

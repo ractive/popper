@@ -119,16 +119,16 @@ class POP3
 		}
 		$this->FP = $fp;
 		$this->BANNER = $this->parse_banner($reply);
-		$this->RFC1939 = $this->noop();
+		/*$this->RFC1939 = $this->noop();
 		if($this->RFC1939)
 		{
-      if ($this->VMAILMGR) {
-      } else {
-  			$this->ERROR = "POP3: premature NOOP OK, NOT an RFC 1939 Compliant server";
-	  		$this->quit();
-		  	return false;
-      }
-		}
+	      if ($this->VMAILMGR) {
+	      } else {
+	  			$this->ERROR = "POP3: premature NOOP OK, NOT an RFC 1939 Compliant server";
+		  		$this->quit();
+			  	return false;
+	      }
+		}*/
 		return true;
 	}
 

@@ -18,21 +18,21 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 
 	include("class.popper.inc.php");
-	
+
 	session_start();
 	if (!isset($popper)) {
 		$popper = new popper;
 	}
-	
+
 	if (isset($action) && $action == "help") {
 		$popper->show_form("help");
 		exit;
 	}
-	
+
 	if (!isset($popper->db_tool)) {
 		$popper->db_tool = new db_tool("popper.inc.php");
-	}	
-	
+	}
+
 	if (isset($login)) {
 
 		if (!isset($login) || !isset($pwd)) {
@@ -46,8 +46,8 @@ http://www.gnu.org/copyleft/gpl.html
  		}
 
 		if (!$popper->is_activated($name)) {
-			$popper->messagebox("Your account is not activated yet! Please follow the instructions you got by mail (to the mail address you entered during the account creation)", "Account not activated", "Account not activated", "Welcome");		
-			return;			
+			$popper->messagebox("Your account is not activated yet! Please follow the instructions you got by mail (to the mail address you entered during the account creation)", "Account not activated", "Account not activated", "Welcome");
+			return;
 		}
 
 		// The password was ok. Now we start the session
@@ -55,14 +55,14 @@ http://www.gnu.org/copyleft/gpl.html
 		$popper->set_user($name);
 		session_register("popper", "logged_in");
 		if (!$popper->has_account()) {
-			$popper->show_in_window("newaccount", "Account", "You first have to enter your account information");		
+			$popper->show_in_window("newaccount", "Account", "You first have to enter your account information");
 			return;
 		}
 		$popper->show();
 	}
 	else if (isset($newuser)) {
 		if ($popper->create_user()) {
-			$popper->messagebox("Your account was created. Check your mail and confirm the subscription", "Account created", "Account created", "Welcome");		
+			$popper->messagebox("Your account was created. Check your mail and confirm the subscription", "Account created", "Account created", "Welcome");
 		}
 	}
 	else if (isset($check)) {
@@ -122,7 +122,7 @@ http://www.gnu.org/copyleft/gpl.html
 			}
 			else if ($action == "choosen") {
 				$popper->show_in_window("newmail", "New mail");
-			}			
+			}
 			else if ($action == "cancel") {
 				if (isset($old_uri)) {
 					Header("Location: $old_uri");
@@ -143,6 +143,13 @@ http://www.gnu.org/copyleft/gpl.html
 			}
 			else if ($action == "newaddress") {
 				$popper->show_in_window("newaddress", "Address");
+			}
+			else if ($action == "newfolder") {
+				$popper->show_in_window("newfolder", "New folder");
+			}
+			else if ($action == "storefolder") {
+				$popper->store_folder();
+				$popper->show_form("main");
 			}
 			else if ($action == "storemail") {
 				$msg = $popper->store_mail();
@@ -181,7 +188,7 @@ http://www.gnu.org/copyleft/gpl.html
 				else {
 					$popper->show_in_window("config", "Configuration");
 				}
-			}			
+			}
 			else if ($action == "deletemail") {
 				$popper->delete_mail();
 			}
