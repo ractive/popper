@@ -46,7 +46,7 @@ class mimepart {
 		$c_type = $this->get_header("Content-Type");
 		$type = $c_type["CONTENT-TYPE"];
 
-		if (strcasecmp($type, "multipart/mixed") == 0 || strcasecmp($type, "multipart/alternative") == 0 || strcasecmp($type, "multipart/related") == 0) {
+		if (strtoupper(substr($type, 0, strlen("MULTIPART/"))) == "MULTIPART/") {
 			$i = 1;
 			while($this->extract_part($i)) {
 				return $this->mimeparts[$i]->get_text_body();
@@ -263,9 +263,7 @@ class mimepart {
 
 		$type = $c_type["CONTENT-TYPE"];
 
-		$is_multipart = (substr($type, 0, strlen("MULTIPART/")) == "MULTIPART/");
-
-		echo $is_multipart;
+		$is_multipart = (strtoupper(substr($type, 0, strlen("MULTIPART/"))) == "MULTIPART/");
 
 		if (empty($c_type["BOUNDARY"])) {
 			return false;
@@ -564,12 +562,22 @@ class mimepart {
 		return $text;
 	}
 	
+	function create_boundary() {
+		srand((double)microtime()*1000000);
+		$this->boundary = '-NextPart---'.chr(rand(65, 91)).'---'.md5(uniqid(rand()).'---');
+		return $this->boundary;
+	}
+	
+	
 	function attach_body() {
 		// Create a random boundary
-		srand((double)microtime()*1000000);
-		$boundary = '-NextPart---'.chr(rand(65, 91)).'---'.md5(uniqid(rand()).'---');
-		$this->boundary = $boundary;
-		$this->headers->put("Content-Type", "multipart/mixed;\tboundary=\"$boundary\"");
+
+		// Add the content type if it's not already set
+		$type = $this->headers->get("Content-Type");
+		if (empty($type)) {
+			$boundary = $this->create_boundary();
+			$this->headers->put("Content-Type", "multipart/mixed;\tboundary=\"$boundary\"");
+		}
 		$this->headers->put("MIME-Version", "1.0");
 		// Create a mimepart out of the body
 		$msg = "Content-Type: text/plain;\tcharset=\"us-ascii\"\r\n";
