@@ -117,7 +117,7 @@ class mimepart {
 	
 	// Strip Header comments from the string
 	// Comments are in brackets outside of quotes
-	function strip_comment($string) {
+	function strip_comment($string, &$comment) {
 		$len = strlen($string);
 		$ret_str = "";
 		$quoted = false;
@@ -126,14 +126,18 @@ class mimepart {
 			$char = $string[$i];
 
 			if (!$quoted && $in_brackets && $char == ')') {
+				// A comment ends
 				$in_brackets--;
 				continue;
 			}
 			if (!$quoted && $char == '(') {
+				// A comment begins
 				$in_brackets++;
 				continue;
 			}
 			if (!$quoted && $in_brackets) {
+				// Add the char in brackets to the comment string
+				$comment .= $char;
 				continue;
 			}
 			if ($char == '"') {
@@ -146,13 +150,20 @@ class mimepart {
 	}
 	
 	function get_address($address) {
-		$address = $this->strip_comment($address);
+		// Strip out header comments
+		$address = $this->strip_comment($address, $comment);
+		// Try to fetch the name and the mail-address
 		preg_match("/([\"\'])?(.*?)([\"\'])?\s*<(.*?)>/", $address, $matches);
 		//$this->print_array($matches);
 		
 		$ret["name"] = $matches[2];
 		if (!empty($matches[4])) {
 			$ret["address"] = $matches[4];
+		}
+		else if (!empty($comment)) {
+			// If there was a comment, we use that as the name
+			$ret["name"] = $comment;
+			$ret["address"] = $address;
 		}
 		else {
 			$ret["address"] = $address;		
@@ -168,7 +179,7 @@ class mimepart {
 
 		if ($name != "Subject") {
 			// Strip out header comments
-			$cont = $this->strip_comment($cont);
+			$cont = $this->strip_comment($cont, $comment);
 		}
 		
 		// The To, Cc and Bcc fields can contain comma separated entries
