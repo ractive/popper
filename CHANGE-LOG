@@ -31,6 +31,7 @@ Version 1.2
 - The noop check for pop3 servers has been removed. Caused a lot of problems :-(
 - Case insensitive mail-header treatment. Multipart messages from Lotus-Notes etc.
   are not recognized correctly.
+- Better MIME mail handling
 - More user options to set up the look and feel (no. of mails per page and
   no. of lines shown at once)
 - Sender of incoming mails can be automatically added to the addressbook
