@@ -2,7 +2,7 @@
 
 /*========================================================================
 A POP3 web mail-client written in PHP
-Copyright (C) 2000 by Jean-Pierre Bergamin
+Copyright (C) 2000, 2001, 2003 by Jean-Pierre Bergamin
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License.
@@ -41,6 +41,15 @@ http://www.gnu.org/copyleft/gpl.html
 	define("IN_VIEW", 1);
 	define("SEP_VIEW", 2);	
 	define("FRAME_VIEW", 3);			
+
+	$action    = $_REQUEST['action'];
+	$popper    =& $_SESSION['popper'];
+	$logged_in = $_SESSION['logged_in'];
+	$cal       =& $_SESSION['cal'];
+	$check     = $_REQUEST['check'];
+	$new_user  = $_REQUEST['new_user'];
+	$login     = $_REQUEST['login'];
+
 	
 	function is_logged_in() {
 		global $logged_in;
