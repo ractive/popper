@@ -20,7 +20,7 @@ http://www.gnu.org/copyleft/gpl.html
   		// NS
   		$isNS = 1;
 	}
-
+	Header("Content-Type: text/html;\ncharset=\"KOI8-R\"\nContent-Transfer-Encoding: 8bit");
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 
@@ -32,11 +32,11 @@ http://www.gnu.org/copyleft/gpl.html
 <META HTTP-EQUIV="author" CONTENT="Jean-Pierre Bergamin">
 <META NAME="keywords" CONTENT="php, pop3, pop, client, pop client, popclient, free, freeware, asp">
 <META NAME="description" CONTENT="">
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<!--<meta http-equiv="Content-Type" content="text/html; charset=KOI8-R">-->
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="-1">
 <?php
-// Don't use the style shee for Netsape. It looks crappy...
+// Don't use the style sheet for Netsape. It looks crappy...
 if ($isNS == 0) {
 ?>
 <LINK REL=stylesheet TYPE="text/css" HREF="style.css">
