@@ -24,8 +24,6 @@ http://www.gnu.org/copyleft/gpl.html
 	// Set the session
 	setup_session();
 	
-	require_once("config.inc.php");
-	
 /*DevNote: roytoo
 This is very insecure!  Need to validate input and screen for PHP [htmlspecialchars()]
 and MySQL [mysql_real_escape_string()] injection attacks.
@@ -111,6 +109,7 @@ function setup_session() {
 	}
 	else {
 		$_SESSION['in_session']++;
+		require_once("config.inc.php");
 	}
 }
 
