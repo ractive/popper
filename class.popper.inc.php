@@ -40,6 +40,7 @@ class popper {
 	var $to;
 	var $max_size;
 	var $language;
+	var $order = "date DESC";
 	var $folders = array(
 			"inbox" => array(
 				"name" => "Inbox",
@@ -293,7 +294,7 @@ class popper {
 		$msg .= $strings["l_ReadAt"].": ".strftime("%c", time())."\r\n";
 		$msg .= $strings["l_Subject"].": ".$this->cur_mailer->subject()."\r\n\r\n";
 		
-		$not_mailer->create($notify, $from, $strings["l_Notification"].": ".$this->cur_mailer->headers->get("Subject"), $msg);
+		$not_mailer->create($notify, $from, $strings["l_NotifiSub"].": ".$this->cur_mailer->headers->get("Subject"), $msg);
 		$boundary = $not_mailer->create_boundary();
 		$not_mailer->headers->put("Content-Type", "multipart/report; report-type=disposition-notification;\tboundary=\"$boundary\"");
 
@@ -309,77 +310,6 @@ class popper {
 
 		$not_mailer->send();
 	}
-		
-	function show_print() {
-		global $strings;
-
-		if ($this->cur_message_id == 0) {
-			return;
-		}
-		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
-			$this->cur_mailer = new mailer($this->userid);
-			$this->cur_mailer->load($this->cur_message_id);
-		}
-
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<LINK REL=stylesheet TYPE="text/css" HREF="print.css">
-<html>
-
-<head>
-<title>PHP POP3 Client</title>
-<body>
-<?php
-
-
-		// Display the headers
-		echo("<table cellspacing=\"3\">\n");
-		echo("<tr><td width=\"15%\"><b>$strings[l_From]:</b></td><td>".htmlspecialchars(stripslashes($this->cur_mailer->headers->get("From")))."</td></tr>");
-		echo("<tr><td><b>$strings[l_To]:</b></td><td>".htmlspecialchars(stripslashes($this->cur_mailer->headers->get("To")))."</td></tr>");
-		$cc = $this->cur_mailer->cc();
-		if (!empty($cc)) {
-			echo("<tr><td><b>Cc:</b></td>".htmlspecialchars($this->cur_mailer->cc())."</td></tr>");
-		}
-		echo("<tr><td><b>$strings[l_Date]</b></td><td>".$this->cur_mailer->headers->get("date")."</td></tr>");
-		$subject = $this->cur_mailer->charset_decode(stripslashes($this->cur_mailer->subject()));
-		//$subject = $this->cur_mailer->headers->get_decoded("Subject");
-		echo("<tr><td><b>$strings[l_Subject]:</b></td><td>".htmlspecialchars($subject)."</td></tr>");
-		echo("</table>\n<hr><br>");
-		$content = "";
-		if (isset($GLOBALS[show_sources]) && $GLOBALS[show_sources] == true) {
-			$query = "SELECT mail FROM mails WHERE id='$this->cur_message_id' AND user_id='$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$content = "\r\n\r\n  ======== ERROR while trying to get mail! ========";
-			}
-			else {
-				$row = $this->db_tool->fetch_row($res);
-				$content = $row[0];
-			}
-		}
-		else {
-			if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
-				$this->cur_mailer = new mailer($this->userid);
-
-				if (!$this->cur_mailer->load($this->cur_message_id)) {
-					$content = "\r\n\r\n  ======== ERROR while trying to get mail! ========";
-				}
-			}
-		}
-
-		if (empty($content)) {
-			$content = $this->cur_mailer->get_text_body();
-		}
-
-		// If we are here, the mail has been read, we tell that the DB
-		$this->set_mail_read($this->cur_message_id);
-		
-		echo(nl2br(stripslashes($content)));
-?>
-</body>
-</html>
-<?php	
-	}
 
 	function has_account() {
 		$query = "SELECT id FROM accounts WHERE user_id='$this->userid'";
@@ -389,7 +319,13 @@ class popper {
 
 	function update_pageno($page, $mail_count) {
 		$cur_page = $this->folders["$this->folder"]["cur_page"];
-		if ($page == "next" && (($cur_page + 1) * $this->config["mails_per_page"]) < $mail_count) {
+		if ($page == "top") {
+			$cur_page = 0;
+		}
+		else if ($page == "last") {
+			$cur_page = floor($mail_count / $this->config["mails_per_page"]);
+		}
+		else if ($page == "next" && (($cur_page + 1) * $this->config["mails_per_page"]) < $mail_count) {
 			$cur_page++;
 		}
 		else if ($page == "prev" && $cur_page != 0) {
@@ -723,7 +659,8 @@ class popper {
 	}
 
 	function show_folders() {
-		$query = "SELECT folder, count(*) as count FROM mails WHERE was_read=MAIL_UNREAD AND user_id='$this->userid' GROUP BY folder";
+		$unread = MAIL_UNREAD;
+		$query = "SELECT folder, count(*) as count FROM mails WHERE was_read='$unread' AND user_id='$this->userid' GROUP BY folder";
 		$res = $this->db_tool->db_query($query);
 		if ($res != 0) {
 			while($row = $this->db_tool->fetch_array($res)) {
@@ -774,15 +711,27 @@ class popper {
 		if (empty($this->folder)) {
 			$this->folder = "inbox";
 		}
-		/*if (!isset($mail_id) || $mail_id == 0) {
-			$this->cur_message_id = 0;
-		}*/
-
+		
+		if (isset($GLOBALS[order]) && empty($this->order)) {
+			$this->order = $GLOBALS[order];
+		}
+		else if (isset($this->order) && isset($GLOBALS[order])) {
+			//echo substr($this->order, -4);
+			if (substr($this->order, -4) == "DESC") {
+				$this->order = $GLOBALS[order];
+			}
+			else {
+				$this->order = $GLOBALS[order]." DESC";
+			}
+			
+		}
+		
 		while(1) {
 			$pageno = $this->get_pageno() * $this->config["mails_per_page"];
 			$mails = $this->config["mails_per_page"];
 
-			$query = "SELECT id, tos, froms, IF(LENGTH(subject) > '".$this->config["subject_size"]."', CONCAT(LEFT(subject, '".$this->config["subject_size"]."'), '...'), subject) as subject, is_mime, date, was_read, priority FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY date DESC LIMIT $pageno, $mails";
+			$query = "SELECT id, tos, from_name as froms, IF(LENGTH(subject) > '".$this->config["subject_size"]."', CONCAT(LEFT(subject, '".$this->config["subject_size"]."'), '...'), subject) as subject, is_mime, date, was_read, priority FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY $this->order LIMIT $pageno, $mails";
+
 			$res = $this->db_tool->db_query($query);
 
 			if ($res == 0) {
@@ -809,16 +758,22 @@ class popper {
 		}
 		echo("<form class=\"mail\" action=\"$GLOBALS[PHP_SELF]?action=deletemails\" method=\"post\">");
 		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");
-		echo("<tr style=\"text-align: left; background-color: silver; color: inherit;\">\n");
-		echo("<th style=\"border: thin outset silver; width: 10px; text-align: center;\"><button type=\"submit\" value=\"delete\" name=\"delete\" style=\"width: 15px; height: 15px; border: none; background-color: silver;\"><img src=\"graphics/del.gif\" alt=\"$strings[l_DeleteMultiple]\" title=\"$strings[l_DeleteMultiple]\"></button></th>");
-		echo("<th style=\"border: thin outset silver; width: 20px; text-align: center;\"><img src=\"graphics/attachment_small.gif\" alt=\"Att.\" align=\"center\"></th><th style=\"border: thin outset silver;\" width=\"33%\">");
+		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\">\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<button type=\"submit\" value=\"delete\" name=\"delete\" style=\"width: 15px; height: 15px; border: none; background-color: silver;\">\n<img src=\"graphics/del.gif\" alt=\"$strings[l_DeleteMultiple]\" title=\"$strings[l_DeleteMultiple]\"></button></th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"$strings[l_Order] $strings[l_Attachment]\"><img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Order] $strings[l_Attachment]\" align=\"center\" border=\"0\"></a></th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=priority\" title=\"$strings[l_Order] $strings[l_Priority]\"><img src=\"graphics/priority.gif\" alt=\"$strings[l_Order] $strings[l_Priority]\" align=\"center\" border=\"0\"></a></th>\n");
+		echo("<th style=\"text-align: left; border: thin outset silver;\" width=\"33%\">");
+		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=");
 		if ($this->folder == "outbox" || $this->folder == "sent") {
-			echo($strings[l_To]);
+			echo("tos\" title=\"$strings[l_Order] $strings[l_From]\">".$strings[l_To]);
 		}
 		else {
-			echo($strings[l_From]);
+			echo("froms\" title=\"$strings[l_Order] $strings[l_From]\">".$strings[l_From]);
 		}
-		echo("</th><th style=\"border: thin outset silver;\" width=\"40%\">$strings[l_Subject]</th><th style=\"border: thin outset silver;\">$strings[l_Date]</th></tr>\n");
+
+		echo("</a></th><th style=\"text-align: left; border: thin outset silver;\" width=\"40%\">\n");
+		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=subject\" title=\"$strings[l_Order] $strings[l_Subject]\">".$strings[l_Subject]."</a></th>\n");
+		echo("<th style=\"text-align: left; border: thin outset silver;\"><a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=date\" title=\"$strings[l_Order] $strings[l_Date]\">".$strings[l_Date]."</a></th></tr>\n");
 
 		// Now fill in the mails
 		while ($row = $this->db_tool->fetch_array($res)) {
@@ -847,17 +802,28 @@ class popper {
 			if ($row[is_mime]) {
 				echo("<img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Attachment]\" align=\"center\" border=\"0\" style=\"vertical-align: middle;\">\n");				
 			}
+			echo("</td><td align=\"center\" style=\"vertical-align: middle\">");
+			
+			switch ($row["priority"]) {
+				case LOWEST_PRIORITY:
+					echo("<img src=\"graphics/lowest.gif\" alt=\"lowest\" title=\"$strings[l_LowestPriority]\">");			
+					break;
+				case LOW_PRIORITY:					
+					echo("<img src=\"graphics/low.gif\" alt=\"low\" title=\"$strings[l_LowPriority]\">");	
+					break;					
+				case HIGH_PRIORITY:					
+					echo("<img src=\"graphics/high.gif\" alt=\"high\" title=\"$strings[l_HighPriority]\">");	
+					break;
+				case HIGHEST_PRIORITY:					
+					echo("<img src=\"graphics/highest.gif\" alt=\"highest\" title=\"$strings[l_HighestPriority]\">");	
+					break;
+				default:
+					echo("&nbsp;");
+					break;				
+			}
+						
 			echo("</td><td>\n<img src=\"graphics/$img\" alt=\"\" style=\"float: left;\">");
 			
-			$row["priority"];
-			
-			if ($row["priority"] == HIGH_PRIORITY) {
-				echo("<img src=\"graphics/high.gif\" alt=\"high\" title=\"$strings[l_HighPriority]\" style=\"float: left; vertical-align: bottom;\">");	
-			}
-			else if ($row["priority"] == LOW_PRIORITY) {
-				echo("<img src=\"graphics/low.gif\" alt=\"low\" title=\"$strings[l_LowPriority]\" style=\"float: left; vertical-align: bottom;\">");			
-			}
-
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\"\n");
 			$this->mail_selected($row[id]);
 			// If the mail was not read, display it bold (also the link)
@@ -935,7 +901,7 @@ class popper {
 	}
 
 	function show_mail_content() {
-		global $strings;
+		global $strings, $action;
 
 		if ($this->cur_message_id == 0) {
 			echo("\r\n\r\n  ======== $strings[l_NoMsgSelected] ========");
@@ -969,10 +935,89 @@ class popper {
 		}
 
 		// If we are here, the mail has been read, we tell that the DB
-		$this->set_mail_read($this->cur_message_id);
+		if ($action != "printmail") {
+			$this->set_mail_read($this->cur_message_id);
+		}
 
-		echo(stripslashes($content));
+		$content = stripslashes($content);
+		
+		if ($action == "printmail") {
+			$content = nl2br($content);
+			// Convert http:// entries to hyperlinks
+			$this->make_clickable($content);
+		}
+
+		echo $content;
 	}
+
+	function show_print() {
+		global $strings;
+
+		if ($this->cur_message_id == 0) {
+			return;
+		}
+		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
+			$this->cur_mailer = new mailer($this->userid);
+			$this->cur_mailer->load($this->cur_message_id);
+		}
+
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<LINK REL=stylesheet TYPE="text/css" HREF="print.css">
+<html>
+
+<head>
+<title>PHP POP3 Client</title>
+<body>
+<?php
+
+
+		// Display the headers
+		echo("<table cellspacing=\"3\">\n");
+		echo("<tr><td width=\"15%\"><b>$strings[l_From]:</b></td><td>".htmlspecialchars(stripslashes($this->cur_mailer->headers->get("From")))."</td></tr>");
+		echo("<tr><td><b>$strings[l_To]:</b></td><td>".htmlspecialchars(stripslashes($this->cur_mailer->headers->get("To")))."</td></tr>");
+		$cc = $this->cur_mailer->cc();
+		if (!empty($cc)) {
+			echo("<tr><td><b>Cc:</b></td>".htmlspecialchars($this->cur_mailer->cc())."</td></tr>");
+		}
+		echo("<tr><td><b>$strings[l_Date]</b></td><td>".$this->cur_mailer->headers->get("date")."</td></tr>");
+		$subject = $this->cur_mailer->charset_decode(stripslashes($this->cur_mailer->subject()));
+		//$subject = $this->cur_mailer->headers->get_decoded("Subject");
+		echo("<tr><td><b>$strings[l_Subject]:</b></td><td>".htmlspecialchars($subject)."</td></tr>");
+	
+		//if (sizeof($this->cur_mailer->mimeparts) > 0) {
+			$bShown = false;
+			$i = 1;
+			while($this->cur_mailer->extract_part($i)) {
+				$type = $this->cur_mailer->get_attachment_type($i);
+				$name = $this->cur_mailer->charset_decode($this->cur_mailer->get_attachment_name($i));			
+				echo("<tr><td><b>");
+				if (!$bShown) {
+					echo($strings["l_Attachment"]);
+					$bShown = true;
+				}
+				else {
+					echo("&nbsp;");
+				}
+				echo("</b></td><td>$name &lt;$type&gt;</td></tr>");
+				$i++;
+			}
+		//}
+		
+		echo("</table>\n<hr><br>");
+
+		echo $this->show_mail_content();
+?>
+</body>
+</html>
+<?php	
+	}
+
+	function make_clickable(&$content) {
+		echo "sldfjlskjfsj";
+		$content = preg_replace("|\s+(http://.*)\s+|U", "<a href=\"\\1\">\\1</a>", $content);
+	}
+	
 
 	function set_mail_read($mail_id) {
 		$was_read = MAIL_READ;
@@ -1177,7 +1222,7 @@ class popper {
 			$mailer->bcc($bccs);
 		}	
 		if (isset($notification) && $notification == "on") {
-			$mailer->headers->put("Disposition-Notification-To",  $tos);
+			$mailer->headers->put("Disposition-Notification-To",  $froms);
 		}
 		
 		if (isset($attachment) && !empty($attachment) && $attachment != "none") {

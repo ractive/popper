@@ -147,6 +147,7 @@ class mailer extends mail {
 		$msg = addslashes($msg);
 		$tos = addslashes($this->headers->get("To"));
 		$froms = addslashes($this->headers->get("From"));
+		$from_name = addslashes($this->get_pretty_header("From"));
 		$subject = addslashes($this->headers->get("Subject"));
 		if ($this->headers->get("X-MSMail-Priority") == "High") {
 			$priority = HIGH_PRIORITY;
@@ -157,6 +158,45 @@ class mailer extends mail {
 		else {
 			$priority = NORMAL_PRIORITY;
 		}
+		if ($this->headers->get("X-MSMail-Priority") == "High") {
+			$priority = HIGH_PRIORITY;
+		}
+		else if ($this->headers->get("X-MSMail-Priority") == "Low") {
+			$priority = LOW_PRIORITY;
+		}
+		else {
+			$priority = NORMAL_PRIORITY;
+		}
+
+		$priority_header = $this->headers->get("X-Priority");
+
+		$priority_header = $priority_header[0];
+
+		if (isset($priority_header)) {
+			switch($priority_header) {
+				case "1";
+					$priority = HIGHEST_PRIORITY;
+					break;
+				case "2";
+					$priority = HIGH_PRIORITY;
+					break;
+				case "3";
+					$priority = NORMAL_PRIORITY;
+					break;
+				case "4";
+					$priority = LOW_PRIORITY;
+					break;
+				case "5";
+					$priority = LOWEST_PRIORITY;
+					break;
+				default:
+					$priority = NORMAL_PRIORITY;
+					break;
+			}
+			
+		}
+		
+		
 		
 		$date = $this->make_timestamp($this->headers->get("Date"));
 		if ($folder == "sent") {
@@ -171,7 +211,7 @@ class mailer extends mail {
 		if ($server_uidl != 0 && !$uidl) {
 			$uidl = $server_uidl;
 		}
-		$query = "INSERT INTO mails (tos, froms, subject, date, folder, user_id, mail, uidl, acc_id, is_mime, was_read, priority) VALUES ('$tos', '$froms', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl', '$this->acc_id', '$is_mime', '$was_read', '$priority')";
+		$query = "INSERT INTO mails (tos, froms, from_name, subject, date, folder, user_id, mail, uidl, acc_id, is_mime, was_read, priority) VALUES ('$tos', '$froms', '$from_name', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl', '$this->acc_id', '$is_mime', '$was_read', '$priority')";
 		$res = $this->db_tool->db_query($query);
 
 		return $this->db_tool->insert_id();	

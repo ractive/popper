@@ -20,7 +20,7 @@ http://www.gnu.org/copyleft/gpl.html
   		// NS
   		$isNS = 1;
 	}
-	Header("Content-Type: text/html;\ncharset=\"KOI8-R\"\nContent-Transfer-Encoding: 8bit");
+	//Header("Content-Type: text/html;\ncharset=\"KOI8-R\"\nContent-Transfer-Encoding: 8bit");
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 

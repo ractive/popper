@@ -17,9 +17,11 @@ http://www.gnu.org/copyleft/gpl.html
 	define("MAIL_REPLIED", 2);
 	define("MAIL_FORWARDED", 3);
 	
-	define("NORMAL_PRIORITY", 0);
-	define("LOW_PRIORITY", 1);
+	define("HIGHEST_PRIORITY", 1);
 	define("HIGH_PRIORITY", 2);
+	define("NORMAL_PRIORITY", 3);
+	define("LOW_PRIORITY", 4);
+	define("LOWEST_PRIORITY", 5);
 
 	function is_logged_in() {
 		global $logged_in;
@@ -67,7 +69,8 @@ http://www.gnu.org/copyleft/gpl.html
 		$popper->db_tool = new db_tool("popper.inc.php");
 	}	
 	
-	if (isset($login) || ($poppercookie["user"] && !is_logged_in())) {
+	if (!isset($check) && !isset($newuser) && (isset($login) || ($poppercookie["user"] && !is_logged_in()))) {
+
 		if (!isset($login) || !isset($pwd)) {
 			$popper->show_in_window("login", $strings["l_Login"]);
 			exit;

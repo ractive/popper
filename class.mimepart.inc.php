@@ -250,7 +250,6 @@ class mimepart {
 
 	// Extract part number $num
 	function extract_part($num) {
-		// echo "NUM: $num<br>";
 		// Did we extract this part already?
 
 		if (isset($this->mimeparts[$num]) && !empty($this->mimeparts[$num])) {

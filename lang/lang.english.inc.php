@@ -180,5 +180,5 @@
 	$strings["l_NotifyQuest2"]	= "Do you want to send it?";
 	$strings["l_SendNot"]		= "Send notification";
 	$strings["l_NotMsg"]		= "The following message has been displayed.\r\nThis is no guarantee that the message has been read or understood.";
-	$strings["l_Notification"]	= "Notification";	
+	$strings["l_NotifiSub"]	= "Notification";	
 ?>

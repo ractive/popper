@@ -70,7 +70,7 @@ Version 1.32
 - Date/Time localized
 - Grrr. update131.mysql was missing :-(
 
-Version 1.4b1
+Version 1.4b3
 =============
 - Russian language file added. They don't work yet :-(
   The charset has to be choosen manually in the browser for a correct display.
@@ -78,3 +78,13 @@ Version 1.4b1
   mails.
 - You can send MDNs for mails that request that
 - Small bug-fixes
+
+Version 1.4b3
+=============
+- You now can sort the columns in the main view (Form, subject, date etc.)
+- X-Priority tag supported and shown
+- Get all at the beginning of the "Send and receive" list (many request :-)
+- The print-view has clickable hyperlinks and shows the name and type of the attachments
+- Attention! Mails stored in a previous version won't show the from part in the main view
+  I will write an update script to fix that!!!
+- The usual bug-fixes :-)

@@ -26,9 +26,9 @@ http://www.gnu.org/copyleft/gpl.html
 	<h4><?php echo($strings["l_Action"]);?></h4>
 	<p>
 	<select name="what" class="button">
+		<option value="getall"><?php echo($strings["l_GetAll"]);?></option>
 		<option value="sendonly"><?php echo($strings["l_SendOnly"]);?></option>
 		<option value="sendandreceive"><?php echo($strings["l_SendRecvAll"]);?></option>
-		<option value="getall"><?php echo($strings["l_GetAll"]);?></option>
 <?php
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<option value=\"$row[id]\">".stripslashes($row["name"])."</option>");
