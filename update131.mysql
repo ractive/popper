@@ -1,0 +1,6 @@
+ALTER TABLE conf MODIFY language varchar(20) NOT NULL DEFAULT 'english';
+ALTER TABLE conf MODIFY subject_size int NOT NULL DEFAULT 55;
+ALTER TABLE conf MODIFY address_size int NOT NULL DEFAULT 22;
+ALTER TABLE conf MODIFY check_int int NOT NULL DEFAULT 15;
+ALTER TABLE conf MODIFY mail_rows int(11) NOT NULL DEFAULT 20;
+ALTER TABLE conf MODIFY mails_per_page int(11) NOT NULL DEFAULT 20;
