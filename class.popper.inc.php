@@ -243,8 +243,8 @@ class popper {
 			return;
 		}
 
-		echo("<table width=\"100%\">\n");
-		echo("<tr><th align=\"left\">Name</th><th align=\"left\">E-Mail</th></tr>\n");
+		echo("<table>\n");
+		echo("<tr><th align=\"left\" width=\"50%\">Name</th><th align=\"left\">E-Mail</th></tr>\n");
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr><td>\n");
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=addressbook&addr_id=$row[id]\" title=\"Show details\"");
@@ -912,9 +912,9 @@ class popper {
 		else {
 			$folder = "inbox";
 		}
-
+		$reply = "\"".$row["fromname"]."\" <".$row["replyto"].">";
 		$mailer = new mailer($this->userid, $replyaccount);
-		$mailer->create($tos, $row[replyto], $subject, $body);
+		$mailer->create($tos, $reply, $subject, $body);
 		if (isset($ccs) && !empty($ccs)) {
 			$mailer->cc($ccs);
 		}
@@ -964,23 +964,39 @@ class popper {
 			}
 		}
 	}
-	function show_attachments() {
+	function show_attachments($of_part = 0, $parent_id = 0) {
 		if ($this->cur_message_id == 0) {
 			return;
 		}
-		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {		
+		if ($of_part != 0) {
+			$mailer = $of_part;
+		}
+		else if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {		
 			$this->cur_mailer = new mailer($this->userid);
 			$this->cur_mailer->load($this->cur_message_id);
-		}		
+			$mailer = $this->cur_mailer;
+		}
+		else {
+			$mailer = $this->cur_mailer;
+		}
 		$i = 1;
-		while($this->cur_mailer->extract_part($i)) {
-			$type = $this->cur_mailer->get_attachment_type($i);
+		//echo "BODY:<br><br>".nl2br($mailer->body)."<br><br>";
+		while($mailer->extract_part($i)) {
+			if (sizeof($mailer->mimeparts[$i]->mimeparts) > 0) {
+				$this->show_attachments($mailer->mimeparts[$i], $i);
+				$i++;
+				continue;
+			}
+
+			$type = $mailer->get_attachment_type($i);
+
 			switch ($type) {
 				case "image/gif":
 				case "image/jpeg":
 				case "image/png":			
 				case "image/tiff":			
 				case "image/pjpeg":
+				case "image/bmp":
 					$type_pic = "picture.gif";
 					break;
 				case "video/mpeg":
@@ -1002,8 +1018,17 @@ class popper {
 				default:
 					$type_pic = "unknown.gif";
 			}
-			$att_name = $this->cur_mailer->get_attachment_name($i);
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=$GLOBALS[mail_id]&att_id=$i\" title=\"$att_name\" target=\"top_\" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"vertical-align: top;\"></a>\n");
+
+			$att_name = $mailer->get_attachment_name($i);
+			
+			echo("<a href=\"$GLOBALS[PHP_SELF]?action=getattachment&mail_id=$GLOBALS[mail_id]&att_id=");
+			if ($of_part != 0) {
+				echo("$parent_id&sub_att_id=$i");
+			}
+			else {
+				echo("$i");
+			}
+			echo("\" title=\"$att_name\" target=\"top_\" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"vertical-align: top;\"></a>\n");
 			$i++;
 		}
 	}
@@ -1029,7 +1054,7 @@ class popper {
 	}
 	
 	function get_attachment() {
-		global $att_id;
+		global $att_id, $sub_att_id;
 		if (!isset($att_id)) {
 			$att_id = 1;
 		}
@@ -1040,15 +1065,32 @@ class popper {
 				exit;
 			}
 		}
-		$data = $this->cur_mailer->get_attachment($att_id);
+
+		if (isset($sub_att_id)) {
+			$data = $this->cur_mailer->get_attachment($att_id, $sub_att_id);
+		}
+		else {
+			$data = $this->cur_mailer->get_attachment($att_id);
+		}
+		
 		if ($data === false) {
 			$this->report_error("The attachment could not be extracted", "Mail error");
 			exit;
 		}
-		$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers->get("Content-Disposition"));
-		$type = "Content-Type: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers->get("Content-Type"));
+		if (isset($sub_att_id)) {
+			$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->mimeparts[$sub_att_id]->headers->get("Content-Disposition"));
+			$type = "Content-Type: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->mimeparts[$sub_att_id]->headers->get("Content-Type"));			
+		}
+		else {
+			$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers->get("Content-Disposition"));
+			$type = "Content-Type: ".str_replace("\r\n\t", " ", $this->cur_mailer->mimeparts[$att_id]->headers->get("Content-Type"));
+		}
 
 		$disp = str_replace("attachment;", "inline;", $disp);
+		
+		//echo "DISP: $disp<br>";
+		//echo "TYPE: $type<br>";
+		
 		Header($disp);
 		Header($type);
 
@@ -1101,6 +1143,10 @@ class popper {
 			else {
 				$del_msg = "The mail could not be moved to the recycle bin!";
 			}
+			
+			// The selected mail is not delete. Cleare the "reference" to it
+			$this->cur_message_id = 0;
+			$this->cur_mailer = 0;
 		}
 
 		$this->show_form("main", $del_msg);
@@ -1353,6 +1399,7 @@ class popper {
 			// If the server doesn't support the X-UIDL header, just get
 			// ALL the mails
 			if ($server_uidls === false) {
+			//if (true){
 				$get = $pop3->pop_list();
 				array_shift($get);
 			}
@@ -1394,12 +1441,17 @@ class popper {
 	}
 
 	function add_address($mailer) {
-		$from = addslashes($mailer->headers->get("From"));
+		// Get the from name from the mail
+		$from = $mailer->headers->get("From");
 		$add = $mailer->get_address($from);
 		if (!empty($add["address"])) {
-			$query = "SELECT name, email FROM addresses WHERE name='$add[name]' AND email='$add[address]' AND user_id='$this->userid'";
+			$name = addslashes($add[name]);
+			$addr = addslashes($add[address]);
+			// Let's see if this entry already exists
+			$query = "SELECT name, email FROM addresses WHERE name='$name' AND email='$addr' AND user_id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
 			if ($this->db_tool->affected_rows() == 0) {
+				// Add the new entry
 				$GLOBALS["name"] = $add["name"];
 				$GLOBALS["email"] = $add["address"];
 				$this->store_address();
