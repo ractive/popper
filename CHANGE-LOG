@@ -130,5 +130,3 @@ Version 1.41
 Version 1.41-r1
 ============
 - Fix for reserved word collision in MySQL >4 (bug #1100222).  Thanks to kodekrash for the heads up.
-- Changed "l_PasswordFail" message to "l_LoginFail" message for better security.  Please look over 
-  the translations and let me know if they are correct.

@@ -14,108 +14,100 @@ http://www.gnu.org/copyleft/gpl.html
 
 /*==========================================================================
                                    Begin Main                             */	
-	// Set the session
-	SetupSession();
-	
 	// Check for PHP >4.1.0
-	if (substr(phpversion(), 0, 1) < 4) {
-		$msg  = "<h1>PHP3 is not supported!</h1>\n<br />\n<br />\nInstall a version of PHP >=4: <a ";
-		$msg .= "href='http://www.php.net' title='PHP Homepage'>http://www.php.net</a>";
+	if (version_compare(phpversion(),'4.1.0','<')) {
+		$msg  = "<h1>Your version of PHP is not supported!</h1>\n<br />\n<br />\nInstall a version ";
+		$msg .= "of PHP >=4: <a href='http://www.php.net' title='PHP Homepage'>http://www.php.net</a>";
 		die($msg);
 	}
+	
+	// Set the session
+	setup_session();
 
-	define("MAIL_UNREAD", 0);
-	define("MAIL_READ", 1);
-	define("MAIL_REPLIED", 2);
-	define("MAIL_FORWARDED", 3);
+	$_SESSION['CONSTS']['MAIL_UNREAD'] = 0;
+	$_SESSION['CONSTS']['MAIL_READ'] = 1;
+	$_SESSION['CONSTS']['MAIL_REPLIED'] = 2;
+	$_SESSION['CONSTS']['MAIL_FORWARDED'] = 3;
 	
-	define("HIGHEST_PRIORITY", 1);
-	define("HIGH_PRIORITY", 2);
-	define("NORMAL_PRIORITY", 3);
-	define("LOW_PRIORITY", 4);
-	define("LOWEST_PRIORITY", 5);
+	$_SESSION['CONSTS']['HIGHEST_PRIORITY'] = 1;
+	$_SESSION['CONSTS']['HIGH_PRIORITY'] = 2;
+	$_SESSION['CONSTS']['NORMAL_PRIORITY'] = 3;
+	$_SESSION['CONSTS']['LOW_PRIORITY'] = 4;
+	$_SESSION['CONSTS']['LOWEST_PRIORITY'] = 5;
 	
-	define("FULL_VIEW", 0);
-	define("MID_VIEW", 1);
-	define("MIN_VIEW", 2);
+	$_SESSION['CONSTS']['FULL_VIEW'] = 0;
+	$_SESSION['CONSTS']['MID_VIEW'] = 1;
+	$_SESSION['CONSTS']['MIN_VIEW'] = 2;
 	
-	define("POPUP_VIEW", 0);
-	define("IN_VIEW", 1);
-	define("SEP_VIEW", 2);	
-	define("FRAME_VIEW", 3);
+	$_SESSION['CONSTS']['POPUP_VIEW'] = 0;
+	$_SESSION['CONSTS']['IN_VIEW'] = 1;
+	$_SESSION['CONSTS']['SEP_VIEW'] = 2;
+	$_SESSION['CONSTS']['FRAME_VIEW'] = 3;
 	
 /*DevNote: roytoo
 This is very insecure!  Need to validate input and screen for PHP [htmlspecialchars()]
 and MySQL [mysql_real_escape_string()] injection attacks.
 :DevNote*/
 	$action    = (!isset($_REQUEST['action']) ? "" : strtolower(htmlspecialchars($_REQUEST['action'])));
-	$popper    =& $_SESSION['popper']; // Still needs a security patch
 	$logged_in = (!isset($_SESSION['logged_in']) ? "" : $_SESSION['logged_in']);
-	$cal       =& $_SESSION['cal']; // Still needs a security patch
 	$confirm_code     = (!isset($_REQUEST['confirm_code']) ? "" : htmlspecialchars($_REQUEST['confirm_code']));
 	$ok 		  = (!isset($_REQUEST['ok']) ? "" : strtolower(htmlspecialchars($_REQUEST['ok'])));
 	$what		  = (!isset($_REQUEST['what']) ? "" : htmlspecialchars($_REQUEST['what']));
 	
-	function is_logged_in() {
-		global $logged_in;
-		return (isset($logged_in) && isset($_SESSION['logged_in']) && $logged_in == 1);
-	}
-	
-	global $strings, $locale;
+	global $locale;
 	
 	@set_time_limit(60);
 
 	include("class.popper.inc.php");
 	include("class.cal.inc.php");
 	
-	$lang_file = LanguageGet();
+	$lang_file = language_get();
 	include($lang_file);
 	setlocale(LC_ALL, $locale);
 	
 	// If needed, setup the persistent session data objects.
-	if (!isset($popper) || !is_object($popper)) {
+	if (!isset($_SESSION['popper']) || !is_object($_SESSION['popper'])) {
 		$_SESSION['popper'] = new popper;
-		$popper =& $_SESSION['popper'];
 	}
 	
-	if (!isset($cal) || !is_object($cal)) {
+	if (!isset($_SESSION['cal']) || !is_object($_SESSION['cal'])) {
 		$_SESSION['cal'] = new cal;
-		$cal =& $_SESSION['cal'];
 	}
+	$cal =& $_SESSION['cal'];
 	
 	/*
 	// Check for early exit conditions
 	switch ($action)
 	{
 	case "lostpwd":
-		$popper->show_in_window("lostpwd");
-		exit;
+		$_SESSION['popper']->show_in_window("lostpwd");
+		exit_popper();
 	case "sendpwd":
-		$popper->send_pwd();
-		exit;
+		$_SESSION['popper']->send_pwd();
+		exit_popper();
 	case "help":
-		$popper->show_form("help");
-		exit;
+		$_SESSION['popper']->show_form("help");
+		exit_popper();
 	}
 	*/
 	
-	if (!isset($popper->db_tool)) {
-		$popper->db_tool = new db_tool("test-popper.inc.php");
+	if (!isset($_SESSION['popper']->db_tool)) {
+		$_SESSION['popper']->db_tool = new db_tool("test-popper.inc.php");
 	}
 	
 	switch ($action)
 	{
 	case "process_login":
-		ProcessLogin();
+		process_login();
 		break;
-	case $strings["l_NewUser"]:
-		ProcessNewUser();
+	case $_SESSION["strings"]["l_NewUser"]:
+		process_new_user();
 		break;
 	case "confirm":
-		ProcessConfirmation($confirm_code);
+		process_confirmation($confirm_code);
 		break;
 	default:
-		ProcessAction();
+		process_action();
 		break;
 	}
 	
@@ -126,6 +118,7 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 	
 	$_SESSION['uri'] = $cururi;
 
+print_r($_SESSION);
 /*==                                End Main
 ==========================================================================*/
 
@@ -134,35 +127,36 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 /*==========================================================================
                                  Begin Functions                          */
 
-function SetupSession() {
+function setup_session() {
 	session_start();
+	unserialize_session();
 	if (!isset($_SESSION['PHPSESSID']) && (!isset($_SESSION['in_session']) || $_SESSION['in_session'] < 1)) {
 		$_SESSION['in_session'] = 1;
 		$hdr = $_SERVER['PHP_SELF'].(($_SERVER['QUERY_STRING'] != "") ? "?".$_SERVER['QUERY_STRING'] : "");
 		Header("Location: ".$hdr);
-		exit;
+		exit_popper();
 	}
 	else {
 		$_SESSION['in_session']++;
 	}
 }
 
-function ProcessLogin() {
-	global $strings, $popper, $name, $pwd, $set_cookie, $poppercookie;
+function process_login() {
+	global $name, $pwd, $set_cookie, $poppercookie;
 	
 	if (!isset($name) || !isset($pwd)) {
-		$msg = $strings["l_FillInAll"];
-		$popper->show_in_window("login", $strings["l_Login"], $strings["l_FillInAll"]);
-		exit;
+		$msg = $_SESSION["strings"]["l_FillInAll"];
+		$_SESSION['popper']->show_in_window("login", $_SESSION["strings"]["l_Login"], $_SESSION["strings"]["l_FillInAll"]);
+		exit_popper();
 	}
 	
-	if (!$popper->pwd_check($name, $pwd)) {
-		$popper->show_in_window("login", $strings["l_Login"], $strings["l_LoginFail"]);
-		exit;
+	if (!$_SESSION['popper']->pwd_check($name, $pwd)) {
+		$_SESSION['popper']->show_in_window("login", $_SESSION["strings"]["l_Login"], $_SESSION["strings"]["l_LoginFail"]);
+		exit_popper();
 	}
 	
-	if (!$popper->is_activated($name)) {
-		$popper->messagebox($strings["l_AccActivation1"], $strings["l_AccActivation2"], $strings["l_AccActivation2"], $strings["l_Welcome"]);		
+	if (!$_SESSION['popper']->is_activated($name)) {
+		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_AccActivation1"], $_SESSION["strings"]["l_AccActivation2"], $_SESSION["strings"]["l_AccActivation2"], $_SESSION["strings"]["l_Welcome"]);		
 		return;			
 	}
 	
@@ -178,60 +172,57 @@ save path and popper is not on an https:// server.
 Need to add info about this topic to INSTALL?
 :DevNote*/
 	$logged_in = 1;	
-	$popper->set_user($name);
+	$_SESSION['popper']->set_user($name);
 	
-	$_SESSION["popper"] = $popper;
 	$_SESSION["logged_in"] = $logged_in;
 	
 	if ($HTTP_COOKIE_VARS["poppercookie"] && $set_cookie != "on") {
-		CookieUnset();
+		cookie_unset();
 	}
 
 	if (isset($set_cookie) && $set_cookie && !$HTTP_COOKIE_VARS["poppercookie"]) {
-		CookieSet();
+		cookie_set();
 	}
 	
-	if (!$popper->has_account()) {
-		$popper->show_in_window("newaccount", $strings["l_Account"], $strings["l_AccInfo"]);		
+	if (!$_SESSION['popper']->has_account()) {
+		$_SESSION['popper']->show_in_window("newaccount", $_SESSION["strings"]["l_Account"], $_SESSION["strings"]["l_AccInfo"]);		
 		return;
 	}
-	$popper->show();
+	$_SESSION['popper']->show();
 }
 
-function ProcessNewUser() {
-	global $popper, $strings;
+function process_new_user() {
 	
-	if ($popper->create_user()) {
+	if ($_SESSION['popper']->create_user()) {
 		require("config.inc.php");
 		echo $GLOBALS[user_confirmation];
 		if ($GLOBALS[user_confirmation]) {
-			$popper->messagebox($strings["l_AccCreated1"], $strings["l_AccCreated2"], $strings["l_AccCreated2"], $strings["l_Welcome"]);		
+			$_SESSION['popper']->messagebox($_SESSION["strings"]["l_AccCreated1"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_Welcome"]);		
 		}
 		else {
-			$popper->messagebox($strings["l_ConfSucc1"], $strings["l_AccCreated2"], $strings["l_AccCreated2"], $strings["l_Welcome"]);
+			$_SESSION['popper']->messagebox($_SESSION["strings"]["l_ConfSucc1"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_AccCreated2"], $_SESSION["strings"]["l_Welcome"]);
 		}
 	}
 }
 
-function ProcessConfirmation($code) {
-	global $popper;
+function process_confirmation($code) {
 	
 	// The user called the confirmation link
-	if ($popper->check_confirmation($code)) {
+	if ($_SESSION['popper']->check_confirmation($code)) {
 		// The check was successful
-		$popper->messagebox($strings["l_ConfSucc1"], $strings["l_ConfSucc2"], $strings["l_ConfSucc2"], $strings["l_Welcome"]);
+		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_ConfSucc1"], $_SESSION["strings"]["l_ConfSucc2"], $_SESSION["strings"]["l_ConfSucc2"], $_SESSION["strings"]["l_Welcome"]);
 	}
 	else {
 		// Could not be confirmed
-		$popper->messagebox($strings["l_ConfFail1"], $strings["l_ConfFail2"], $strings["l_ConfFail2"], $strings["l_TryAgain"]);
+		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_ConfFail1"], $_SESSION["strings"]["l_ConfFail2"], $_SESSION["strings"]["l_ConfFail2"], $_SESSION["strings"]["l_TryAgain"]);
 	}
 }
 
-function ProcessAction() {
-	global $action, $popper, $strings, $ok, $what, $poppercookie;
+function process_action() {
+	global $action, $ok, $what, $poppercookie;
 	
 	// Remove previously created tmp-files
-	$popper->unlink_tmp();
+	$_SESSION['popper']->unlink_tmp();
 
 /*DevNote: roytoo
 Temporarily masked out the 'ok' functionality since it now interfers with $action processing.
@@ -239,238 +230,238 @@ Will need to be re-implemented, most likely by dynamically changing the value of
 upon the contents of $_SESSION['last_action'].
 :DevNote*/
 	/*if ($ok == "ok") {
-		if ($popper->config["mailview"] == FRAME_VIEW) {
-			$popper->show_frame_list();
+		if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+			$_SESSION['popper']->show_frame_list();
 		}
 		else {
-			$popper->show("main");
+			$_SESSION['popper']->show("main");
 		}
 		return;
 	}
 	*/
 	
-	$popper->pre_frame();
+	$_SESSION['popper']->pre_frame();
 	
 	switch($action)
 	{
 	case "showfolder":
-		$popper->show($folder);
+		$_SESSION['popper']->show($folder);
 		break;
 	case "list":
-		$popper->show_frame_list();
+		$_SESSION['popper']->show_frame_list();
 		break;
 	case "mail_cont":
-		$popper->show_mail_frame();
+		$_SESSION['popper']->show_mail_frame();
 		break;
 	case "showmail":
-		$popper->show_popup_mail();
-		//$popper->show_form("newmail", $strings["l_ShowMail"]);
+		$_SESSION['popper']->show_popup_mail();
+		//$_SESSION['popper']->show_form("newmail", $_SESSION["strings"]["l_ShowMail"]);
 		break;
 	case "showsources":
-		$popper->show_sources();
+		$_SESSION['popper']->show_sources();
 		break;
 	case "logoff":
 		CookieUnset();
 		session_destroy();
-		$popper->messagebox($strings["l_LogoffMsg"], $strings["l_Logoff"], "$popper->name ".$strings["l_LoggedOff"], $strings["l_GoodBye"]);
+		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_LogoffMsg"], $_SESSION["strings"]["l_Logoff"], $_SESSION['popper']->name." ".$_SESSION["strings"]["l_LoggedOff"], $_SESSION["strings"]["l_GoodBye"]);
 		break;
 	case "newmail":
-		$popper->show_in_window("newmail", $strings["l_NewMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_NewMail"]);
 		break;
 	case "printmail":
-		$popper->show_popup_mail();
+		$_SESSION['popper']->show_popup_mail();
 		break;
 	case "reply":
-		$popper->show_in_window("newmail", $strings["l_ReplyMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_ReplyMail"]);
 		break;
 	case "replytoall":
-		$popper->show_in_window("newmail", $strings["l_ReplyAllMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_ReplyAllMail"]);
 		break;
 	case "forward":
-		$popper->show_in_window("newmail", $strings["l_ForwardMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_ForwardMail"]);
 		break;
 	case "showmail":
-		$popper->show_popup_mail();
+		$_SESSION['popper']->show_popup_mail();
 		break;
 	case "openmail":
-		$popper->show_in_window("newmail", $strings["l_ShowMail"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_ShowMail"]);
 		break;
 	case "choosen":
-		$popper->show_in_window("newmail", $strings["l_Choosen"]);
+		$_SESSION['popper']->show_in_window("newmail", $_SESSION["strings"]["l_Choosen"]);
 		break;
 	case "cancel":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		if (isset($_SESSION['old_uri']) && $popper->config["mailview"] != FRAME_VIEW) {
+		if (isset($_SESSION['old_uri']) && $_SESSION['popper']->config["mailview"] != FRAME_VIEW) {
 			Header("Location: ".$_SESSION['old_uri']);
 		}
 		else {
-			$popper->show_form("main");
+			$_SESSION['popper']->show_form("main");
 		}
 		return;
 	case "accounts":
-		$popper->show_form("accounts");
+		$_SESSION['popper']->show_form("accounts");
 		break;
 	case "addressbook":
-		$popper->show_form("addressbook");
+		$_SESSION['popper']->show_form("addressbook");
 		break;
 	case "newaccount":
-		$popper->show_in_window("newaccount", $strings["l_Account"], $strings["l_FillInAll"]);
+		$_SESSION['popper']->show_in_window("newaccount", $_SESSION["strings"]["l_Account"], $_SESSION["strings"]["l_FillInAll"]);
 		break;
 	case "newaddress":
-		$popper->show_in_window("newaddress", $strings["l_Address"]);
+		$_SESSION['popper']->show_in_window("newaddress", $_SESSION["strings"]["l_Address"]);
 		break;
 	case "storemail":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		$msg = $popper->store_mail();
-		if ($popper->config["mailview"] == FRAME_VIEW) {
-			$popper->show_form("main");
+		$msg = $_SESSION['popper']->store_mail();
+		if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+			$_SESSION['popper']->show_form("main");
 		}
 		else {
 			Header("Location: ".$_SESSION['old_uri']);
 		}
-		//$popper->show_form("main", $msg);
+		//$_SESSION['popper']->show_form("main", $msg);
 		break;
 	case "storeaccount":
-		$popper->store_account();
-		$popper->show_form("accounts");
+		$_SESSION['popper']->store_account();
+		$_SESSION['popper']->show_form("accounts");
 		break;
 	case "storeaddress":
-		$popper->store_address();
-		$popper->show_form("addressbook");
+		$_SESSION['popper']->store_address();
+		$_SESSION['popper']->show_form("addressbook");
 		break;
 	case "deladdress":
-		$popper->del_address();
+		$_SESSION['popper']->del_address();
 		break;
 	case "delaccount":
-		$popper->del_account();
+		$_SESSION['popper']->del_account();
 		break;
 	case "checkrep":
-		$popper->check_repetitive();
+		$_SESSION['popper']->check_repetitive();
 		break;
 	case "sendandreceive":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
 		if (!isset($what)) {
-			if ($popper->config["mailview"] == FRAME_VIEW) {
-				$popper->show_small_window("sendreceive", $strings["l_SendReceive"]);
+			if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+				$_SESSION['popper']->show_small_window("sendreceive", $_SESSION["strings"]["l_SendReceive"]);
 			}
 			else {
-				$popper->show_in_window("sendreceive", $strings["l_SendReceive"]);
+				$_SESSION['popper']->show_in_window("sendreceive", $_SESSION["strings"]["l_SendReceive"]);
 			}
 		}
 		else {
-			$popper->send_and_receive();
+			$_SESSION['popper']->send_and_receive();
 		}
 		break;
 	case "getattachment":
-		$popper->get_attachment();
+		$_SESSION['popper']->get_attachment();
 		break;
 	case "config":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
 		if (isset($GLOBALS['conf_submit'])) {
-			$popper->store_config();
+			$_SESSION['popper']->store_config();
 			
-			$lang_file = "lang/lang.".$popper->config["language"].".inc.php";
+			$lang_file = "lang/lang.".$_SESSION['popper']->config["language"].".inc.php";
 			
 			include($lang_file);
 			
 			setlocale(LC_ALL, $locale);	
 			
-			$popper->show();
+			$_SESSION['popper']->show();
 		}
 		else if (isset($changepwd)) {
-			$popper->show_in_window("changepwd", $strings["l_ChangePwd"]);
+			$_SESSION['popper']->show_in_window("changepwd", $_SESSION["strings"]["l_ChangePwd"]);
 		}
 		else if (isset($deluser) || isset($ack)) {
-			$popper->delete_user();
+			$_SESSION['popper']->delete_user();
 		}
 		else {
-			$popper->show_in_window("config", $strings["l_Config"]);
+			$_SESSION['popper']->show_in_window("config", $_SESSION["strings"]["l_Config"]);
 		}
 		break;
 	case "changepwd":
-		$popper->change_pwd();
+		$_SESSION['popper']->change_pwd();
 		break;
 	case "deletemail":
-		$popper->delete_mail();
+		$_SESSION['popper']->delete_mail();
 		break;
 	case "selected":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
 		if (isset($GLOBALS["delete_x"]) || isset($GLOBALS["ack"])) {
-			$popper->delete_mails();
+			$_SESSION['popper']->delete_mails();
 		}
 		else if (isset($GLOBALS["add_addr_x"])) {
-			$popper->add_sel_addr();
-			if ($popper->config["mailview"] == FRAME_VIEW) {
-				$popper->show_frame_list();
+			$_SESSION['popper']->add_sel_addr();
+			if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+				$_SESSION['popper']->show_frame_list();
 			}
 			else {
-				$popper->show();
+				$_SESSION['popper']->show();
 			}
 		}
 		else if (isset($GLOBALS["block_x"])) {
 			// Mark the senders as blocked
-			$popper->add_sel_addr(true);
+			$_SESSION['popper']->add_sel_addr(true);
 			// Delete the mails
-			$popper->delete_blocked();					
+			$_SESSION['popper']->delete_blocked();					
 		}
 		else if (isset($GLOBALS["move"])) {
-			//$popper->move_to();
-			$popper->report_error("Not implemented yet", "Not implemented");
+			//$_SESSION['popper']->move_to();
+			$_SESSION['popper']->report_error("Not implemented yet", "Not implemented");
 		}
 		break;
 	case "deleteall":
-		$popper->delete_all();
+		$_SESSION['popper']->delete_all();
 		break;
 	case "notification":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		$popper->send_notification();
-		if ($popper->config["mailview"] == IN_VIEW) {
-			Header("Location: ".$GLOBALS['PHP_SELF']."?action=showfolder&folder=".$popper->folder."&mail_id=".$popper->cur_message_id);
+		$_SESSION['popper']->send_notification();
+		if ($_SESSION['popper']->config["mailview"] == IN_VIEW) {
+			Header("Location: ".$GLOBALS['PHP_SELF']."?action=showfolder&folder=".$_SESSION['popper']->folder."&mail_id=".$_SESSION['popper']->cur_message_id);
 		}
-		else if ($popper->config["mailview"] == FRAME_VIEW) {
-			$popper->show_mail_frame();
+		else if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+			$_SESSION['popper']->show_mail_frame();
 		}
 		else {
-			Header("Location: ".$GLOBALS['PHP_SELF']."?action=showmail&mail_id=".$popper->cur_message_id);				
+			Header("Location: ".$GLOBALS['PHP_SELF']."?action=showmail&mail_id=".$_SESSION['popper']->cur_message_id);				
 		}
 		break;
 	case "login":
-		$popper->show_in_window("login", $strings["l_Login"]);
+		$_SESSION['popper']->show_in_window("login", $_SESSION["strings"]["l_Login"]);
 		break;		
 	case "lostpwd":
-		$popper->show_in_window("lostpwd");
-		exit;
+		$_SESSION['popper']->show_in_window("lostpwd");
+		exit_popper();
 	case "sendpwd":
-		$popper->send_pwd();
-		exit;
+		$_SESSION['popper']->send_pwd();
+		exit_popper();
 	case "help":
-		$popper->show_form("help");
-		exit;
+		$_SESSION['popper']->show_form("help");
+		exit_popper();
 	default:
-		$popper->show_in_window("home", $strings["l_Welcome"]);
+		$_SESSION['popper']->show_in_window("home", $_SESSION["strings"]["l_Welcome"]);
 		break;
 	}
 }
 
-function CookieSet() {
+function cookie_set() {
 	// Set the cookies if the user wants that and if it's not set yet.
 	setcookie("poppercookie['user']", $name, time() + 365 * 24 * 3600);
-	setcookie("poppercookie['language']", $popper->config["language"], time() + 365 * 24 * 3600);
+	setcookie("poppercookie['language']", $_SESSION['popper']->config["language"], time() + 365 * 24 * 3600);
 }
 
-function CookieUnset() {
+function cookie_unset() {
 	global $poppercookie;
 	
 	// This indicates that the user previously set the cookie, but does
@@ -480,15 +471,15 @@ function CookieUnset() {
 	unset($poppercookie);
 }
 
-function LanguageGet() {
-	global $popper, $poppercookie;
+function language_get() {
+	global $_SESSION['popper'], $poppercookie;
 	
 	if ($poppercookie["language"]) {
 		$langfile = "lang/lang.".$poppercookie["language"].".inc.php";
 	}
 	else {
-		if (isset($popper->config["language"]) && !empty($popper->config["language"])) {
-			$langfile = "lang/lang.".$popper->config["language"].".inc.php";
+		if (isset($_SESSION['popper']->config["language"]) && !empty($_SESSION['popper']->config["language"])) {
+			$langfile = "lang/lang.".$_SESSION['popper']->config["language"].".inc.php";
 		}
 		else {
 			$langfile = "lang/lang.english.inc.php";
@@ -500,6 +491,41 @@ function LanguageGet() {
 	}
 	
 	return $langfile;
+}
+
+function is_logged_in() {
+	global $logged_in;
+	
+	return (isset($logged_in) && isset($_SESSION['logged_in']) && $logged_in == 1);
+}
+
+function serialize_session() {
+	// Serialize objects for proper storage
+	if (isset($_SESSION['popper']) && is_object($_SESSION['popper']))
+	{
+		$_SESSION['popper'] = serialize($_SESSION['popper']);
+	}
+	if (isset($_SESSION['cal']) && is_object($_SESSION['cal']))
+	{
+		$_SESSION['cal'] = serialize($_SESSION['cal']);
+	}
+}
+
+function unserialize_session() {
+	// Serialize objects for proper storage
+	if (isset($_SESSION['popper']) && !is_object($_SESSION['popper']))
+	{
+		$_SESSION['popper'] = unserialize($_SESSION['popper']);
+	}
+	if (isset($_SESSION['cal']) && !is_object($_SESSION['cal']))
+	{
+		$_SESSION['cal'] = unserialize($_SESSION['cal']);
+	}
+}
+
+function exit_popper() {
+	takedown_session();	
+	exit;
 }
 
 /*==                              End Functions

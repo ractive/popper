@@ -66,7 +66,7 @@ class db_tool {
 
 	// Get the link to the db
 	function link_db() {
-		global $strings;
+	   
 		$doc_root = getenv("DOCUMENT_ROOT");
 		$path = $doc_root;
 		if ($GLOBALS["in_docroot"] === false) {
@@ -75,12 +75,12 @@ class db_tool {
 		$path .= "/".$this->db_data_inc;
 		require($path);
 		$this->db_link = $this->db_connect($host, $user, $pass)
-			or die ($strings["l_ServerConnect"]."<br>".$this->db_error());
+			or die ($_SESSION["strings"]["l_ServerConnect"]."<br>".$this->db_error());
 
 		$query = "USE $dbname";
 		
 		$this->query($query, $this->db_link)
-			or die ($strings["l_OpenDB"]."<br>".$this->db_error());
+			or die ($_SESSION["strings"]["l_OpenDB"]."<br>".$this->db_error());
 	}
 
 	// Public functions

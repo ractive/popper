@@ -18,7 +18,7 @@
 ?>
 		
 			<p class="windowtitle">
-				<?php echo("<a href=\"$GLOBALS[PHP_SELF]?action=newaddress\">$strings[l_AddContact]</a>");?>
+				<?php echo("<a href=\"$GLOBALS[PHP_SELF]?action=newaddress\">".$_SESSION["strings"]["l_AddContact"]."</a>");?>
 			</p>
 			<?php $this->show_addresses() ?>
 <?php

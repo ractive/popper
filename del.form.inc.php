@@ -4,7 +4,7 @@
 ?>
 <br>
 <center>
-	<input class="button" type="submit" value="<?php echo($strings["l_Delete"]); ?>" name="delete">
+	<input class="button" type="submit" value="<?php echo($_SESSION["strings"]["l_Delete"]); ?>" name="delete">
 </center>
 <br>
 </form>

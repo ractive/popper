@@ -129,7 +129,7 @@ http://www.gnu.org/copyleft/gpl.html
 <h2>
 <?php
 		if (!$readonly) {
-			echo($strings["l_ComposeMail"]);
+			echo($_SESSION["strings"]["l_ComposeMail"]);
 		}
 ?>
 </h2>
@@ -140,37 +140,37 @@ http://www.gnu.org/copyleft/gpl.html
 		$priority = $priority[0];	
 		if ($readonly) {
 			if (!empty($priority) && $priority != NORMAL_PRIORITY) {
-				echo("<tr><td><b>$strings[l_Priority]:</b></td><td ");
+				echo("<tr><td><b>".$_SESSION["strings"]["l_Priority"].":</b></td><td ");
 				if ($priority == HIGHEST_PRIORITY) {
-					echo("style=\"background-color: #ff3333;\">$strings[l_HighestPriority]");
+					echo("style=\"background-color: #ff3333;\">".$_SESSION["strings"]["l_HighestPriority"]);
 				}
 				if ($priority == HIGH_PRIORITY) {
-					echo("style=\"background-color: #ff6666;\">$strings[l_HighPriority]");
+					echo("style=\"background-color: #ff6666;\">".$_SESSION["strings"]["l_HighPriority"]);
 				}			
 				else if ($priority == LOW_PRIORITY) {
-					echo("style=\"background-color: #9999ff; color: white;\">$strings[l_LowPriority]");
+					echo("style=\"background-color: #9999ff; color: white;\">".$_SESSION["strings"]["l_LowPriority"]);
 				}
 				else if ($priority == LOWEST_PRIORITY) {
-					echo("style=\"background-color: #4444ff; color: white;\">$strings[l_LowestPriority]");
+					echo("style=\"background-color: #4444ff; color: white;\">".$_SESSION["strings"]["l_LowestPriority"]);
 				}			
 				echo("</td></tr>");
 			}
 		}
 		else {
-			echo("<tr><td><b>$strings[l_Priority]:</b></td>\n");
+			echo("<tr><td><b>".$_SESSION["strings"]["l_Priority"].":</b></td>\n");
 			echo("<td><select name=\"priority\" style=\"width: 100%;\">");
 			echo("<option value=\"".NORMAL_PRIORITY."\"></option>\n");
-			echo("<option value=\"".HIGHEST_PRIORITY."\" style=\"background-color: #ff3333;\">$strings[l_HighestPriority]</option>\n");
-			echo("<option value=\"".HIGH_PRIORITY."\" style=\"background-color: #ff6666;\">$strings[l_HighPriority]</option>\n");								
-			echo("<option value=\"".LOW_PRIORITY."\" style=\"background-color: #9999ff;\">$strings[l_LowPriority]</option>\n");				
-			echo("<option value=\"".LOWEST_PRIORITY."\" style=\"background-color: #4444ff;\">$strings[l_LowestPriority]</option>\n");				
+			echo("<option value=\"".HIGHEST_PRIORITY."\" style=\"background-color: #ff3333;\">".$_SESSION["strings"]["l_HighestPriority"]."</option>\n");
+			echo("<option value=\"".HIGH_PRIORITY."\" style=\"background-color: #ff6666;\">".$_SESSION["strings"]["l_HighPriority"]."</option>\n");								
+			echo("<option value=\"".LOW_PRIORITY."\" style=\"background-color: #9999ff;\">".$_SESSION["strings"]["l_LowPriority"]."</option>\n");				
+			echo("<option value=\"".LOWEST_PRIORITY."\" style=\"background-color: #4444ff;\">".$_SESSION["strings"]["l_LowestPriority"]."</option>\n");				
 			echo("</optgroup></td>");
 			echo("</td></tr>");
 		}
 		
 ?>		
 	<tr>
-		<td style="width: 15%;"><label for="from" accesskey="F"><?php echo($strings["l_From"]);?>:<label></td>
+		<td style="width: 15%;"><label for="from" accesskey="F"><?php echo($_SESSION["strings"]["l_From"]);?>:<label></td>
 <?php
 		if ($readonly) {
 			echo("<td>".$mailer->from()."</td>");
@@ -201,7 +201,7 @@ http://www.gnu.org/copyleft/gpl.html
 			echo(htmlspecialchars(stripslashes($mailer->headers->get("To"))));
 		}
 		else {
-			echo("<td><input style=\"vertical-align: middle;\" name=\"to\" type=\"image\" src=\"graphics/small_address.gif\" alt=\"$strings[l_To]:\" value=\"to\"> <label for=\"tos\" accesskey=\"T\">$strings[l_To]:</label></td>");						
+			echo("<td><input style=\"vertical-align: middle;\" name=\"to\" type=\"image\" src=\"graphics/small_address.gif\" alt=\"".$_SESSION["strings"]["l_To"].":\" value=\"to\"> <label for=\"tos\" accesskey=\"T\">".$_SESSION["strings"]["l_To"].":</label></td>");						
 			// When the user clicked on an address in the addressbook, the $to_row is set (from above)
 			if ($to_row) {
 //				dbg("TO_ROW: $to_row[email]");
@@ -242,7 +242,7 @@ http://www.gnu.org/copyleft/gpl.html
 ?>
 	</tr>
 	<tr>
-		<td><label for="subject" accesskey="S"><?php echo($strings["l_Subject"]); ?>:</label></td>
+		<td><label for="subject" accesskey="S"><?php echo($_SESSION["strings"]["l_Subject"]); ?>:</label></td>
 <?php
 		if ($readonly) {
 			echo("<td>".htmlspecialchars($mailer->charset_decode($mailer->subject()))."</td>\n");
@@ -282,7 +282,7 @@ http://www.gnu.org/copyleft/gpl.html
 		}
 		else {
 ?>
-		<input type="checkbox" name="notification"> <?php echo($strings["l_Notification"]);?><br><br>
+		<input type="checkbox" name="notification"> <?php echo($_SESSION["strings"]["l_Notification"]);?><br><br>
 		<img src="graphics/clip.gif" alt="Attachment" title="Attachment" border="0"> <input style="width: 60%;" type="file" name="attachment">
 <?php
 		}
@@ -294,9 +294,9 @@ http://www.gnu.org/copyleft/gpl.html
 <p>
 <hr><br>
 <center>
-<input class="button" type="submit" value="<?php echo($strings["l_Send"]);?>" name="submit" style="margin-right: 15px;">
-<input class="button" type="submit" value="<?php echo($strings["l_Store"]);?>" name="submit" style="margin-right: 15px;">
-<input class="button" type="reset" value="<?php echo($strings["l_Reset"]);?>"></p>
+<input class="button" type="submit" value="<?php echo($_SESSION["strings"]["l_Send"]);?>" name="submit" style="margin-right: 15px;">
+<input class="button" type="submit" value="<?php echo($_SESSION["strings"]["l_Store"]);?>" name="submit" style="margin-right: 15px;">
+<input class="button" type="reset" value="<?php echo($_SESSION["strings"]["l_Reset"]);?>"></p>
 <input type="hidden" name="action" value="storemail">
 <input type="hidden" name="update" value="<?php if ($GLOBALS[action] == "openmail") echo("1"); else echo("0");?>">
 <?php

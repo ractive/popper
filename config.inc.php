@@ -10,7 +10,9 @@ For more information see the file gpl.txt or go to
 http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
-
+	// Set the popper version number
+	define("POPPER_VERSION", "1.5-a1");
+	
 	// The file which describes the upper part of the HTML code
 	$top_part = "top.inc.php";
 	// The file which describes the bottom part of the HTML code

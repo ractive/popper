@@ -16,7 +16,7 @@ http://www.gnu.org/copyleft/gpl.html
 		$query = "SELECT * FROM accounts WHERE id = '$this->cur_account_id' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
 			return;
 		}
 		$row = $this->db_tool->fetch_array($res);
@@ -25,25 +25,25 @@ http://www.gnu.org/copyleft/gpl.html
 <br>
 <center>
 <h2>
-<?php echo($strings["l_NewAcc"]);?>
+<?php echo($_SESSION["strings"]["l_NewAcc"]);?>
 </h2>
 
 <form action="<?php echo("$GLOBALS[PHP_SELF]");?>" method="post">
 	<table cellpadding="5">
 		<tr>
-			<td><?php echo $strings["l_AccName"];?>:</td>
+			<td><?php echo $_SESSION["strings"]["l_AccName"];?>:</td>
 			<td><input name="name" size="25" value="<?php echo(stripslashes($row["name"]));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $strings["l_From"]."-".$strings["l_Name"];?>:</td>
+			<td><?php echo $_SESSION["strings"]["l_From"]."-".$_SESSION["strings"]["l_Name"];?>:</td>
 			<td><input name="fromname" size="25" value="<?php echo(stripslashes($row["fromname"]));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $strings["l_ReplyTo"];?>:</td>
+			<td><?php echo $_SESSION["strings"]["l_ReplyTo"];?>:</td>
 			<td><input name="replyto" size="25" value="<?php echo(stripslashes($row["replyto"]));?>"></td>
 		</tr>
 		<tr>
-			<td><?php echo $strings["l_POPServer"];?>:</td>
+			<td><?php echo $_SESSION["strings"]["l_POPServer"];?>:</td>
 			<td>
 <?php
 		// Check which mail-server are allowed...
@@ -86,8 +86,8 @@ http://www.gnu.org/copyleft/gpl.html
 	</table>
 	<br><hr><br>
 	&nbsp;
-	<input class="button" type="submit" value="<?php echo $strings["l_Store"];?>">
-	<input class="button" type="reset" value="<?php echo $strings["l_Reset"];?>" style="width: 150px;">
+	<input class="button" type="submit" value="<?php echo $_SESSION["strings"]["l_Store"];?>">
+	<input class="button" type="reset" value="<?php echo $_SESSION["strings"]["l_Reset"];?>" style="width: 150px;">
 	<input type="hidden" name="update" value="<?php echo($GLOBALS["update"]);?>">
 	<input type="hidden" name="action" value="storeaccount">
 </form>

@@ -16,12 +16,12 @@
 		$page_no = $this->get_pageno();
 
 		if ($page_no != 0) {
-			$fromto = $strings["l_FromTo"]." ";
+			$fromto = $_SESSION["strings"]["l_FromTo"]." ";
 			$fromto .= ($page_no - 1) * $this->config["mails_per_page"] + 1;
-			$fromto .= " $strings[l_ToM] ";
+			$fromto .= " ".$_SESSION["strings"]["l_ToM"]." ";
 			$fromto .= $page_no * $this->config["mails_per_page"];
 			
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&page=top\"><img src=\"graphics/top.gif\"  border=\"0\" title=\"$strings[l_FirstP]\" alt=\"$strings[l_FirstP]\"></a>");
+			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&page=top\"><img src=\"graphics/top.gif\"  border=\"0\" title=\"".$_SESSION["strings"]["l_FirstP"]."\" alt=\"".$_SESSION["strings"]["l_FirstP"]."\"></a>");
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&page=prev\"><img src=\"graphics/arrowup.gif\"  border=\"0\" title=\"$fromto\" alt=\"$fromto\"></a>");				
 		}
 		else {
@@ -39,9 +39,9 @@
 <?php
 		if ($this->config["mailview"] != FRAME_VIEW) {
 			echo("<td class=\"scrollbar\" valign=\"bottom\">");				
-			$fromto = $strings["l_FromTo"]." ";
+			$fromto = $_SESSION["strings"]["l_FromTo"]." ";
 			$fromto .= ($page_no + 1) * $this->config["mails_per_page"] + 1;
-			$fromto .= " $strings[l_ToM] ";
+			$fromto .= " ".$_SESSION["strings"]["l_ToM"]." ";
 			$to_no = ($page_no + 2) * $this->config["mails_per_page"];
 			if ($mail_count < $to_no) {
 				$to_no = $mail_count;
@@ -50,7 +50,7 @@
 
 			if (($page_no + 1) * $this->config["mails_per_page"] < $mail_count) {
 				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&page=next\"><img src=\"graphics/arrowdown.gif\" border=\"0\" title=\"$fromto\" alt=\"$fromto\"></a>");
-				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&page=last\"><img src=\"graphics/last.gif\"  border=\"0\" title=\"$strings[l_LastP]\" alt=\"$strings[l_LastP]\"></a>");		
+				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&page=last\"><img src=\"graphics/last.gif\"  border=\"0\" title=\"".$_SESSION["strings"]["l_LastP"]."\" alt=\"".$_SESSION["strings"]["l_LastP"]."\"></a>");		
 			}
 			else {
 				echo('<img src="graphics/arrowdown_dis.gif" alt="" border="0">');
