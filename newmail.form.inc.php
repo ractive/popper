@@ -64,6 +64,9 @@ http://www.gnu.org/copyleft/gpl.html
 			$this->report_error($mailer->db_tool->db_error(), "DB Error");
 			return;
 		}
+		$read_status = MAIL_REPLIED;
+		$query = "UPDATE mails SET was_read='$read_status' WHERE id='$this->cur_message_id' AND user_id='$this->userid'";
+		$res = $this->db_tool->db_query($query);
 
 	}
 	else if (isset($GLOBALS[action]) && $GLOBALS[action] == "forward") {
@@ -75,6 +78,9 @@ http://www.gnu.org/copyleft/gpl.html
 			$this->report_error($mailer->db_tool->db_error(), "DB Error");
 			return;
 		}
+		$read_status = MAIL_FORWARDED;		
+		$query = "UPDATE mails SET was_read='$read_status' WHERE id='$this->cur_message_id' AND user_id='$this->userid'";
+		$res = $this->db_tool->db_query($query);		
 
 	}
 	else if (isset($GLOBALS[action]) && $GLOBALS[action] == "showmail") {
@@ -115,6 +121,19 @@ http://www.gnu.org/copyleft/gpl.html
 </h2>
 <form class="mail" action="<?php echo("$GLOBALS[PHP_SELF]")?>" method="post" enctype="multipart/form-data">
 <table style="width: 100%">
+<?php
+		$priority = $mailer->headers->get("X-MSMail-Priority");
+		if (!empty($priority)) {
+			echo("<tr><td><b>$strings[l_Priority]:</b></td><td ");
+			if ($priority == "High") {
+				echo("style=\"background-color: #ff6666;\">$strings[l_HighPriority]");
+			}
+			else if ($priority == "Low") {
+				echo("style=\"background-color: #9999ff;\">$strings[l_LowPriority]");
+			}
+			echo("</td></tr>");
+		}
+?>
 	<tr>
 		<td style="width: 15%;"><label for="from" accesskey="F"><?php echo($strings["l_From"]);?>:<label></td>
 <?php
@@ -214,7 +233,7 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 
 ?>
-</textarea><br><br><br>
+</textarea><br><br>
 <?php
 		if ($readonly) {
 			echo('<img src="graphics/clip.gif" alt="Attachment" title="Attachment" border="0">');
@@ -227,6 +246,7 @@ http://www.gnu.org/copyleft/gpl.html
 		}
 		else {
 ?>
+		<input type="checkbox" name="notification"> <?php echo($strings["l_Notification"]);?><br><br>
 		<img src="graphics/clip.gif" alt="Attachment" title="Attachment" border="0"> <input style="width: 60%;" type="file" name="attachment">
 <?php
 		}

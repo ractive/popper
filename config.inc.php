@@ -30,5 +30,5 @@ http://www.gnu.org/copyleft/gpl.html
 	// If this value is set to true, the user needs to confirm the creation of the account
 	// He'll receive an E-mail with a link to activate it.
 	// Set it to false if you don't need this
-	$user_confirmation = false;
+	$user_confirmation = true;
 ?>

@@ -239,6 +239,77 @@ class popper {
 		$this->show_form("main", $msg);
 	}
 
+	function show_notification_request() {
+		global $strings;
+
+		if ($this->cur_message_id == 0) {
+			return;
+		}
+		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
+			$this->cur_mailer = new mailer($this->userid);
+			$this->cur_mailer->load($this->cur_message_id);
+		}
+		
+		// Is there a notification header?
+		$notify = $this->cur_mailer->headers->get("Disposition-Notification-To");
+		if (!empty($notify)) {		
+			$query = "SELECT was_read FROM mails WHERE user_id = '$this->userid' AND id='$this->cur_message_id'";
+			$res = $this->db_tool->db_query($query);
+			if ($res != 0 && $row = $this->db_tool->fetch_array($res)) {
+				if ($row["was_read"] == MAIL_UNREAD) {
+					$options = $this->cur_mailer->get_header("Disposition-Notification-Options");
+					if ($options && $options["attribute"] == "important") {
+						// We don't know any options...
+						// Ignore the notification
+						return;
+					}
+					
+					echo("<tr class=\"childwindow\"><td>$strings[l_NotifyQuest]<br>$strings[l_NotifyQuest2]</td>\n");
+					echo("<td><form action=\"$GLOBALS[PHP_SELF]\" method=\"GET\">\n<input type=\"submit\" name=\"submit\" value=\"$strings[l_SendNot]\">");
+					echo("<input type=\"hidden\" name=\"action\" value=\"notification\"></form>\n</td>\n</tr>\n");
+				}
+			}
+		}
+		
+	}
+	
+	function send_notification() {
+		global $strings;
+
+		$not_mailer = new mailer($this->userid);
+		$notify = $this->cur_mailer->headers->get("Disposition-Notification-To");
+		$from = $this->cur_mailer->headers->get("To");
+
+		/*echo "TO: $notify<br>";
+		echo("FROM: ".$this->cur_mailer->headers->get("To")."<br>");
+		echo("SUBJECT: Re: ".$this->cur_mailer->headers->get("Subject"));
+		echo("<br>");*/
+
+		$msg = $strings["l_NotMsg"]."\r\n\r\n";
+
+		$msg .= $strings["l_To"].": $from\r\n";
+	
+		$msg .= $strings["l_SentAt"].": ".$this->cur_mailer->headers->get("Date")."\r\n";
+		$msg .= $strings["l_ReadAt"].": ".strftime("%c", time())."\r\n";
+		$msg .= $strings["l_Subject"].": ".$this->cur_mailer->subject()."\r\n\r\n";
+		
+		$not_mailer->create($notify, $from, $strings["l_Notification"].": ".$this->cur_mailer->headers->get("Subject"), $msg);
+		$boundary = $not_mailer->create_boundary();
+		$not_mailer->headers->put("Content-Type", "multipart/report; report-type=disposition-notification;\tboundary=\"$boundary\"");
+
+		$server = getenv("SERVER_NAME");
+		$data = "Reporting-UA: $server; popper\r\n";
+		$data .= "Original-Recipient: rfc822; $notify\r\n";
+		$data .= "Final-Recipient: rfc822; $notify\r\n";
+		$data .= "Original-Message-ID: ".$this->cur_mailer->headers->get("Message-ID")."\r\n";
+		$data .= "Disposition: manual-action/MDN-sent-manually; displayed";
+
+
+		$not_mailer->attach_data($data, "message/disposition-notification", "7bit", "", "inline", false);
+
+		$not_mailer->send();
+	}
+		
 	function show_print() {
 		global $strings;
 
@@ -652,7 +723,7 @@ class popper {
 	}
 
 	function show_folders() {
-		$query = "SELECT folder, count(*) as count FROM mails WHERE was_read!=1 AND user_id='$this->userid' GROUP BY folder";
+		$query = "SELECT folder, count(*) as count FROM mails WHERE was_read=MAIL_UNREAD AND user_id='$this->userid' GROUP BY folder";
 		$res = $this->db_tool->db_query($query);
 		if ($res != 0) {
 			while($row = $this->db_tool->fetch_array($res)) {
@@ -711,7 +782,7 @@ class popper {
 			$pageno = $this->get_pageno() * $this->config["mails_per_page"];
 			$mails = $this->config["mails_per_page"];
 
-			$query = "SELECT id, tos, froms, IF(LENGTH(subject) > '".$this->config["subject_size"]."', CONCAT(LEFT(subject, '".$this->config["subject_size"]."'), '...'), subject) as subject, is_mime, date, was_read FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY date DESC LIMIT $pageno, $mails";
+			$query = "SELECT id, tos, froms, IF(LENGTH(subject) > '".$this->config["subject_size"]."', CONCAT(LEFT(subject, '".$this->config["subject_size"]."'), '...'), subject) as subject, is_mime, date, was_read, priority FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY date DESC LIMIT $pageno, $mails";
 			$res = $this->db_tool->db_query($query);
 
 			if ($res == 0) {
@@ -753,9 +824,22 @@ class popper {
 		while ($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr");
 			// If the mail was not read, display it bold
-			if (!$row["was_read"]) {
-				echo(" style=\"font-weight: bolder;\"");
+			switch($row["was_read"]) {
+				case MAIL_UNREAD:
+					echo(" style=\"font-weight: bolder;\"");
+					$img = "not_read_mail.gif";
+					break;
+				case MAIL_READ:
+					$img = "read_mail.gif";
+					break;
+				case MAIL_REPLIED:
+					$img = "replied_mail.gif";
+					break;
+				case MAIL_FORWARDED:
+					$img = "forwarded_mail.gif";
+					break;
 			}
+				
 			echo(">\n");
 
 			echo("<td style=\"width: 10px; text-align: center;\"><input type=\"checkbox\" name=\"del[]\" value=\"$row[id]\"></td>");
@@ -763,16 +847,28 @@ class popper {
 			if ($row[is_mime]) {
 				echo("<img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Attachment]\" align=\"center\" border=\"0\" style=\"vertical-align: middle;\">\n");				
 			}
-			echo("</td><td>\n<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\"\n");
+			echo("</td><td>\n<img src=\"graphics/$img\" alt=\"\" style=\"float: left;\">");
+			
+			$row["priority"];
+			
+			if ($row["priority"] == HIGH_PRIORITY) {
+				echo("<img src=\"graphics/high.gif\" alt=\"high\" title=\"$strings[l_HighPriority]\" style=\"float: left; vertical-align: bottom;\">");	
+			}
+			else if ($row["priority"] == LOW_PRIORITY) {
+				echo("<img src=\"graphics/low.gif\" alt=\"low\" title=\"$strings[l_LowPriority]\" style=\"float: left; vertical-align: bottom;\">");			
+			}
+
+			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\"\n");
 			$this->mail_selected($row[id]);
 			// If the mail was not read, display it bold (also the link)
-			if (!$row["was_read"]) {
+			if ($row["was_read"] == MAIL_UNREAD) {
 				echo(" style=\"font-weight: bolder;\"");
 			}
 			else {
 				echo(" style=\"font-weight: normal;\"");
 			}
 			echo(">");
+
 			$mailer = new mailer(0);
 
 			if ($this->folder == "outbox" || $this->folder == "sent") {
@@ -875,12 +971,15 @@ class popper {
 		// If we are here, the mail has been read, we tell that the DB
 		$this->set_mail_read($this->cur_message_id);
 
-		echo(htmlentities(stripslashes($content)));
+		echo(stripslashes($content));
 	}
 
 	function set_mail_read($mail_id) {
-		$query = "UPDATE mails SET was_read = 1 WHERE id='$mail_id' AND user_id='$this->userid'";
+		$was_read = MAIL_READ;
+		$unread = MAIL_UNREAD;
+		$query = "UPDATE mails SET was_read='$was_read' WHERE id='$mail_id' AND user_id='$this->userid' AND was_read='$unread'";
 		$this->db_tool->db_query($query);
+		echo $this->db_tool->db_error();
 	}
 
 	function get_foldername() {
@@ -1043,7 +1142,7 @@ class popper {
 	}
 
 	function store_mail($backup = false) {
-		global $to_x, $cc_x, $bcc_x, $tos, $ccs, $bccs, $subject, $body, $submit, $replyaccount, $submit, $attachment, $attachment_name, $attachment_size, $attachment_type, $strings;
+		global $notification, $to_x, $cc_x, $bcc_x, $tos, $ccs, $bccs, $subject, $body, $submit, $replyaccount, $submit, $attachment, $attachment_name, $attachment_size, $attachment_type, $strings;
 
 		$body = stripslashes($body);
 
@@ -1077,7 +1176,10 @@ class popper {
 		if (isset($bccs) && !empty($bccs)) {
 			$mailer->bcc($bccs);
 		}	
-			
+		if (isset($notification) && $notification == "on") {
+			$mailer->headers->put("Disposition-Notification-To",  $tos);
+		}
+		
 		if (isset($attachment) && !empty($attachment) && $attachment != "none") {
 			$mailer->attach_file($attachment, $attachment_name, $attachment_type, "", "", "");
 		}
@@ -1174,6 +1276,7 @@ class popper {
 				case "application/zip":			
 					$type_pic = "zip.gif";
 					break;
+				case "message/disposition-notification":
 				case "text/plain":
 					$type_pic = "text.gif";
 					break;
@@ -1331,7 +1434,16 @@ class popper {
 		$part = $this->cur_mailer->get_attachment($att_path);
 		
 		$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $part->headers->get("Content-Disposition"));
-		$type = "Content-Type: ".str_replace("\r\n\t", " ", $part->headers->get("Content-Type"));			
+		$c_type = $part->get_header("Content-Type");
+		$type = $c_type["CONTENT-TYPE"];
+
+		if (strtoupper($type) == "MESSAGE/DISPOSITION-NOTIFICATION") {
+			// Show this as text
+			$type = "Content-Type: text/plain";
+		}
+		else {
+			$type = "Content-Type: ".str_replace("\r\n\t", " ", $part->headers->get("Content-Type"));
+		}
 		
 		$disp = str_replace("attachment;", "inline;", $disp);
 
@@ -2007,7 +2119,7 @@ class popper {
 			// When the mail could be send, we move the mail to the "sent" folder
 			if ($ret) {
 				$send_counter++;
-				$query = "UPDATE mails SET folder='sent', was_read = 1 WHERE id='$row[id]' AND user_id='$this->userid'";
+				$query = "UPDATE mails SET folder='sent', was_read = MAIL_READ WHERE id='$row[id]' AND user_id='$this->userid'";
 				$update_res = $this->db_tool->db_query($query);
 				if ($update_res == 0) {
 					$this->report_error($this->db_tool->db_error(), $strings["l_FolderMoveFail"].": ".$strings["l_Sent"]);

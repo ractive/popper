@@ -135,9 +135,7 @@ class mailer extends mail {
 	
 	function store($folder, $msg = false, $server_uidl = 0) {
 		if ($msg) {
-			// ATTENTION
 			$this->headers->extract($msg);
-			//$this->headers = $this->extract_headers($msg);
 		}
 		else if ($msg === false) {
 			$msg = $this->generate_body(true, true);
@@ -150,10 +148,22 @@ class mailer extends mail {
 		$tos = addslashes($this->headers->get("To"));
 		$froms = addslashes($this->headers->get("From"));
 		$subject = addslashes($this->headers->get("Subject"));
-
+		if ($this->headers->get("X-MSMail-Priority") == "High") {
+			$priority = HIGH_PRIORITY;
+		}
+		else if ($this->headers->get("X-MSMail-Priority") == "Low") {
+			$priority = LOW_PRIORITY;
+		}
+		else {
+			$priority = NORMAL_PRIORITY;
+		}
+		
 		$date = $this->make_timestamp($this->headers->get("Date"));
 		if ($folder == "sent") {
-			$was_read = 1;
+			$was_read = MAIL_READ;
+		}
+		else {
+			$was_read = MAIL_UNREAD;
 		}
 		
 		// Some POP server list uidls on request, but don't store them in
@@ -161,7 +171,7 @@ class mailer extends mail {
 		if ($server_uidl != 0 && !$uidl) {
 			$uidl = $server_uidl;
 		}
-		$query = "INSERT INTO mails (tos, froms, subject, date, folder, user_id, mail, uidl, acc_id, is_mime, was_read) VALUES ('$tos', '$froms', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl', '$this->acc_id', '$is_mime', '$was_read')";
+		$query = "INSERT INTO mails (tos, froms, subject, date, folder, user_id, mail, uidl, acc_id, is_mime, was_read, priority) VALUES ('$tos', '$froms', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl', '$this->acc_id', '$is_mime', '$was_read', '$priority')";
 		$res = $this->db_tool->db_query($query);
 
 		return $this->db_tool->insert_id();	

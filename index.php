@@ -12,6 +12,15 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
+	define("MAIL_UNREAD", 0);
+	define("MAIL_READ", 1);
+	define("MAIL_REPLIED", 2);
+	define("MAIL_FORWARDED", 3);
+	
+	define("NORMAL_PRIORITY", 0);
+	define("LOW_PRIORITY", 1);
+	define("HIGH_PRIORITY", 2);
+
 	function is_logged_in() {
 		global $logged_in;
 		return (isset($logged_in) && session_is_registered("logged_in") && $logged_in == 1);
@@ -40,10 +49,11 @@ http://www.gnu.org/copyleft/gpl.html
 	if (!file_exists($lang_file)) {
 		$lang_file = "lang/lang.english.inc.php";	
 	}
-	
+
 	include($lang_file);
 	setlocale(LC_ALL, $locale);
-		
+
+
 	if (!isset($popper) || !is_object($popper)) {
 		$popper = new popper;
 	}
@@ -253,7 +263,11 @@ http://www.gnu.org/copyleft/gpl.html
 			}
 			else if ($action == "deleteall") {
 				$popper->delete_all();
-			}			
+			}
+			else if ($action == "notification") {
+				$popper->send_notification();
+				Header("Location: ".$GLOBALS[PHP_SELF]."?action=showfolder&folder=".$popper->folder."&mail_id=".$popper->cur_message_id);
+			}					
 			else {
 				$popper->show();
 			}

@@ -51,7 +51,7 @@
 		</td>
 	</tr>
 </table>
-<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" class="windowtitle">
+<table width="100%" height="100%" border="0" cellpadding="4" cellspacing="0" class="windowtitle">
 <tr>
 	<td>
 <?php
@@ -64,6 +64,9 @@
 ?>
 	</td>
 </tr>
+<?php	
+		$this->show_notification_request();
+?>
 </table>
 <form>
 <textarea readonly rows="<?php echo($this->config["mail_rows"]);?>" cols="80" style="width: 100%;">
