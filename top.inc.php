@@ -32,7 +32,7 @@ http://www.gnu.org/copyleft/gpl.html
 <META HTTP-EQUIV="author" CONTENT="Jean-Pierre Bergamin">
 <META NAME="keywords" CONTENT="php, pop3, pop, client, pop client, popclient, free, freeware, asp">
 <META NAME="description" CONTENT="">
-<!--<META HTTP-EQUIV="Refresh" content="10;URL=<?php echo($GLOBALS['PHP_SELF']."?action=sendandreceive&what=getall");?>">-->
+<!--<META HTTP-EQUIV="Refresh" content="10;URL=<?php echo($_SERVER['PHP_SELF']."?action=sendandreceive&what=getall");?>">-->
 <!--<meta http-equiv="Content-Type" content="text/html; charset=KOI8-R">-->
 <!--<meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="-1">-->

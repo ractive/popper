@@ -53,20 +53,34 @@ http://www.gnu.org/copyleft/gpl.html
 		$_SESSION['calendar'] = new cal;
 	}
 	
-	switch ($_SESSION['action'])
-	{
-	case "process_login":
-		process_login();
-		break;
-	case $_SESSION['strings']['l_NewUser']:
-		process_new_user();
-		break;
-	case "confirm":
-		process_confirmation($_SESSION['DATA']['confirm_code']);
-		break;
-	default:
+	if ($_SESSION['logged_in']) {
 		process_action();
-		break;
+	}
+	else {
+		switch ($_SESSION['action']) {
+			case "process_login":
+				process_login();
+				break;
+			case $_SESSION['strings']['l_NewUser']:
+				process_new_user();
+				break;
+			case "confirm":
+				process_confirmation($_SESSION['DATA']['confirm_code']);
+				break;
+			case $_SESSION['strings']['l_Login']:
+				$_SESSION['popper']->show_in_window("login", $_SESSION['strings']['l_Login']);
+				break;
+			case "lostpwd":
+				$_SESSION['popper']->show_in_window("lostpwd");
+				exit_popper();
+			case "sendpwd":
+				$_SESSION['popper']->send_pwd();
+				exit_popper();
+				break;
+			default:
+				$_SESSION['popper']->show_in_window("home", $_SESSION['strings']['l_Welcome']);
+				break;
+		}
 	}
 	
 	takedown_session();
@@ -216,219 +230,204 @@ upon the contents of $_SESSION['last_action'].
 		return;
 	}
 	
-	
 	$_SESSION['popper']->pre_frame();
 	
-	switch($_SESSION['action'])
-	{
-	case "showfolder":
-		$_SESSION['popper']->show($folder);
-		break;
-	case "list":
-		$_SESSION['popper']->show_frame_list();
-		break;
-	case "mail_cont":
-		$_SESSION['popper']->show_mail_frame();
-		break;
-	case "showmail":
-		$_SESSION['popper']->show_popup_mail();
-		//$_SESSION['popper']->show_form("newmail", $_SESSION['strings']['l_ShowMail']);
-		break;
-	case "showsources":
-		$_SESSION['popper']->show_sources();
-		break;
-	case "logoff":
-		cookie_unset();
-		session_destroy();
-		$_SESSION['popper']->messagebox($_SESSION['strings']['l_LogoffMsg'], $_SESSION['strings']['l_Logoff'], $_SESSION['popper']->name." ".$_SESSION['strings']['l_LoggedOff'], $_SESSION['strings']['l_GoodBye']);
-		break;
-	case "newmail":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_NewMail']);
-		break;
-	case "printmail":
-		$_SESSION['popper']->show_popup_mail();
-		break;
-	case "reply":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ReplyMail']);
-		break;
-	case "replytoall":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ReplyAllMail']);
-		break;
-	case "forward":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ForwardMail']);
-		break;
-	case "showmail":
-		$_SESSION['popper']->show_popup_mail();
-		break;
-	case "openmail":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ShowMail']);
-		break;
-	case "choosen":
-		$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_Choosen']);
-		break;
-	case "cancel":
+	switch($_SESSION['action']) {
+		case "showfolder":
+			$_SESSION['popper']->show($folder);
+			break;
+		case "list":
+			$_SESSION['popper']->show_frame_list();
+			break;
+		case "mail_cont":
+			$_SESSION['popper']->show_mail_frame();
+			break;
+		case "showsources":
+			$_SESSION['popper']->show_sources();
+			break;
+		case "logoff":
+			cookie_unset();
+			session_destroy();
+			$_SESSION['popper']->messagebox($_SESSION['strings']['l_LogoffMsg'], $_SESSION['strings']['l_Logoff'], $_SESSION['popper']->name." ".$_SESSION['strings']['l_LoggedOff'], $_SESSION['strings']['l_GoodBye']);
+			break;
+		case "newmail":
+			$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_NewMail']);
+			break;
+		case "printmail":
+			$_SESSION['popper']->show_popup_mail();
+			break;
+		case "reply":
+			$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ReplyMail']);
+			break;
+		case "replytoall":
+			$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ReplyAllMail']);
+			break;
+		case "forward":
+			$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ForwardMail']);
+			break;
+		case "showmail":
+			$_SESSION['popper']->show_popup_mail();
+			break;
+		case "openmail":
+			$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_ShowMail']);
+			break;
+		case "choosen":
+			$_SESSION['popper']->show_in_window("newmail", $_SESSION['strings']['l_Choosen']);
+			break;
+		case "cancel":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		if (isset($_SESSION['old_uri']) && ($_SESSION['popper']->config['mailview'] != $_SESSION['FRAME_VIEW'])) {
-			Header("Location: ".$_SESSION['old_uri']);
-		}
-		else {
-			$_SESSION['popper']->show_form("main");
-		}
-		return;
-	case "accounts":
-		$_SESSION['popper']->show_form("accounts");
-		break;
-	case "addressbook":
-		$_SESSION['popper']->show_form("addressbook");
-		break;
-	case "newaccount":
-		$_SESSION['popper']->show_in_window("newaccount", $_SESSION['strings']['l_Account'], $_SESSION['strings']['l_FillInAll']);
-		break;
-	case "newaddress":
-		$_SESSION['popper']->show_in_window("newaddress", $_SESSION['strings']['l_Address']);
-		break;
-	case "storemail":
-/*DevNote: roytoo
-Functionalize this one.
-:DevNote*/
-		$msg = $_SESSION['popper']->store_mail();
-		if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
-			$_SESSION['popper']->show_form("main");
-		}
-		else {
-			Header("Location: ".$_SESSION['old_uri']);
-		}
-		//$_SESSION['popper']->show_form("main", $msg);
-		break;
-	case "storeaccount":
-		$_SESSION['popper']->store_account();
-		$_SESSION['popper']->show_form("accounts");
-		break;
-	case "storeaddress":
-		$_SESSION['popper']->store_address();
-		$_SESSION['popper']->show_form("addressbook");
-		break;
-	case "deladdress":
-		$_SESSION['popper']->del_address();
-		break;
-	case "delaccount":
-		$_SESSION['popper']->del_account();
-		break;
-	case "checkrep":
-		$_SESSION['popper']->check_repetitive();
-		break;
-	case "sendandreceive":
-/*DevNote: roytoo
-Functionalize this one.
-:DevNote*/
-		if (!isset($_SESSION['DATA']['what'])) {
-			if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
-				$_SESSION['popper']->show_small_window("sendreceive", $_SESSION['strings']['l_SendReceive']);
+			if (isset($_SESSION['old_uri']) && ($_SESSION['popper']->config['mailview'] != $_SESSION['FRAME_VIEW'])) {
+				Header("Location: ".$_SESSION['old_uri']);
 			}
 			else {
-				$_SESSION['popper']->show_in_window("sendreceive", $_SESSION['strings']['l_SendReceive']);
+				$_SESSION['popper']->show_form("main");
 			}
-		}
-		else {
-			$_SESSION['popper']->send_and_receive();
-		}
-		break;
-	case "getattachment":
-		$_SESSION['popper']->get_attachment();
-		break;
-	case "config":
+			return;
+		case "accounts":
+			$_SESSION['popper']->show_form("accounts");
+			break;
+		case "addressbook":
+			$_SESSION['popper']->show_form("addressbook");
+			break;
+		case "newaccount":
+			$_SESSION['popper']->show_in_window("newaccount", $_SESSION['strings']['l_Account'], $_SESSION['strings']['l_FillInAll']);
+			break;
+		case "newaddress":
+			$_SESSION['popper']->show_in_window("newaddress", $_SESSION['strings']['l_Address']);
+			break;
+		case "storemail":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		if (isset($_SESSION['DATA']['conf_submit'])) {
-			$_SESSION['popper']->store_config();
-			
-			$lang_file = "lang/lang.".$_SESSION['popper']->config['language'].".inc.php";
-			
-			include($lang_file);
-			
-			setlocale(LC_ALL, $_SESSION['locale']);	
-			
-			$_SESSION['popper']->show();
-		}
-		else if (isset($changepwd)) {
-			$_SESSION['popper']->show_in_window("changepwd", $_SESSION['strings']['l_ChangePwd']);
-		}
-		else if (isset($deluser) || isset($ack)) {
-			$_SESSION['popper']->delete_user();
-		}
-		else {
-			$_SESSION['popper']->show_in_window("config", $_SESSION['strings']['l_Config']);
-		}
-		break;
-	case "changepwd":
-		$_SESSION['popper']->change_pwd();
-		break;
-	case "deletemail":
-		$_SESSION['popper']->delete_mail();
-		break;
-	case "selected":
-/*DevNote: roytoo
-Functionalize this one.
-:DevNote*/
-		if (isset($_SESSION['DATA']['delete_x']) || isset($_SESSION['DATA']['ack'])) {
-			$_SESSION['popper']->delete_mails();
-		}
-		else if (isset($_SESSION['DATA']['add_addr_x'])) {
-			$_SESSION['popper']->add_sel_addr();
+			$msg = $_SESSION['popper']->store_mail();
 			if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
-				$_SESSION['popper']->show_frame_list();
+				$_SESSION['popper']->show_form("main");
 			}
 			else {
+				Header("Location: ".$_SESSION['old_uri']);
+			}
+			//$_SESSION['popper']->show_form("main", $msg);
+			break;
+		case "storeaccount":
+			$_SESSION['popper']->store_account();
+			$_SESSION['popper']->show_form("accounts");
+			break;
+		case "storeaddress":
+			$_SESSION['popper']->store_address();
+			$_SESSION['popper']->show_form("addressbook");
+			break;
+		case "deladdress":
+			$_SESSION['popper']->del_address();
+			break;
+		case "delaccount":
+			$_SESSION['popper']->del_account();
+			break;
+		case "checkrep":
+			$_SESSION['popper']->check_repetitive();
+			break;
+		case "sendandreceive":
+/*DevNote: roytoo
+Functionalize this one.
+:DevNote*/
+			if (!isset($_SESSION['DATA']['what'])) {
+				if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
+					$_SESSION['popper']->show_small_window("sendreceive", $_SESSION['strings']['l_SendReceive']);
+				}
+				else {
+					$_SESSION['popper']->show_in_window("sendreceive", $_SESSION['strings']['l_SendReceive']);
+				}
+			}
+			else {
+				$_SESSION['popper']->send_and_receive();
+			}
+			break;
+		case "getattachment":
+			$_SESSION['popper']->get_attachment();
+			break;
+		case "config":
+/*DevNote: roytoo
+Functionalize this one.
+:DevNote*/
+			if (isset($_SESSION['DATA']['conf_submit'])) {
+				$_SESSION['popper']->store_config();
+				
+				$lang_file = "lang/lang.".$_SESSION['popper']->config['language'].".inc.php";
+				
+				include($lang_file);
+				
+				setlocale(LC_ALL, $_SESSION['locale']);	
+				
 				$_SESSION['popper']->show();
 			}
-		}
-		else if (isset($_SESSION['DATA']['block_x'])) {
-			// Mark the senders as blocked
-			$_SESSION['popper']->add_sel_addr(true);
-			// Delete the mails
-			$_SESSION['popper']->delete_blocked();					
-		}
-		else if (isset($_SESSION['DATA']['move'])) {
-			//$_SESSION['popper']->move_to();
-			$_SESSION['popper']->report_error("Not implemented yet", "Not implemented");
-		}
-		break;
-	case "deleteall":
-		$_SESSION['popper']->delete_all();
-		break;
-	case "notification":
+			else if (isset($changepwd)) {
+				$_SESSION['popper']->show_in_window("changepwd", $_SESSION['strings']['l_ChangePwd']);
+			}
+			else if (isset($deluser) || isset($_SESSION['DATA']['ack'])) {
+				$_SESSION['popper']->delete_user();
+			}
+			else {
+				$_SESSION['popper']->show_in_window("config", $_SESSION['strings']['l_Config']);
+			}
+			break;
+		case "changepwd":
+			$_SESSION['popper']->change_pwd();
+			break;
+		case "deletemail":
+			$_SESSION['popper']->delete_mail();
+			break;
+		case "selected":
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		$_SESSION['popper']->send_notification();
-		if ($_SESSION['popper']->config['mailview'] == $_SESSION['IN_VIEW']) {
-			Header("Location: ".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$_SESSION['popper']->folder."&mail_id=".$_SESSION['popper']->cur_message_id);
-		}
-		else if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
-			$_SESSION['popper']->show_mail_frame();
-		}
-		else {
-			Header("Location: ".$_SERVER['PHP_SELF']."?action=showmail&mail_id=".$_SESSION['popper']->cur_message_id);				
-		}
-		break;
-	case $_SESSION['strings']['l_Login']:
-		$_SESSION['popper']->show_in_window("login", $_SESSION['strings']['l_Login']);
-		break;		
-	case "lostpwd":
-		$_SESSION['popper']->show_in_window("lostpwd");
-		exit_popper();
-	case "sendpwd":
-		$_SESSION['popper']->send_pwd();
-		exit_popper();
-	case "help":
-		$_SESSION['popper']->show_form("help");
-		exit_popper();
-	default:
-		$_SESSION['popper']->show_in_window("home", $_SESSION['strings']['l_Welcome']);
-		break;
+			if (isset($_SESSION['DATA']['delete_x']) || isset($_SESSION['DATA']['ack'])) {
+				$_SESSION['popper']->delete_mails();
+			}
+			else if (isset($_SESSION['DATA']['add_addr_x'])) {
+				$_SESSION['popper']->add_sel_addr();
+				if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
+					$_SESSION['popper']->show_frame_list();
+				}
+				else {
+					$_SESSION['popper']->show();
+				}
+			}
+			else if (isset($_SESSION['DATA']['block_x'])) {
+				// Mark the senders as blocked
+				$_SESSION['popper']->add_sel_addr(true);
+				// Delete the mails
+				$_SESSION['popper']->delete_blocked();					
+			}
+			else if (isset($_SESSION['DATA']['move'])) {
+				//$_SESSION['popper']->move_to();
+				$_SESSION['popper']->report_error("Not implemented yet", "Not implemented");
+			}
+			break;
+		case "deleteall":
+			$_SESSION['popper']->delete_all();
+			break;
+		case "notification":
+/*DevNote: roytoo
+Functionalize this one.
+:DevNote*/
+			$_SESSION['popper']->send_notification();
+			if ($_SESSION['popper']->config['mailview'] == $_SESSION['IN_VIEW']) {
+				Header("Location: ".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$_SESSION['popper']->folder."&mail_id=".$_SESSION['popper']->cur_message_id);
+			}
+			else if ($_SESSION['popper']->config['mailview'] == $_SESSION['FRAME_VIEW']) {
+				$_SESSION['popper']->show_mail_frame();
+			}
+			else {
+				Header("Location: ".$_SERVER['PHP_SELF']."?action=showmail&mail_id=".$_SESSION['popper']->cur_message_id);				
+			}
+			break;
+		case "help":
+			$_SESSION['popper']->show_form("help");
+			exit_popper();
+		default:
+			//$_SESSION['popper']->show_in_window("home", $_SESSION['strings']['l_Welcome']);
+			break;
 	}
 }
 
