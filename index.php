@@ -110,8 +110,7 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 	}
 	
 	takedown_session();
-
-print_r($_SESSION);
+	
 /*==                                End Main
 ==========================================================================*/
 
@@ -254,7 +253,7 @@ upon the contents of $_SESSION['last_action'].
 		$_SESSION['popper']->show_sources();
 		break;
 	case "logoff":
-		CookieUnset();
+		cookie_unset();
 		session_destroy();
 		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_LogoffMsg"], $_SESSION["strings"]["l_Logoff"], $_SESSION['popper']->name." ".$_SESSION["strings"]["l_LoggedOff"], $_SESSION["strings"]["l_GoodBye"]);
 		break;

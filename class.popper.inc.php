@@ -935,7 +935,7 @@ Masked out for better security.  See prior DevNote.
 		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\">\n");
 		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n&nbsp;</th>\n");
 		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Attachment"]."\"><img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Attachment"]."\" align=\"middle\" border=\"0\"></a>\n</th>\n");
-		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=priority\" title=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Priority"]."\"><img src=\"graphics/priority.gif\" alt=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Priority"]".\" align=\"middle\" border=\"0\"></a></th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=priority\" title=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Priority"]."\"><img src=\"graphics/priority.gif\" alt=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Priority"]."\" align=\"middle\" border=\"0\"></a></th>\n");
 		echo("<th style=\"text-align: left; border: thin outset silver;\" width=\"33%\">");
 		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=");
 		if ($this->folder == "outbox" || $this->folder == "sent") {
