@@ -119,3 +119,14 @@ Version 1.4
 - "Forgot" password feature added
 - Disposition-Notification requests now work! The notification was sent to the reader itself! 
   $to and $from is not the same ;-)
+  
+Version 1.41
+============
+- Choosing the recipients when writing a new mail works again
+- Some jerks with frame-view fixed.
+- E-Mail adresses in mails are also clickable now
+  
+  
+Version 1.41-r1
+============
+- Fix for reserved word collision in MySQL >4 (bug #1100222).  Thanks to kodekrash for the heads up.

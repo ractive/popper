@@ -36,7 +36,8 @@ account with everything you need (CVS, ftp, mailinglists etc...)
 at: http://sourceforge.net/projects/popper
 
 
-E-Mail:				james@ractive.ch
+E-Mail:				roytoo@roytoo.org
+						james@ractive.ch (alternate contact)
 Homepage:			http://www.ractive.ch
 POPPER-Homepage:	http://popper.ractive.ch
 POPPER-forum:		http://forum.ractive.ch
@@ -60,7 +61,7 @@ Popper tries to fill this gap. It gives you the possibility to read and write
 your mails from (almost ;-) any web-browser from any place.
 It's MIME conformant. This means that you also can get and send attachments.
 
-What brwosers are supported?
+What browsers are supported?
 ============================
 Popper is 100% Java(-script) FREE which eliminates problems on different
 platforms and browsers (yes, you can even use lynx ;-)!
@@ -156,7 +157,10 @@ Make it accessible for all:
 chmod 777 tmp
 
 Update the database structure:
-From version >= 1.31
+From version 1.41:
+    mysql popper -p < update14-r1.mysql
+
+From version >= 1.31:
     mysql popper -p < update14.mysql
     mysql popper -p < update14b5.mysql
     mysql popper -p < update14b6.mysql
@@ -185,8 +189,22 @@ From Versions < 1.2:
 
 (Sorry about the many DB updates :-(
 
-Then run the script update14.php in your browser. This will fill in the
-new column from_name in the table mails!
+
+Update of PHP files:
+
+If you are using V1.41:
+Apply the index.php-V1_41-r1-patch.diff and 
+class.popper.inc.php-V1_41-r1-patch.diff patch files to index.php and
+class.popper.inc.php from popper V1.41 respectively:
+patch index.php index.php-V1_41-r1-patch.diff
+patch class.popper.inc.php class.popper.inc.php-V1_41-r1-patch.diff
+
+If you are using earlier versions:
+Download the popper-1.41-r1.tar.gz package, then extract and copy it the
+popper (or whatever you call it) folder on your webserver.  If you have 
+already performed the mysql updates, everything should work just fine.
+
+
 
 
 =============================================================================
@@ -224,7 +242,7 @@ As normal user:
 2. Change the file popper.inc.php located above the documet root to 
    the settings you made.
    It should look something like this then:
-      $host = "localhost";       // Unlikely to be another host than localhost
+	  $host = "localhost";       // Unlikely to be another host than localhost
 	  $user = "dbusername"       // Or the user-name given in step 3
 	  $pass = "theuserpassword"; // Or the password given in step 3
 	  $dbname = "popper";        // Or the name given in step 2
@@ -237,7 +255,8 @@ SECURITY ISSUES
 Web applications are not known to be secure!
 I tried to make popper as secure as possible. But I'm sure someone will find
 a hole somewhere. Please report ANY security-considerations to
-james@ractive.ch or post is to the mailinglist.
+roytoo@roytoo.org (alternate contact: james@ractive.ch) or post is to the 
+mailinglist.
 
 Some thoughts about security:
 - ALL passwords of ALL POP-servers of ALL users are stored in plain-text
@@ -271,9 +290,9 @@ Some thoughts about security:
 BUGS
 =============================================================================
 There are probably still a lot of bugs in this program.     
-Report them to james@ractive.ch with a detailed descprition of the
-problem, including your PHP version and the used webserver.
-Put them also in the bug-tracking system at sourceforge.net:
+Report them to roytoo@roytoo.org (alternate contact: james@ractive.ch) with 
+a detailed description of the problem, including your PHP version and the 
+used webserver.  Put them also in the bug-tracking system at sourceforge.net:
 http://sourceforge.net/bugs/?func=addbug&group_id=15135
 
 You may want to create a file phpinfo.php with this content:
@@ -293,7 +312,8 @@ http://sourceforge.net/projects/popper/
 
 Visit http://popper.sourceforge.net for more infomation (under construction)
 
-Contact me if you need more information: james@ractive.ch
+Contact me if you need more information: roytoo@roytoo.org (alternate 
+contact: james@ractive.ch)
 
 =============================================================================
 
