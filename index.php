@@ -108,6 +108,8 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 		process_action();
 		break;
 	}
+	
+	takedown_session();
 
 print_r($_SESSION);
 /*==                                End Main
@@ -527,6 +529,8 @@ function takedown_session()
 		$_SESSION['old_uri'] = $_SESSION['uri'];
 	}
 	$_SESSION['uri'] = $cururi;
+	
+	unserialize_session();
 }
 
 function exit_popper() {
