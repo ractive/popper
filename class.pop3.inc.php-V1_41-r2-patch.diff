@@ -1,0 +1,24 @@
+diff -u -r1.4 -r1.4.2.1
+--- class.pop3.inc.php	24 Feb 2001 00:05:13 -0000	1.4
++++ class.pop3.inc.php	27 Feb 2005 04:51:43 -0000	1.4.2.1
+@@ -657,7 +657,7 @@
+ 				$own_uidl = true;
+ 				return $myUidl;
+ 			}
+-			list ($ok,$num,$myUidl) = explode(" ",$reply);
++			list ($_SESSION['ok'],$num,$myUidl) = explode(" ",$reply);
+ 			return $myUidl;
+ 		}
+ 		else
+@@ -788,9 +788,9 @@
+ 		for($count =0; $count < $length; $count++)
+ 		{
+ 			$digit = substr($server_text,$count,1);
+-			if(!empty($digit))
++			if(($digit == "0") || !empty($digit))
+ 			{
+-				if( (!$outside) and ($digit != '<') and ($digit != '>') )
++				if( ($outside != true) and ($digit != '<') and ($digit != '>') )
+ 				{
+ 					$banner .= $digit;
+ 				}

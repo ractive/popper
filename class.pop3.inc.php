@@ -1,6 +1,6 @@
 <?
 # phpop RCS version info:
-# $Id: class.pop3.inc.php,v 1.3 2001/02/11 16:04:35 jbergamin Exp $
+# $Id: class.pop3.inc.php,v 1.6 2005/02/17 06:48:17 roytoo Exp $
 /*
 
 	class.POP3.php3 v1.0	99/03/24 CDI cdi@thewebmasters.net
@@ -657,7 +657,7 @@ class POP3
 				$own_uidl = true;
 				return $myUidl;
 			}
-			list ($ok,$num,$myUidl) = explode(" ",$reply);
+			list ($_SESSION['ok'],$num,$myUidl) = explode(" ",$reply);
 			return $myUidl;
 		}
 		else
@@ -788,9 +788,9 @@ class POP3
 		for($count =0; $count < $length; $count++)
 		{
 			$digit = substr($server_text,$count,1);
-			if(!empty($digit))
+			if(($digit == "0") || !empty($digit))
 			{
-				if( (!$outside) and ($digit != '<') and ($digit != '>') )
+				if( ($outside != true) and ($digit != '<') and ($digit != '>') )
 				{
 					$banner .= $digit;
 				}
