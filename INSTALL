@@ -136,12 +136,20 @@ UPDATE FROM VERSIONS >= 1.2
 Rename the file config.inc.php to (i.e.) config.inc.php.orig.
 Untar the archive to the same directory. Rename config.inc.php.orig back
 
+Create a sub-directory in the directory popper, called tmp.
+Make it accessible for all:
+chmod 777 tmp
+
 =============================================================================
 UPDATE FROM VERSIONS < 1.2
 =============================================================================
 Rename the file config.inc.php to (i.e.) config.inc.php.orig.
 Untar the archive to the same directory. Rename config.inc.php.orig back
 to config.inc.php. Delete the file popper.inc.php.
+
+Create a sub-directory in the directory popper, called tmp.
+Make it accessible for all:
+chmod 777 tmp
 
 Update the MySQL database, by adding the definitions in update.mysql:
 

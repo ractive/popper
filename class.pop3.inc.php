@@ -1,6 +1,6 @@
 <?
 # phpop RCS version info:
-# $Id: class.pop3.inc.php,v 1.1.1.3 2001/02/04 10:48:36 jbergamin Exp $
+# $Id: class.pop3.inc.php,v 1.2 2001/02/05 00:30:11 jbergamin Exp $
 /*
 
 	class.POP3.php3 v1.0	99/03/24 CDI cdi@thewebmasters.net
