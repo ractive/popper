@@ -4,12 +4,12 @@
 <?php	
 		global $mail_id;
 		
-		$frame_view = ($this->config["mailview"] == FRAME_VIEW);
+		$frame_view = ($this->config["mailview"] == $_SESSION['FRAME_VIEW']);
 		
 		echo("<a href=\"$GLOBALS[PHP_SELF]?action=newmail\"><img src=\"graphics/newmail.gif\" alt=\"".$_SESSION["strings"]["l_NewMail"]."\" title=\"".$_SESSION["strings"]["l_NewMail"]."\" border=\"0\"></a>\n");
 
 			echo("<img src=\"graphics/spacing.gif\" alt=\"|\">");
- 			if ($this->config["mailview"] != POPUP_VIEW) {	
+ 			if ($this->config["mailview"] != $_SESSION['POPUP_VIEW']) {	
 				// Enable the read button only when a message is selected
 				$disable = !$frame_view && (!isset($GLOBALS[mail_id]) || $GLOBALS[mail_id] == 0);
 				if ($disable) {
@@ -60,7 +60,7 @@
 					
 					echo("><img src=\"graphics/cancel.gif\" alt=\"".$_SESSION["strings"]["l_DeleteSel"]."\" title=\"".$_SESSION["strings"]["l_DeleteSel"]."\" border=\"0\"></a>\n");
 				}
-			} // end of if ($this->config["mailview"] == IN_VIEW)
+			} // end of if ($this->config["mailview"] == $_SESSION['IN_VIEW'])
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=deleteall\"");
 			if ($frame_view) {
 				echo(" target=\"maillist\"");

@@ -50,6 +50,8 @@ class popper {
 			$this->db_tool = new db_tool("popper.inc.php");
 		}
 		
+		$this->set_folders();
+		
 		// Determine the max size of a mail you can
 		// store in the DB
 		$query = "SHOW VARIABLES";
@@ -68,7 +70,7 @@ class popper {
 	function pre_frame() {
 		global $mail_id;
 		
-		if ($this->config["mailview"] != FRAME_VIEW) {
+		if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 			return;
 		}
 		
@@ -108,10 +110,11 @@ class popper {
 		if (empty($name)) {
 			$name = $this->name;
 		}
+		
 		$query = "SELECT id FROM users WHERE STRCMP(name, '$name') = 0";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 
@@ -160,12 +163,12 @@ class popper {
 		
 		setlocale(LC_ALL, $_SESSION["locale"]);
 		
-		$this->folders["inbox"]["name"] = $_SESSION["strings"]["l_Inbox"];
-		$this->folders["outbox"]["name"] = $_SESSION["strings"]["l_Outbox"];
-		$this->folders["sent"]["name"] = $_SESSION["strings"]["l_SentMail"];
-		$this->folders["bin"]["name"] = $_SESSION["strings"]["l_RecycleBin"];
-		$this->folders["drafts"]["name"] = $_SESSION["strings"]["l_Drafts"];				
-		$this->folders["cal"]["name"] = $_SESSION["strings"]["l_Calendar"];	
+		$this->folders["inbox"]["name"] = $_SESSION['strings']['l_Inbox'];
+		$this->folders["outbox"]["name"] = $_SESSION['strings']['l_Outbox'];
+		$this->folders["sent"]["name"] = $_SESSION['strings']['l_SentMail'];
+		$this->folders["bin"]["name"] = $_SESSION['strings']['l_RecycleBin'];
+		$this->folders["drafts"]["name"] = $_SESSION['strings']['l_Drafts'];				
+		$this->folders["cal"]["name"] = $_SESSION['strings']['l_Calendar'];	
 		if ($_SESSION["poppercookie"]["language"]) {
 			setcookie("poppercookie['language']", $this->config["language"], time() + 365 * 24 * 3600);
 		}
@@ -176,7 +179,7 @@ class popper {
 		$query = "SELECT * FROM conf WHERE user_id = '$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_UserInfoFail"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_UserInfoFail']);
 			return;
 		}
 		
@@ -218,7 +221,7 @@ For extra security:
 		$query = "SELECT users.email as email, users.pwd as pwd, conf.language as lang FROM users LEFT JOIN conf ON conf.user_id = users.id WHERE users.name='$user'";
 		$res = $this->db_tool->db_query($query);
 		if ($this->db_tool->affected_rows($res) != 1) {
-			$this->show_in_window("lostpwd", $_SESSION["strings"]["l_LostPwd"], $_SESSION["strings"]["l_UserNotFound"]);
+			$this->show_in_window("lostpwd", $_SESSION['strings']['l_LostPwd'], $_SESSION['strings']['l_UserNotFound']);
 			return;
 		}
 	
@@ -233,29 +236,29 @@ For extra security:
 		
 		$server = getenv("SERVER_NAME");
 		
-		$mail = $_SESSION["strings"]["l_LostPwdMail1"]." ".$server;
+		$mail = $_SESSION['strings']['l_LostPwdMail1']." ".$server;
 		$mail .= "\r\nhttp://$server".$GLOBALS["PHP_SELF"];
 /*DevNote: roytoo
 Masked out for better security.  See prior DevNote.
 :DevNote*/
-//		$mail .= "\r\n\r\n".$_SESSION["strings"]["l_UserName"].": ".$user;
-		$mail .= "\r\n".$_SESSION["strings"]["l_Pwd"].": ".stripslashes($row[pwd]);
-		$mail .= "\r\n\r\n".$_SESSION["strings"]["l_LostPwdMail2"];
+//		$mail .= "\r\n\r\n".$_SESSION['strings']['l_UserName'].": ".$user;
+		$mail .= "\r\n".$_SESSION['strings']['l_Pwd'].": ".stripslashes($row[pwd]);
+		$mail .= "\r\n\r\n".$_SESSION['strings']['l_LostPwdMail2'];
 		
-		if (mail($row[email], $_SESSION["strings"]["l_LostPwd"], $mail, "From: noreply@".$server)) {		
-			$this->messagebox($_SESSION["strings"]["l_LostPwdMail3"], $_SESSION["strings"]["l_LostPwdMail4"], $_SESSION["strings"]["l_LostPwdMail4"]);
+		if (mail($row[email], $_SESSION['strings']['l_LostPwd'], $mail, "From: noreply@".$server)) {		
+			$this->messagebox($_SESSION['strings']['l_LostPwdMail3'], $_SESSION['strings']['l_LostPwdMail4'], $_SESSION['strings']['l_LostPwdMail4']);
 		}
 		else {
-			$this->messagebox($_SESSION["strings"]["l_LostPwdMail5"], $_SESSION["strings"]["l_Error"], $_SESSION["strings"]["l_Error"]);			
+			$this->messagebox($_SESSION['strings']['l_LostPwdMail5'], $_SESSION['strings']['l_Error'], $_SESSION['strings']['l_Error']);			
 		}
 		
 	}
 	
 
-	function show_in_window($form, $title="", $status_msg="", $msgboxtext = "", $msgboxhead="") {
+	function show_in_window($form, $title="", $status_msg="", $msgboxtext = "", $msgboxhead="", $msgboxdata="") {
 		
-		if ($this->config["mailview"] == FRAME_VIEW && $form != "config" && $form != "changepwd" && $form != "newmail") {
-			$this->show_small_window($form, $title, $status_msg, $msgboxtext, $msgboxhead);
+		if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && ($form != "config") && ($form != "changepwd") && ($form != "newmail")) {
+			$this->show_small_window($form, $title, $status_msg, $msgboxtext, $msgboxhead, $msgboxdata);
 			return;
 		}
 		
@@ -270,7 +273,7 @@ Masked out for better security.  See prior DevNote.
 		include($_SESSION['bottom_part']);
 	}
 	
-	function show_small_window($form, $title = "", $status_msg = "", $msgboxtext = "", $msgboxhead = "") {
+	function show_small_window($form, $title = "", $status_msg = "", $msgboxtext = "", $msgboxhead = "", $msgboxdata="") {
 
 		$this->frame_header();
 		echo("<table class=\"windowborder\" width=\"50%\" border=\"0\" align=\"center\" style=\"margin-top: 2em;\">");
@@ -296,7 +299,7 @@ Masked out for better security.  See prior DevNote.
 			$this->cur_address_id = $addr_id;
 		}
 		
-		if ($this->config["mailview"] == FRAME_VIEW && ($form == "addressbook" || $form == "accounts")) {
+		if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && (($form == "addressbook") || ($form == "accounts"))) {
 			$this->frame_header();
 			echo("<table class=\"windowborder\" width=\"100%\" border=\"0\" align=\"center\">");
 		}
@@ -313,7 +316,7 @@ Masked out for better security.  See prior DevNote.
 			}
 		}
 		include($form.".form.inc.php");
-		if ($this->config["mailview"] == FRAME_VIEW && ($_SESSION['action'] == "addressbook" || $_SESSION['action'] == "accounts")) {
+		if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && (($_SESSION['action'] == "addressbook") || ($_SESSION['action'] == "accounts"))) {
 			echo("</table></form>");
 			$this->frame_footer();
 		}		
@@ -345,7 +348,7 @@ Masked out for better security.  See prior DevNote.
 			$query = "SELECT was_read FROM mails WHERE user_id = '$this->userid' AND id='$this->cur_message_id'";
 			$res = $this->db_tool->db_query($query);
 			if ($res != 0 && $row = $this->db_tool->fetch_array($res)) {
-				if ($row["was_read"] == MAIL_UNREAD) {
+				if ($row["was_read"] == $_SESSION['MAIL_UNREAD']) {
 					$options = $this->cur_mailer->get_header("Disposition-Notification-Options");
 					if ($options && $options["attribute"] == "important") {
 						// We don't know any options...
@@ -353,8 +356,8 @@ Masked out for better security.  See prior DevNote.
 						return;
 					}
 					
-					echo("<tr class=\"childwindow\"><td>".$_SESSION["strings"]["l_NotifyQuest"]."<br>".$_SESSION["strings"]["l_NotifyQuest2"]."</td>\n");
-					echo("<td><form action=\"$GLOBALS[PHP_SELF]\" method=\"GET\">\n<input type=\"submit\" name=\"submit\" value=\"".$_SESSION["strings"]["l_SendNot"]."\">");
+					echo("<tr class=\"childwindow\"><td>".$_SESSION['strings']['l_NotifyQuest']."<br>".$_SESSION['strings']['l_NotifyQuest2']."</td>\n");
+					echo("<td><form action=\"$GLOBALS[PHP_SELF]\" method=\"GET\">\n<input type=\"submit\" name=\"submit\" value=\"".$_SESSION['strings']['l_SendNot']."\">");
 					echo("<input type=\"hidden\" name=\"action\" value=\"notification\"></form>\n</td>\n</tr>\n");
 				}
 			}
@@ -373,15 +376,15 @@ Masked out for better security.  See prior DevNote.
 		echo("SUBJECT: Re: ".$this->cur_mailer->headers->get("Subject"));
 		echo("<br>");*/
 
-		$msg = $_SESSION["strings"]["l_NotMsg"]."\r\n\r\n";
+		$msg = $_SESSION['strings']['l_NotMsg']."\r\n\r\n";
 
-		$msg .= $_SESSION["strings"]["l_To"].": $from\r\n";
+		$msg .= $_SESSION['strings']['l_To'].": $from\r\n";
 	
-		$msg .= $_SESSION["strings"]["l_SentAt"].": ".$this->cur_mailer->headers->get("Date")."\r\n";
-		$msg .= $_SESSION["strings"]["l_ReadAt"].": ".strftime("%c", time())."\r\n";
-		$msg .= $_SESSION["strings"]["l_Subject"].": ".$this->cur_mailer->subject()."\r\n\r\n";
+		$msg .= $_SESSION['strings']['l_SentAt'].": ".$this->cur_mailer->headers->get("Date")."\r\n";
+		$msg .= $_SESSION['strings']['l_ReadAt'].": ".strftime("%c", time())."\r\n";
+		$msg .= $_SESSION['strings']['l_Subject'].": ".$this->cur_mailer->subject()."\r\n\r\n";
 		
-		$not_mailer->create($notify, $from, $_SESSION["strings"]["l_NotiSub"].": ".$this->cur_mailer->headers->get("Subject"), $msg);
+		$not_mailer->create($notify, $from, $_SESSION['strings']['l_NotiSub'].": ".$this->cur_mailer->headers->get("Subject"), $msg);
 		$boundary = $not_mailer->create_boundary();
 		$not_mailer->headers->put("Content-Type", "multipart/report; report-type=disposition-notification;\tboundary=\"$boundary\"");
 
@@ -437,7 +440,7 @@ Masked out for better security.  See prior DevNote.
 		}
 	}
 	function mail_selected($message) {
-		if (($this->config["mailview"] == IN_VIEW || $this->config["mailview"] == SEP_VIEW) && $this->cur_message_id == $message) {
+		if (($this->config["mailview"] == $_SESSION['IN_VIEW'] || $this->config["mailview"] == $_SESSION['SEP_VIEW']) && $this->cur_message_id == $message) {
 			echo(" style=\"background-color: Blue; color: White;\" ");
 		}
 	}
@@ -453,7 +456,7 @@ Masked out for better security.  See prior DevNote.
 
 		if ($show == "blocked") {
 			$blocked = true;
-			echo("<h3>".$_SESSION["strings"]["l_Blocked"]."</h3>");
+			echo("<h3>".$_SESSION['strings']['l_Blocked']."</h3>");
 		}
 		
 
@@ -464,11 +467,11 @@ Masked out for better security.  See prior DevNote.
 		$query = "SELECT id, IF(LENGTH(name) > '".$this->config["address_size"]."', CONCAT(LEFT(name, '".$this->config["address_size"]."'), '...'), name) as name, IF(LENGTH(email) > '".$this->config["address_size"]."', CONCAT(LEFT(email, '".$this->config["address_size"]."'), '...'), email) as email FROM addresses WHERE user_id = '$this->userid' AND blocked='$blocked'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 		if ($this->db_tool->affected_rows() < 1) {
-			echo($_SESSION["strings"]["l_NoAddress"]);
+			echo($_SESSION['strings']['l_NoAddress']);
 			return;
 		}
 
@@ -480,10 +483,10 @@ Masked out for better security.  See prior DevNote.
 			if ($blocked) {
 				echo("&show=blocked");
 			}
-			echo("\" title=\"".$_SESSION["strings"]["l_ShowDetails"]."\"");
+			echo("\" title=\"".$_SESSION['strings']['l_ShowDetails']."\"");
 			$this->address_selected($row[id]);
 			echo(">".$this->extract_disp_name(stripslashes($row[name]))."</a></td>\n");
-			echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"".$_SESSION["strings"]["l_SendMail"]."\" target=\"_parent\">".stripslashes($row["email"])."</a></td></tr>\n");
+			echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"".$_SESSION['strings']['l_SendMail']."\" target=\"_parent\">".stripslashes($row["email"])."</a></td></tr>\n");
 		}
 		echo("</table>\n");
 	}
@@ -494,29 +497,30 @@ Masked out for better security.  See prior DevNote.
 		if (isset($addr_id) && !empty($addr_id)) {
 			$this->cur_address_id = $addr_id;
 		}
+		
 		$query = "SELECT * FROM addresses WHERE user_id='$this->userid' AND id='$this->cur_address_id'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 		if ($this->db_tool->affected_rows() != 1) {
-			echo($_SESSION["strings"]["l_ClickName"]."<br><br><br><br><br><br><br><br><br><br><br>");
+			echo($_SESSION['strings']['l_ClickName']."<br><br><br><br><br><br><br><br><br><br><br>");
 			return;
 		}
 		$row = $this->db_tool->fetch_array($res);
 ?>
 		<table cellpadding="3" cellspacing="3">
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_Name"]); ?>:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_Name']); ?>:</b></td>
 				<td><?php echo(stripslashes($row["name"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_LastName"]); ?>:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_LastName']); ?>:</b></td>
 				<td><?php echo(stripslashes($row["lastname"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_NickName"]); ?>:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_NickName']); ?>:</b></td>
 				<td><?php echo(stripslashes($row["nickname"])); ?></td>
 			</tr>
 			<tr>
@@ -524,35 +528,35 @@ Masked out for better security.  See prior DevNote.
 				<td><?php echo(stripslashes($row["email"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_Address"]); ?> 1:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_Address']); ?> 1:</b></td>
 				<td><?php echo(stripslashes($row["address1"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_Address"]); ?> 2:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_Address']); ?> 2:</b></td>
 				<td><?php echo(stripslashes($row["address2"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_ZIP"]); ?>:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_ZIP']); ?>:</b></td>
 				<td><?php echo(stripslashes($row["zip"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_Town"]); ?>:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_Town']); ?>:</b></td>
 				<td><?php echo(stripslashes($row["town"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_State"]); ?>:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_State']); ?>:</b></td>
 				<td><?php echo(stripslashes($row["state"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_Country"]); ?>:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_Country']); ?>:</b></td>
 				<td><?php echo(stripslashes($row["country"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_Phone"]); ?>:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_Phone']); ?>:</b></td>
 				<td><?php echo(stripslashes($row["phone"])); ?></td>
 			</tr>
 			<tr>
-				<td><b><?php echo($_SESSION["strings"]["l_MobilePhone"]); ?>:</b></td>
+				<td><b><?php echo($_SESSION['strings']['l_MobilePhone']); ?>:</b></td>
 				<td><?php echo(stripslashes($row["mobile"])); ?></td>
 			</tr>
 			<tr>
@@ -580,34 +584,34 @@ Masked out for better security.  See prior DevNote.
 		$query = "SELECT * FROM accounts WHERE user_id = '$this->userid' AND id = '$this->cur_account_id'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 		if ($this->db_tool->affected_rows() != 1) {
-			echo($_SESSION["strings"]["l_ClickName"]."<br><br><br><br><br><br><br><br><br><br><br>");
+			echo($_SESSION['strings']['l_ClickName']."<br><br><br><br><br><br><br><br><br><br><br>");
 			return;
 		}
 		$row = $this->db_tool->fetch_array($res);
 ?>
 		<table cellpadding="3" cellspacing="3">
 			<tr>
-				<td><?php echo($_SESSION["strings"]["l_AccountName"]); ?>:</td>
+				<td><?php echo($_SESSION['strings']['l_AccountName']); ?>:</td>
 				<td><?php echo(stripslashes($row["name"]));?></td>
 			</tr>
 			<tr>
-				<td><?php echo($_SESSION["strings"]["l_From"]." ".$_SESSION["strings"]["l_Name"]); ?>:</td>
+				<td><?php echo($_SESSION['strings']['l_From']." ".$_SESSION['strings']['l_Name']); ?>:</td>
 				<td><?php echo(stripslashes($row["fromname"]));?></td>
 			</tr>
 			<tr>
-				<td><?php echo($_SESSION["strings"]["l_ReplyTo"]); ?>:</td>
+				<td><?php echo($_SESSION['strings']['l_ReplyTo']); ?>:</td>
 				<td><?php echo(stripslashes($row["replyto"]));?></td>
 			</tr>
 			<tr>
-				<td><?php echo($_SESSION["strings"]["l_POPServer"]); ?>:</td>
+				<td><?php echo($_SESSION['strings']['l_POPServer']); ?>:</td>
 				<td><?php echo(stripslashes($row["popserver"]));?></td>
 			</tr>
 			<tr>
-				<td><?php echo($_SESSION["strings"]["l_POPLogin"]); ?>:</td>
+				<td><?php echo($_SESSION['strings']['l_POPLogin']); ?>:</td>
 				<td><?php echo(stripslashes($row["poplogin"]));?></td>
 			</tr>
 		</table>
@@ -625,17 +629,17 @@ Masked out for better security.  See prior DevNote.
 		$query = "SELECT id, name, popserver FROM accounts WHERE user_id = '$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 
 		echo("<table width=\"100%\">\n");
 		echo("<tr>");
 
-		echo("<th align=\"left\">".$_SESSION["strings"]["l_Name"]."</th><th align=\"left\">".$_SESSION["strings"]["l_Server"]."</th></tr>\n");
+		echo("<th align=\"left\">".$_SESSION['strings']['l_Name']."</th><th align=\"left\">".$_SESSION['strings']['l_Server']."</th></tr>\n");
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr><td>\n");
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=accounts&account_id=$row[id]\" title=\"".$_SESSION["strings"]["l_ShowDetails"]."\"");
+			echo("<a href=\"$GLOBALS[PHP_SELF]?action=accounts&account_id=$row[id]\" title=\"".$_SESSION['strings']['l_ShowDetails']."\"");
 			$this->account_selected($row[id]);
 			echo(">".stripslashes($row["name"])."</a></td>\n");
 			echo("<td>".stripslashes($row["popserver"])."</td></tr>\n");
@@ -658,10 +662,11 @@ Masked out for better security.  See prior DevNote.
 		if(!isset($id) || empty($id)) {
 			$id = $this->cur_account_id;
 		}
+		
 		$query = "SELECT name FROM  accounts WHERE id=$id AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 		if ($this->db_tool->affected_rows($res) != 1) {
@@ -678,10 +683,11 @@ Masked out for better security.  See prior DevNote.
 		if(!isset($id) || empty($id)) {
 			$id = $this->cur_address_id;
 		}
+		
 		$query = "SELECT name FROM  addresses WHERE id='$id' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return "";
 		}
 		if ($this->db_tool->affected_rows($res) != 1) {
@@ -694,7 +700,7 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_ack($title = "", $status_msg = "") {
-		if ($this->config["mailview"] == FRAME_VIEW) {
+		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			$this->show_small_window("ack", $title, $status_msg);
 		}
 		else {
@@ -712,7 +718,7 @@ Masked out for better security.  See prior DevNote.
 		$query = "UPDATE addresses SET blocked=0 WHERE id = '$this->cur_address_id' AND user_id = '$this->userid' AND blocked=1";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 
@@ -720,7 +726,7 @@ Masked out for better security.  See prior DevNote.
 			// The address was not blocked. Delete it
 			$name = $this->get_address_name();
 			if (!isset($ack) || empty($ack) ) {
-				$this->show_ack($_SESSION["strings"]["l_DelAddress"].": $name", $_SESSION["strings"]["l_DelAddressConf"]);
+				$this->show_ack($_SESSION['strings']['l_DelAddress'].": $name", $_SESSION['strings']['l_DelAddressConf']);
 				return;
 			}
 			else if($ack == "No") {
@@ -730,14 +736,14 @@ Masked out for better security.  See prior DevNote.
 				$query = "DELETE FROM addresses WHERE id = '$this->cur_address_id' AND user_id = '$this->userid'";
 				$res = $this->db_tool->db_query($query);
 				if ($res === false) {
-					$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+					$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 					return;
 				}
 				if ($this->db_tool->affected_rows() > 0) {
-					$del_msg = $_SESSION["strings"]["l_AddressDel"];
+					$del_msg = $_SESSION['strings']['l_AddressDel'];
 				}
 				else {
-					$del_msg = $_SESSION["strings"]["l_AddressDelFail"];
+					$del_msg = $_SESSION['strings']['l_AddressDelFail'];
 				}
 			}
 	
@@ -751,7 +757,7 @@ Masked out for better security.  See prior DevNote.
 		global $ack;
 		$accountname = $this->get_account_name();
 		if (!isset($ack) || empty($ack) ) {
-			$this->show_ack($_SESSION["strings"]["l_DelAccount"]." $accountname", $_SESSION["strings"]["l_DelAccountConf"]);
+			$this->show_ack($_SESSION['strings']['l_DelAccount']." $accountname", $_SESSION['strings']['l_DelAccountConf']);
 			return;
 		}
 		else if($ack == "No") {
@@ -761,14 +767,14 @@ Masked out for better security.  See prior DevNote.
 			$query = "DELETE FROM accounts WHERE id = '$this->cur_account_id' AND user_id = '$this->userid'";
 			$res = $this->db_tool->db_query($query);
 			if ($res === false) {
-				$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return;
 			}
 			if ($this->db_tool->affected_rows() > 0) {
-				$del_msg = $_SESSION["strings"]["l_AccountDel"];
+				$del_msg = $_SESSION['strings']['l_AccountDel'];
 			}
 			else {
-				$del_msg = $_SESSION["strings"]["l_AccountDelFail"];
+				$del_msg = $_SESSION['strings']['l_AccountDelFail'];
 			}
 		}
 
@@ -778,7 +784,7 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_folders() {
-		$unread = MAIL_UNREAD;
+		$unread = $_SESSION['MAIL_UNREAD'];
 		$query = "SELECT folder, count(*) as count FROM mails WHERE was_read='$unread' AND user_id='$this->userid' GROUP BY folder";
 		$res = $this->db_tool->db_query($query);
 		if ($res != 0) {
@@ -788,7 +794,7 @@ Masked out for better security.  See prior DevNote.
 			}
 		}
 		
-		if ($this->config["view"] == MIN_VIEW) {
+		if ($this->config["view"] == $_SESSION['MIN_VIEW']) {
 			$width = "100%";
 		}
 		else {
@@ -798,10 +804,10 @@ Masked out for better security.  See prior DevNote.
 		echo("<table width=\"$width\">");
 			while(list($key, $val) = each($this->folders)) {
 				echo("<tr>\n");
-					if ($this->config["view"] != MIN_VIEW) {
+					if ($this->config["view"] != $_SESSION['MIN_VIEW']) {
 						echo("<td width=\"1%\">");
 						echo("<a href=\"$GLOBALS[PHP_SELF]?action=");
-						if ($this->config["mailview"] == FRAME_VIEW && $key != "cal" && $this->folder != "cal") {
+						if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && ($key != "cal") && ($this->folder != "cal")) {
 							echo("list&folder=$key\" target=\"maillist\" ");
 						}
 						else {
@@ -815,7 +821,7 @@ Masked out for better security.  See prior DevNote.
 						echo(">");
 						echo("<img src=\"graphics/$val[pic]\" alt=\"$val[name]\" title=\"$val[name]\" border=\"0\" ");
 						echo("style=\"vertical-align: middle;\"></a></td>\n<td><a href=\"$GLOBALS[PHP_SELF]?action=");
-						if ($this->config["mailview"] == FRAME_VIEW && $key != "cal" && $this->folder != "cal") {
+						if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && ($key != "cal") && ($this->folder != "cal")) {
 							echo("list&folder=$key\" target=\"maillist\" ");
 						}
 						else {
@@ -836,7 +842,7 @@ Masked out for better security.  See prior DevNote.
 					}
 					else {
 						echo("<td align=\"center\"><a href=\"$GLOBALS[PHP_SELF]?action=");
-						if ($this->config["mailview"] == FRAME_VIEW && $key != "cal" && $this->folder != "cal") {
+						if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && ($key != "cal") && ($this->folder != "cal")) {
 							echo("list&folder=$key\" target=\"maillist\" ");
 						}
 						else {
@@ -859,15 +865,15 @@ Masked out for better security.  See prior DevNote.
 		$query = "SELECT COUNT(*) FROM mails WHERE user_id='$this->userid' AND folder='$this->folder'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 		$row = $this->db_tool->fetch_row($res);
 		return $row[0];
 	}
 
-	function report_error($err_msg, $head) {
-		$this->messagebox($err_msg, "ERROR", $head);
+	function report_error($err_msg, $head, $rptdata = "") {
+		$this->messagebox($err_msg, "ERROR", $head, $rptdata);
 		exit;
 	}
 
@@ -890,30 +896,30 @@ Masked out for better security.  See prior DevNote.
 		
 		echo("<form class=\"mail\" action=\"$GLOBALS[PHP_SELF]?action=selected\" method=\"post\">");
 		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");
-		if ($this->config["mailview"] == FRAME_VIEW) {
+		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			echo("<tr class=\"windowtitle\"><td>".$this->get_foldername()."</td></tr>");		
 		}
 		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\"><td width=\"100%\" align=\"left\">");
-		echo("<input class=\"smallbutton\" type=\"image\" name=\"delete\" value=\"delete\" src=\"graphics/del.gif\" alt=\"".$_SESSION["strings"]["l_DeleteMultiple"]."\" title=\"".$_SESSION["strings"]["l_DeleteMultiple"]."\">");
-		echo("<input class=\"smallbutton\" type=\"image\" name=\"add_addr\" value=\"add_addr\" src=\"graphics/add_addr.gif\" alt=\"".$_SESSION["strings"]["l_AddAddr"]."\" title=\"".$_SESSION["strings"]["l_AddAddr"]."\">");
-		echo("<input class=\"smallbutton\" type=\"image\" name=\"block\" value=\"block\" src=\"graphics/stop.gif\" alt=\"".$_SESSION["strings"]["l_Block"]."\" title=\"".$_SESSION["strings"]["l_Block"]."\">");
-		//echo("<select name=\"move_folder\" style=\"margin: 0, 0, 0, 0; padding: 0, 0, 0, 0; border: none;\"><option>".$_SESSION["strings"]["l_MoveTo"]."</option><option>lajksdlkj</option></select>");
+		echo("<input class=\"smallbutton\" type=\"image\" name=\"delete\" value=\"delete\" src=\"graphics/del.gif\" alt=\"".$_SESSION['strings']['l_DeleteMultiple']."\" title=\"".$_SESSION['strings']['l_DeleteMultiple']."\">");
+		echo("<input class=\"smallbutton\" type=\"image\" name=\"add_addr\" value=\"add_addr\" src=\"graphics/add_addr.gif\" alt=\"".$_SESSION['strings']['l_AddAddr']."\" title=\"".$_SESSION['strings']['l_AddAddr']."\">");
+		echo("<input class=\"smallbutton\" type=\"image\" name=\"block\" value=\"block\" src=\"graphics/stop.gif\" alt=\"".$_SESSION['strings']['l_Block']."\" title=\"".$_SESSION['strings']['l_Block']."\">");
+		//echo("<select name=\"move_folder\" style=\"margin: 0, 0, 0, 0; padding: 0, 0, 0, 0; border: none;\"><option>".$_SESSION['strings']['l_MoveTo']."</option><option>lajksdlkj</option></select>");
 		echo("</td></tr></table>\n");
 		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");		
 		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\">\n");
 		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n&nbsp;</th>\n");
-		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Attachment"]."\"><img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Attachment"]."\" align=\"middle\" border=\"0\"></a>\n</th>\n");
-		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=priority\" title=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Priority"]."\"><img src=\"graphics/priority.gif\" alt=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Priority"]."\" align=\"middle\" border=\"0\"></a></th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Attachment']."\"><img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Attachment']."\" align=\"middle\" border=\"0\"></a>\n</th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=priority\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Priority']."\"><img src=\"graphics/priority.gif\" alt=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Priority']."\" align=\"middle\" border=\"0\"></a></th>\n");
 		echo("<th style=\"text-align: left; border: thin outset silver;\" width=\"33%\">");
 		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=");
 		if ($this->folder == "outbox" || $this->folder == "sent") {
-			echo("tos\" title=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_From"]."\">".$_SESSION["strings"]["l_To"]);
+			echo("tos\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_From']."\">".$_SESSION['strings']['l_To']);
 		}
 		else {
-			echo("froms\" title=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_From"]."\">".$_SESSION["strings"]["l_From"]);
+			echo("froms\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_From']."\">".$_SESSION['strings']['l_From']);
 		}
 
-		if ($GLOBALS[order] == "froms" || $GLOBALS[order] == "tos") {
+		if ($_SESSION['order'] == "froms" || $_SESSION['order'] == "tos") {
 			if ($desc) {
 				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
 			}
@@ -922,8 +928,8 @@ Masked out for better security.  See prior DevNote.
 			}
 		}		
 		echo("</a></th><th style=\"text-align: left; border: thin outset silver;\" width=\"40%\">\n");
-		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=subject\" title=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Subject"]."\">".$_SESSION["strings"]["l_Subject"]);
-		if ($GLOBALS[order] == "subject") {
+		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=subject\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Subject']."\">".$_SESSION['strings']['l_Subject']);
+		if ($_SESSION['order'] == "subject") {
 			if ($desc) {
 				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
 			}
@@ -932,8 +938,8 @@ Masked out for better security.  See prior DevNote.
 			}
 		}			
 		echo("</a></th>\n");
-		echo("<th style=\"text-align: left; border: thin outset silver;\"><a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=date\" title=\"".$_SESSION["strings"]["l_Order"]." ".$_SESSION["strings"]["l_Date"]."\">".$_SESSION["strings"]["l_Date"]);
-		if ($GLOBALS[order] == "date") {
+		echo("<th style=\"text-align: left; border: thin outset silver;\"><a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=date\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Date']."\">".$_SESSION['strings']['l_Date']);
+		if ($_SESSION['order'] == "date") {
 			if ($desc) {
 				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
 			}
@@ -952,52 +958,54 @@ Masked out for better security.  See prior DevNote.
 			$this->folder = "inbox";
 		}
 		
-		if (isset($GLOBALS[order]) && empty($this->order)) {
+		if (isset($_SESSION['order']) && empty($this->order)) {
 			$desc = false;
-			$order = $this->order;
+			$this->order = $_SESSION['order'];
 		}
-		else if (isset($this->order) && isset($GLOBALS[order])) {
+		elseif (isset($this->order) && isset($_SESSION['order'])) {
 			if (substr($this->order, -4) == "DESC") {
-				$this->order = $GLOBALS[order];
+				$this->order = $_SESSION['order'];
 				$desc = false;
 			}
 			else {
-				$this->order = $GLOBALS[order]." DESC";
+				$this->order = $_SESSION['order']." DESC";
 				$desc = true;
 			}
 			
-			$order = $this->order;
 			
-			if ($GLOBALS[order] != "date") {
+			if (!empty($this->order) && !strstr($_SESSION['order'], "date")) {
 				// The second order options is always the date
-				$order .= ", date DESC";
+				$this->order .= ", date DESC";
+			}
+			else
+			{
+				$this->order .= " date DESC";
 			}
 				
 		}
 		
 		// Make sure we have an order expression
-		if (empty($order)) {
+		if (empty($this->order)) {
 			$this->order = "date DESC";
-			$order = $this->order;
 		}
 		
 		
 		
 		while(1) {
-			$pageno = $this->get_pageno() * $this->config["mails_per_page"];
-			$mails = $this->config["mails_per_page"];
+			$mails = ($this->config["mails_per_page"] ? $this->config["mails_per_page"] : 25);
+			$pageno = $this->get_pageno() * $mails;
 
-			$query = "SELECT id, tos, from_name as froms, subject, is_mime, date, was_read, priority FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY $order";
+			$query = "SELECT id, tos, from_name as froms, subject, is_mime, date, was_read, priority FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY ".$this->order;
 
 			// Show all mails in FRAME view
-			if ($this->config["mailview"] != FRAME_VIEW) {
+			if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 				$query .= " LIMIT $pageno, $mails";
 			}
 			
 			$res = $this->db_tool->db_query($query);
 
 			if ($res === false) {
-				$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return;
 			}
 			// See how much mails we got
@@ -1011,7 +1019,7 @@ Masked out for better security.  See prior DevNote.
 				}
 				else {
 					echo("</table>\n");
-					echo($_SESSION["strings"]["l_NoMails"]);
+					echo($_SESSION['strings']['l_NoMails']);
 					echo(str_repeat("<br>", $this->config["mails_per_page"] - 1));
 					return;
 				}
@@ -1025,17 +1033,17 @@ Masked out for better security.  See prior DevNote.
 			echo("<tr");
 			// If the mail was not read, display it bold
 			switch($row["was_read"]) {
-				case MAIL_UNREAD:
+				case $_SESSION['MAIL_UNREAD']:
 					echo(" style=\"font-weight: bolder;\"");
 					$img = "not_read_mail.gif";
 					break;
-				case MAIL_READ:
+				case $_SESSION['MAIL_READ']:
 					$img = "read_mail.gif";
 					break;
-				case MAIL_REPLIED:
+				case $_SESSION['MAIL_REPLIED']:
 					$img = "replied_mail.gif";
 					break;
-				case MAIL_FORWARDED:
+				case $_SESSION['MAIL_FORWARDED']:
 					$img = "forwarded_mail.gif";
 					break;
 			}
@@ -1045,22 +1053,22 @@ Masked out for better security.  See prior DevNote.
 			echo("<td style=\"width: 10px; text-align: center;\"><input type=\"checkbox\" name=\"del[]\" value=\"$row[id]\"></td>");
 			echo("<td style=\"width: 20px; text-align: center;\">\n");
 			if ($row[is_mime]) {
-				echo("<img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION["strings"]["l_Attachment"]."\" align=\"middle\" border=\"0\" style=\"vertical-align: middle;\">\n");				
+				echo("<img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION['strings']['l_Attachment']."\" align=\"middle\" border=\"0\" style=\"vertical-align: middle;\">\n");				
 			}
 			echo("</td><td align=\"center\" style=\"vertical-align: middle\">");
 			
 			switch ($row["priority"]) {
-				case LOWEST_PRIORITY:
-					echo("<img src=\"graphics/lowest.gif\" alt=\"lowest\" title=\"".$_SESSION["strings"]["l_LowestPriority"]."\">");			
+				case $_SESSION['LOWEST_PRIORITY']:
+					echo("<img src=\"graphics/lowest.gif\" alt=\"lowest\" title=\"".$_SESSION['strings']['l_LowestPriority']."\">");			
 					break;
-				case LOW_PRIORITY:					
-					echo("<img src=\"graphics/low.gif\" alt=\"low\" title=\"".$_SESSION["strings"]["l_LowPriority"]."\">");	
+				case $_SESSION['LOW_PRIORITY']:					
+					echo("<img src=\"graphics/low.gif\" alt=\"low\" title=\"".$_SESSION['strings']['l_LowPriority']."\">");	
 					break;					
-				case HIGH_PRIORITY:					
-					echo("<img src=\"graphics/high.gif\" alt=\"high\" title=\"".$_SESSION["strings"]["l_HighPriority"]."\">");	
+				case $_SESSION['HIGH_PRIORITY']:					
+					echo("<img src=\"graphics/high.gif\" alt=\"high\" title=\"".$_SESSION['strings']['l_HighPriority']."\">");	
 					break;
-				case HIGHEST_PRIORITY:					
-					echo("<img src=\"graphics/highest.gif\" alt=\"highest\" title=\"".$_SESSION["strings"]["l_HighestPriority"]."\">");	
+				case $_SESSION['HIGHEST_PRIORITY']:					
+					echo("<img src=\"graphics/highest.gif\" alt=\"highest\" title=\"".$_SESSION['strings']['l_HighestPriority']."\">");	
 					break;
 				default:
 					echo("&nbsp;");
@@ -1068,27 +1076,27 @@ Masked out for better security.  See prior DevNote.
 			}
 						
 			echo("</td><td>\n<img src=\"graphics/$img\" alt=\"\" style=\"float: left;\">");
-			if ($this->config["mailview"] == IN_VIEW) {
+			if ($this->config["mailview"] == $_SESSION['IN_VIEW']) {
 				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder&mail_id=$row[id]\"");
 			}
-			else if ($this->config["mailview"] == FRAME_VIEW) {
+			else if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 				echo("<a href=\"$GLOBALS[PHP_SELF]?action=mail_cont&mail_id=$row[id]\" target=\"mail\" ");			
 			}
 			else {
 				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showmail&mail_id=$row[id]\"");				
-				if ($this->config["mailview"] == POPUP_VIEW) {
+				if ($this->config["mailview"] == $_SESSION['POPUP_VIEW']) {
 					echo(" target=\"_blank\" ");
 				}
 				
 			}
 			
 			// Don't highlight a mail in FrameView
-			if ($this->config["mailview"] != FRAME_VIEW) {
+			if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 				$this->mail_selected($row[id]);
 			}
 			
 			// If the mail was not read, display it bold (also the link)
-			if ($row["was_read"] == MAIL_UNREAD) {
+			if ($row["was_read"] == $_SESSION['MAIL_UNREAD']) {
 				echo(" style=\"font-weight: bolder;\"");
 			}
 			else {
@@ -1127,7 +1135,7 @@ Masked out for better security.  See prior DevNote.
 		echo("</form>\n");
 		// If we have less then $minlines mails, we fill the rest with line-breaks
 
-		if ($this->config["mailview"] != FRAME_VIEW && $count < $this->config["mails_per_page"]) {
+		if (($this->config["mailview"] != $_SESSION['FRAME_VIEW']) && ($count < $this->config["mails_per_page"])) {
 			echo(str_repeat("<br>", $this->config["mails_per_page"] - $count));
 		}	
 	}
@@ -1152,7 +1160,7 @@ Masked out for better security.  See prior DevNote.
 	}
 	
 	function show_folder_content() {
-		if ($this->config["mailview"] == FRAME_VIEW) {
+		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			$height = $this->config["mails_per_page"];
 			echo("<iframe name=\"maillist\" src=\"$GLOBALS[PHP_SELF]?action=list\" width=\"100%\" style=\"height: ".$height."em;\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\"></iframe>");
 		}
@@ -1202,11 +1210,11 @@ Masked out for better security.  See prior DevNote.
 		
 
 		if ($this->cur_message_id == 0 || $this->cur_mailer == 0) {
-			$content = "\r\n\r\n  ======== ".$_SESSION["strings"]["l_NoMsgSelected"]." ========";
+			$content = "\r\n\r\n  ======== ".$_SESSION['strings']['l_NoMsgSelected']." ========";
 			if ($_SESSION['action'] == "printmail" || $_SESSION['action'] == "showmail" || $_SESSION['action'] == "getattachment" || $_SESSION['action'] == "mail_cont") {
 				$content = nl2br($content);
 			}
-			if ($this->config["mailview"] == FRAME_VIEW) {
+			if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 				return $content;
 			}
 			
@@ -1235,11 +1243,11 @@ Masked out for better security.  See prior DevNote.
 		}
 
 		if (empty($content)) {
-			$get_html = $this->config["mailview"] == FRAME_VIEW && $_SESSION['action'] == "mail_cont";
+			$get_html = (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && ($_SESSION['action'] == "mail_cont"));
 			$content = $mailer->get_text_body($get_html);
 		}
 
-		if ($this->config["mailview"] == FRAME_VIEW && $_SESSION['action'] == "mail_cont" || $_SESSION['action'] == "notification") {
+		if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && (($_SESSION['action'] == "mail_cont") || ($_SESSION['action'] == "notification"))) {
 			// We return the content, so that show_mail_frame can handle it correctly
 			// This is needed if $content is a HTML mail
 			return $content;
@@ -1349,7 +1357,7 @@ Masked out for better security.  See prior DevNote.
 		$query = "SELECT id FROM mails WHERE user_id='$this->userid' ORDER BY $this->order";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			exit;	
 		}
 
@@ -1423,31 +1431,31 @@ Masked out for better security.  See prior DevNote.
 		// Display the headers
 		echo("<div class=\"header\">");
 		echo("<table cellspacing=\"0\">\n");
-		echo("<tr><td width=\"15%\"><b>".$_SESSION["strings"]["l_From"].":</b></td><td>".htmlspecialchars(stripslashes($mailer->headers->get("From")))."</td></tr>");
-		echo("<tr><td><b>".$_SESSION["strings"]["l_To"].":</b></td><td>".htmlspecialchars(stripslashes($mailer->headers->get("To")))."</td></tr>");
+		echo("<tr><td width=\"15%\"><b>".$_SESSION['strings']['l_From'].":</b></td><td>".htmlspecialchars(stripslashes($mailer->headers->get("From")))."</td></tr>");
+		echo("<tr><td><b>".$_SESSION['strings']['l_To'].":</b></td><td>".htmlspecialchars(stripslashes($mailer->headers->get("To")))."</td></tr>");
 		$cc = $mailer->cc();
 		if (!empty($cc)) {
 			echo("<tr><td><b>Cc:</b></td>".htmlspecialchars($mailer->cc())."</td></tr>");
 		}
-		echo("<tr><td><b>".$_SESSION["strings"]["l_Date"]."</b></td><td>".$mailer->headers->get("date")."</td></tr>");
+		echo("<tr><td><b>".$_SESSION['strings']['l_Date']."</b></td><td>".$mailer->headers->get("date")."</td></tr>");
 		$subject = $mailer->charset_decode(stripslashes($mailer->subject()));
 		//$subject = $mailer->headers->get_decoded("Subject");
-		echo("<tr><td><b>".$_SESSION["strings"]["l_Subject"].":</b></td><td>".htmlspecialchars($subject)."</td></tr>");
+		echo("<tr><td><b>".$_SESSION['strings']['l_Subject'].":</b></td><td>".htmlspecialchars($subject)."</td></tr>");
 		$priority = $mailer->headers->get("X-Priority");
 		$priority = $priority[0];		
-		if (!empty($priority) && $priority != NORMAL_PRIORITY) {
-			echo("<tr><td><b>".$_SESSION["strings"]["l_Priority"].":</b></td><td>");
-			if ($priority == HIGHEST_PRIORITY) {
-				echo("<span style=\"background-color: #ff3333;\">".$_SESSION["strings"]["l_HighestPriority"]."</span>");
+		if (!empty($priority) && $priority != $_SESSION['NORMAL_PRIORITY']) {
+			echo("<tr><td><b>".$_SESSION['strings']['l_Priority'].":</b></td><td>");
+			if ($priority == $_SESSION['HIGHEST_PRIORITY']) {
+				echo("<span style=\"background-color: #ff3333;\">".$_SESSION['strings']['l_HighestPriority']."</span>");
 			}
-			if ($priority == HIGH_PRIORITY) {
-				echo("<span style=\"background-color: #ff6666;\">".$_SESSION["strings"]["l_HighPriority"]."</span>");
+			if ($priority == $_SESSION['HIGH_PRIORITY']) {
+				echo("<span style=\"background-color: #ff6666;\">".$_SESSION['strings']['l_HighPriority']."</span>");
 			}			
-			else if ($priority == LOW_PRIORITY) {
-				echo("<span style=\"background-color: #9999ff; color: white;\">".$_SESSION["strings"]["l_LowPriority"]."</span>");
+			else if ($priority == $_SESSION['LOW_PRIORITY']) {
+				echo("<span style=\"background-color: #9999ff; color: white;\">".$_SESSION['strings']['l_LowPriority']."</span>");
 			}
-			else if ($priority == LOWEST_PRIORITY) {
-				echo("<span style=\"background-color: #4444ff; color: white;\">".$_SESSION["strings"]["l_LowestPriority"]."</span>");
+			else if ($priority == $_SESSION['LOWEST_PRIORITY']) {
+				echo("<span style=\"background-color: #4444ff; color: white;\">".$_SESSION['strings']['l_LowestPriority']."</span>");
 			}			
 			echo("</td></tr>");
 		}	
@@ -1460,7 +1468,7 @@ Masked out for better security.  See prior DevNote.
 				$name = $mailer->charset_decode($mailer->get_attachment_name($i));			
 				echo("<tr><td><b>");
 				if (!$bShown) {
-					echo($_SESSION["strings"]["l_Attachment"].":");
+					echo($_SESSION['strings']['l_Attachment'].":");
 					$bShown = true;
 				}
 				else {
@@ -1473,7 +1481,7 @@ Masked out for better security.  See prior DevNote.
 		else {
 			// Otherwise we show the links to the attachment
 			if ($mailer->is_mime()) {
-				echo("<tr><td><b>".$_SESSION["strings"]["l_Attachment"].":</b></td><td>");
+				echo("<tr><td><b>".$_SESSION['strings']['l_Attachment'].":</b></td><td>");
 			}
 			if ($show_att_mail) {
 				$this->show_attachments($mailer);
@@ -1507,7 +1515,7 @@ Masked out for better security.  See prior DevNote.
 	
 
 	function set_mail_read($mail_id) {
-		$query = "UPDATE mails SET was_read='".MAIL_READ."' WHERE id='$mail_id' AND user_id='$this->userid' AND was_read='".MAIL_UNREAD."'";
+		$query = "UPDATE mails SET was_read='".$_SESSION['MAIL_READ']."' WHERE id='$mail_id' AND user_id='$this->userid' AND was_read='".$_SESSION['MAIL_UNREAD']."'";
 		$this->db_tool->db_query($query);
 		echo $this->db_tool->db_error();
 	}
@@ -1522,15 +1530,16 @@ Masked out for better security.  See prior DevNote.
 
 		if (!empty($name) && !empty($pwd)) {
 
-			$res = $this->db_tool->db_query("SELECT name, pwd FROM users WHERE STRCMP(name, '$name') = 0");
+			$query = "SELECT name, pwd FROM users WHERE STRCMP(name, '$name') = 0";
+			$res = $this->db_tool->db_query($query);
 			if ($res === false) {
-				$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return;
 			}
 			if ($this->db_tool->affected_rows() == 0) {
 				unset($name);
 				unset($pwd);
-				$this->show_in_window("login", $_SESSION["strings"]["l_Login"], $_SESSION["strings"]["l_LoginFail"]);
+				$this->show_in_window("login", $_SESSION['strings']['l_Login'], $_SESSION['strings']['l_LoginFail']);
 			}
 
 			$row = $this->db_tool->fetch_array($res)
@@ -1539,7 +1548,7 @@ Masked out for better security.  See prior DevNote.
 			if ($row[pwd] != $pwd) {
 				unset($name);
 				unset($pwd);
-				$this->show_in_window("login", $_SESSION["strings"]["l_Login"], $_SESSION["strings"]["l_LoginFail"]);
+				$this->show_in_window("login", $_SESSION['strings']['l_Login'], $_SESSION['strings']['l_LoginFail']);
 			}
 			else {
 				return 1;
@@ -1555,19 +1564,19 @@ Masked out for better security.  See prior DevNote.
 		if (!isset($name) && !isset($pwd) && !isset($pwd2)) {
 			// Seems like new user is called for the first time without any info
 			// Just show the form
-			$this->show_in_window("newuser", $_SESSION["strings"]["l_NewUser"]);
+			$this->show_in_window("newuser", $_SESSION['strings']['l_NewUser']);
 			exit;
 		}
 
 		// Check if the password and the password confirmation are tha same
 		if ($pwd != $pwd2) {
-			$this->show_in_window("newuser", $_SESSION["strings"]["l_PwdMismatch1"], $_SESSION["strings"]["l_PwdMismatch2"]);
+			$this->show_in_window("newuser", $_SESSION['strings']['l_PwdMismatch1'], $_SESSION['strings']['l_PwdMismatch2']);
 			return;
 		}
 
 		// Don't allow empty passwords
 		if (empty($pwd)) {
-			$this->show_in_window("newuser", $_SESSION["strings"]["l_EmptyPwd1"], $_SESSION["strings"]["l_EmptyPwd1"]);
+			$this->show_in_window("newuser", $_SESSION['strings']['l_EmptyPwd1'], $_SESSION['strings']['l_EmptyPwd1']);
 			return 0;
 		}
 
@@ -1578,11 +1587,11 @@ Masked out for better security.  See prior DevNote.
 		if ($res === false) {
 			$error = mysql_error();
 			if (ereg("^Duplicate entry", $error)) {
-				$this->show_in_window("newuser", $_SESSION["strings"]["l_UserExists1"], $_SESSION["strings"]["l_UserExists2"]." ".$name);
+				$this->show_in_window("newuser", $_SESSION['strings']['l_UserExists1'], $_SESSION['strings']['l_UserExists2']." ".$name);
 				return 0;
 			}
 			else {
-				$this->report_error($error, $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($error, $_SESSION['strings']['l_DBError'], $query);
 			}
 		}
 		$this->userid = $this->db_tool->insert_id();
@@ -1612,19 +1621,19 @@ Masked out for better security.  See prior DevNote.
 		$query = "INSERT INTO confirmations (user_id, confirm_code) VALUES ('$this->userid', '$confirm_code')";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($_SESSION["strings"]["l_ConfFail"]."<br><br>".$this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($_SESSION['strings']['l_ConfFail']."<br><br>".$this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 
 		$mailer = new mailer($this->userid);
 		$mailer->to($email);
-		$mailer->subject($_SESSION["strings"]["l_ConfSubject"]);
+		$mailer->subject($_SESSION['strings']['l_ConfSubject']);
 		$mailer->from("webmaster@".getenv("SERVER_NAME"));		
-		$mail_text = $_SESSION["strings"]["l_ConfMail"]." $server\r\n\r\n".$_SESSION["strings"]["l_ConfMail2"]."\r\n$href\r\n\r\n".$_SESSION["strings"]["l_ConfMail3"];
+		$mail_text = $_SESSION['strings']['l_ConfMail']." $server\r\n\r\n".$_SESSION['strings']['l_ConfMail2']."\r\n$href\r\n\r\n".$_SESSION['strings']['l_ConfMail3'];
 		$mailer->body = $mail_text;
 		
 		if (!$mailer->send()) {
-			$this->report_error($_SESSION["strings"]["l_ConfMailFail"], $_SESSION["strings"]["l_MailFail"]);
+			$this->report_error($_SESSION['strings']['l_ConfMailFail'], $_SESSION['strings']['l_MailFail']);
 			return;
 		}
 	}
@@ -1645,7 +1654,7 @@ Masked out for better security.  See prior DevNote.
 			}
 
 			if ($ret === false) {
-				$this->report_error($_SESSION["strings"]["l_AccActivation2"], $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($_SESSION['strings']['l_AccActivation2'], $_SESSION['strings']['l_DBError'], $query);
 				exit;
 			}			
 		}
@@ -1659,7 +1668,7 @@ Masked out for better security.  See prior DevNote.
 
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($_SESSION["strings"]["l_ActStatus"], $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($_SESSION['strings']['l_ActStatus'], $_SESSION['strings']['l_DBError'], $query);
 			exit;
 		}
 		$row = $this->db_tool->fetch_array($res);
@@ -1668,8 +1677,8 @@ Masked out for better security.  See prior DevNote.
 		
 	}
 
-	function messagebox($msgtext, $msgtitle = "", $msghead = "", $msgstatus = "") {
-		$this->show_in_window("report", $msgtitle, $msgstatus, $msgtext, $msghead);
+	function messagebox($msgtext, $msgtitle = "", $msghead = "", $msgstatus = "", $msgdata = "") {
+		$this->show_in_window("report", $msgtitle, $msgstatus, $msgtext, $msghead, $msgdata);
 	}
 
 	function store_mail($backup = false) {
@@ -1684,15 +1693,15 @@ Masked out for better security.  See prior DevNote.
 		$query = "SELECT fromname, replyto FROM accounts WHERE id = '$replyaccount' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_AccInfoFail"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_AccInfoFail']);
 			exit;
 		}
 		$row = $this->db_tool->fetch_array($res);
 
-		if ($submit == $_SESSION["strings"]["l_Send"]) {
+		if ($submit == $_SESSION['strings']['l_Send']) {
 			$folder = "outbox";
 		}
-		else if ($submit == $_SESSION["strings"]["l_Store"]) {
+		else if ($submit == $_SESSION['strings']['l_Store']) {
 //			dbg($submit);
 			$folder = "drafts";
 		}
@@ -1712,7 +1721,7 @@ Masked out for better security.  See prior DevNote.
 			$mailer->headers->put("Disposition-Notification-To",  $reply);
 		}
 		
-		if (isset($priority) && $priority != NORMAL_PRIORITY) {
+		if (isset($priority) && $priority != $_SESSION['NORMAL_PRIORITY']) {
 			$mailer->headers->put("X-Priority", $priority);
 		}
 		
@@ -1735,27 +1744,27 @@ Masked out for better security.  See prior DevNote.
 			}						
 			$this->cur_mailer = $mailer;
 
-			$this->show_in_window("choose", "$GLOBALS[field]: ".$_SESSION["strings"]["l_ChooseRec"]);			
+			$this->show_in_window("choose", "$GLOBALS[field]: ".$_SESSION['strings']['l_ChooseRec']);			
 			exit;
 		}
 		else {
 			// Does the user want to send it directly?
-			if ($submit == $_SESSION["strings"]["l_Send"] && $this->config["send_direct"] == 1) {
+			if ($submit == $_SESSION['strings']['l_Send'] && $this->config["send_direct"] == 1) {
 				if ($mailer->send()) {
 					// The mail could be sent. Store it in the sent folder
 					$folder = "sent";
 				}
-				else if ($submit == $_SESSION["strings"]["l_Send"]) {
+				else if ($submit == $_SESSION['strings']['l_Send']) {
 					// The mail could not be sent, keep it in the outbox folder
 					$folder = "outbox";
 				}
 				
 			}
 			if ($mailer->store($folder)) {
-				return $_SESSION["strings"]["l_FolderMove"].": ".$this->folders[$folder][name];
+				return $_SESSION['strings']['l_FolderMove'].": ".$this->folders[$folder][name];
 			}
 			else {
-				return $_SESSION["strings"]["l_FolderMoveFail"].": ".$this->folders[$folder][name];
+				return $_SESSION['strings']['l_FolderMoveFail'].": ".$this->folders[$folder][name];
 			}
 		}
 	}
@@ -1953,8 +1962,8 @@ Masked out for better security.  See prior DevNote.
 			}
 			
 			echo("\" title=\"$att_name\"");
-			// Open attachments in a new window in IN_VIEW AND POPUP_VIEW
-			if ($this->config["mailview"] != SEP_VIEW) {
+			// Open attachments in a new window in $_SESSION['IN_VIEW'] AND $_SESSION['POPUP_VIEW']
+			if ($this->config["mailview"] != $_SESSION['SEP_VIEW']) {
 				echo(" target=\"_blank\"");
 			}
 			echo(" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"vertical-align: top; margin: 0, 0, 0, 0;\"></a>\n");
@@ -1974,7 +1983,7 @@ Masked out for better security.  See prior DevNote.
 			$this->cur_mailer->load($this->cur_message_id);
 		}
 
-		echo("<b>".$_SESSION["strings"]["l_From"].":</b> ".htmlspecialchars(stripslashes($this->cur_mailer->from()))."&nbsp;<b>".$_SESSION["strings"]["l_To"].":</b> ".htmlspecialchars(stripslashes($this->cur_mailer->to())));
+		echo("<b>".$_SESSION['strings']['l_From'].":</b> ".htmlspecialchars(stripslashes($this->cur_mailer->from()))."&nbsp;<b>".$_SESSION['strings']['l_To'].":</b> ".htmlspecialchars(stripslashes($this->cur_mailer->to())));
 
 		$cc = $this->cur_mailer->cc();
 		if (!empty($cc)) {
@@ -1982,7 +1991,7 @@ Masked out for better security.  See prior DevNote.
 		}
 		$subject = $this->cur_mailer->charset_decode(stripslashes($this->cur_mailer->subject()));
 		//$subject = $this->cur_mailer->headers->get_decoded("Subject");
-		echo("<br><b>".$_SESSION["strings"]["l_Subject"].":</b> ".htmlspecialchars($subject));
+		echo("<br><b>".$_SESSION['strings']['l_Subject'].":</b> ".htmlspecialchars($subject));
 	}
 	
 	function get_attachment() {
@@ -2006,7 +2015,7 @@ Masked out for better security.  See prior DevNote.
 		$data = $mailer->get_attachment_data($att_path);
 
 		if ($data === false) {
-			$this->report_error($_SESSION["strings"]["l_AttFail"], $_SESSION["strings"]["l_Error"]);
+			$this->report_error($_SESSION['strings']['l_AttFail'], $_SESSION['strings']['l_Error']);
 			exit;
 		}
 		
@@ -2113,7 +2122,7 @@ Masked out for better security.  See prior DevNote.
 	function delete_mail() {
 		global $ack;
 		if ($this->cur_message_id == 0) {
-			$this->show_form("main", $_SESSION["strings"]["l_Select"]);
+			$this->show_form("main", $_SESSION['strings']['l_Select']);
 			return 0;
 		}
 
@@ -2125,7 +2134,7 @@ Masked out for better security.  See prior DevNote.
 			// If $ack is not set, we pop-up the confirmation window
 			if (!isset($ack) || empty($ack) ) {
 				$this->del = $this->cur_message_id;
-				$this->show_ack($_SESSION["strings"]["l_DelMail"], $_SESSION["strings"]["l_DelMailQuest"]);
+				$this->show_ack($_SESSION['strings']['l_DelMail'], $_SESSION['strings']['l_DelMailQuest']);
 				return;
 			}
 			else if($ack == "No") {
@@ -2138,10 +2147,10 @@ Masked out for better security.  See prior DevNote.
 
 				if ($this->config["server_del"] == 1) {
 					if ($this->trash_mail($this->cur_message_id)) {
-						$del_msg = $_SESSION["strings"]["l_ServerDel"];
+						$del_msg = $_SESSION['strings']['l_ServerDel'];
 					}
 					else {
-						$del_msg = $_SESSION["strings"]["l_ServerDelFail"];
+						$del_msg = $_SESSION['strings']['l_ServerDelFail'];
 					}
 				}
 				$this->del = "";
@@ -2149,10 +2158,10 @@ Masked out for better security.  See prior DevNote.
 		}
 		else {
 			if ($this->move_to_bin($this->cur_message_id)) {
-				$del_msg = $_SESSION["strings"]["l_FolderMove"].": ".$_SESSION["strings"]["l_RecycleBin"];
+				$del_msg = $_SESSION['strings']['l_FolderMove'].": ".$_SESSION['strings']['l_RecycleBin'];
 			}
 			else {
-				$del_msg = $_SESSION["strings"]["l_FolderMoveFail"].": ".$_SESSION["strings"]["l_RecycleBin"];
+				$del_msg = $_SESSION['strings']['l_FolderMoveFail'].": ".$_SESSION['strings']['l_RecycleBin'];
 			}
 			
 			// The selected mail is not delete. Cleare the "reference" to it
@@ -2160,7 +2169,7 @@ Masked out for better security.  See prior DevNote.
 			$this->cur_mailer = 0;
 		}
 
-		if ($this->config["mailview"] == FRAME_VIEW) {
+		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			$this->show_frame_list();
 		}
 		else {
@@ -2186,13 +2195,13 @@ Masked out for better security.  See prior DevNote.
 		if ($this->folder == "bin") {
 			// If $ack is not set, we pop-up the confirmation window
 			if (!isset($ack) || empty($ack) ) {
-				$this->show_ack($_SESSION["strings"]["l_DelMails"], $_SESSION["strings"]["l_DelMailsQuest"]);
+				$this->show_ack($_SESSION['strings']['l_DelMails'], $_SESSION['strings']['l_DelMailsQuest']);
 				return;
 			}
 			else if($ack == "No") {
 				$this->del = "";
 				// The user said no :-(
-				$del_msg = $_SESSION["strings"]["l_DelCancel"];
+				$del_msg = $_SESSION['strings']['l_DelCancel'];
 			}
 			else {
 				$del = $this->del;
@@ -2200,10 +2209,10 @@ Masked out for better security.  See prior DevNote.
 					$all_succ = $this->trash_mail($del);
 
 					if ($all_succ) {
-						$del_msg = $_SESSION["strings"]["l_AllDel"];
+						$del_msg = $_SESSION['strings']['l_AllDel'];
 					}
 					else {
-						$del_msg = $_SESSION["strings"]["l_AllDelFail"];
+						$del_msg = $_SESSION['strings']['l_AllDelFail'];
 					}
 				}
 				$this->del = "";
@@ -2213,15 +2222,15 @@ Masked out for better security.  See prior DevNote.
 			$all_succ = $this->move_to_bin($this->del);
 			
 			if ($all_succ) {
-				$del_msg = $_SESSION["strings"]["l_FolderMove"].": ".$_SESSION["strings"]["l_RecycleBin"];
+				$del_msg = $_SESSION['strings']['l_FolderMove'].": ".$_SESSION['strings']['l_RecycleBin'];
 			}
 			else {
-				$del_msg = $_SESSION["strings"]["l_FolderMoveFail"].": ".$_SESSION["strings"]["l_RecycleBin"];
+				$del_msg = $_SESSION['strings']['l_FolderMoveFail'].": ".$_SESSION['strings']['l_RecycleBin'];
 			}
 
 		}
 
-		if ($this->config["mailview"] == FRAME_VIEW) {
+		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			$this->show_frame_list();
 		}
 		else {
@@ -2243,7 +2252,7 @@ Masked out for better security.  See prior DevNote.
 		}
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 		}
 		
 		while ($row = $this->db_tool->fetch_array($res)) {
@@ -2257,7 +2266,7 @@ Masked out for better security.  See prior DevNote.
 		$query = "SELECT email FROM addresses WHERE user_id='$this->userid' AND blocked=1";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);			
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 		}
 		
 		// Build the WHERE part for th query
@@ -2270,10 +2279,9 @@ Masked out for better security.  See prior DevNote.
 		}
 		
 		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='$this->folder' AND ".$where;
-
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);			
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 		}
 
 		// Now delete these mails
@@ -2289,7 +2297,7 @@ Masked out for better security.  See prior DevNote.
 		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='$this->folder'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_AllDelFail"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_AllDelFail']);
 			exit;
 		}
 		
@@ -2404,10 +2412,9 @@ Masked out for better security.  See prior DevNote.
 		// Remove the last comma
 		$query = substr($query, 0, strlen($query) - 2);		
 		$query .= ") AND user_id = '$this->userid' AND folder='bin'";
-
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return false;
 		}
 		
@@ -2422,11 +2429,11 @@ Masked out for better security.  See prior DevNote.
 		$query = "SELECT id, email, name FROM addresses WHERE user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 		echo('<table width="100%" align="center" border="1">');
-		echo('<tr style="text-align: left;"><th>&nbsp;</th><th>'.$_SESSION["strings"]["l_Name"].'</th><th>E-Mail</th></tr>');
+		echo('<tr style="text-align: left;"><th>&nbsp;</th><th>'.$_SESSION['strings']['l_Name'].'</th><th>E-Mail</th></tr>');
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr>\n<td>\n");
 			echo('<input type="checkbox" name="rec[]" value="'.$row[id].'"></td>');
@@ -2447,7 +2454,7 @@ Masked out for better security.  See prior DevNote.
 			return;
 		}
 		echo('<table width="100%" align="center" border="1">');
-		echo('<tr style="text-align: left;"><th>&nbsp;</th><th>'.$_SESSION["strings"]["l_To"].'</th><th>'.$_SESSION["strings"]["l_From"].'</th><th>'.$_SESSION["strings"]["l_Subject"].'</th></tr>');
+		echo('<tr style="text-align: left;"><th>&nbsp;</th><th>'.$_SESSION['strings']['l_To'].'</th><th>'.$_SESSION['strings']['l_From'].'</th><th>'.$_SESSION['strings']['l_Subject'].'</th></tr>');
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr>\n<td>\n");
 			echo('<input type="checkbox" name="del[]" value="'.$row[id].'"></td>');
@@ -2488,7 +2495,7 @@ Masked out for better security.  See prior DevNote.
 			Header("Location: $GLOBALS[PHP_SELF]?action=checkrep");
 			exit;
 		}
-		if ($this->config["mailview"] == FRAME_VIEW) {
+		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			$this->show_frame_list();			
 		}
 		else {
@@ -2504,11 +2511,11 @@ Masked out for better security.  See prior DevNote.
 <META HTTP-EQUIV="Refresh" content="<?php echo($interval); ?>;URL=<?php echo($GLOBALS[PHP_SELF]."?action=sendandreceive&what=getall&show=no");?>">
 <html>
 <head>
-<title><?php echo($_SESSION["strings"]["l_MinWndTitle"]);?></title>
+<title><?php echo($_SESSION['strings']['l_MinWndTitle']);?></title>
 <body>
 <?php
-	echo($_SESSION["strings"]["l_MinWnd"]."<br><br>");
-	echo($_SESSION["strings"]["l_MinWndInfo"].": ".$this->config["check_int"]." ".$_SESSION["strings"]["l_Minutes"]);
+	echo($_SESSION['strings']['l_MinWnd']."<br><br>");
+	echo($_SESSION['strings']['l_MinWndInfo'].": ".$this->config["check_int"]." ".$_SESSION['strings']['l_Minutes']);
 ?>
 </body>
 </html>
@@ -2541,7 +2548,7 @@ Masked out for better security.  See prior DevNote.
 
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return;
 		}
 
@@ -2549,7 +2556,7 @@ Masked out for better security.  See prior DevNote.
 			$pop3 = new pop3("$row[popserver]");
 			$count = $pop3->pop_login($row["poplogin"], $row["poppwd"]);
 			if ($count < 0 || $count === false) {
-				$error_head = "POP3 ".$_SESSION["strings"]["l_Error"]."<br>".$_SESSION["strings"]["l_Account"]." $row[name]";
+				$error_head = "POP3 ".$_SESSION['strings']['l_Error']."<br>".$_SESSION['strings']['l_Account']." $row[name]";
 				$error_msg = $pop3->ERROR;
 				$this->report_error($error_msg, $error_head);
 				continue;
@@ -2615,7 +2622,7 @@ Masked out for better security.  See prior DevNote.
 								
 				// Try to store the mail in the DB
 				if (($insert_id = $mailer->store($store_folder, $mail, $server_uidls[$num])) == 0) {
-					$this->report_error($mailer->db_tool->db_error(), $_SESSION["strings"]["l_MailStoreFail"]);
+					$this->report_error($mailer->db_tool->db_error(), $_SESSION['strings']['l_MailStoreFail']);
 					exit;
 				}
 
@@ -2680,19 +2687,19 @@ Masked out for better security.  See prior DevNote.
 		
 		// If $ack is not set, we pop-up the confirmation window
 		if (!isset($ack) || empty($ack) ) {
-			$this->show_ack($_SESSION["strings"]["l_DelUser"], $_SESSION["strings"]["l_DelUserQuest"]);
+			$this->show_ack($_SESSION['strings']['l_DelUser'], $_SESSION['strings']['l_DelUserQuest']);
 			return;
 		}
 		else if($ack == "No") {
 			// The user said no :-(
-			$msg = $_SESSION["strings"]["l_DelCancel"];
+			$msg = $_SESSION['strings']['l_DelCancel'];
 		}
 		else {
 			// We remove the user...
 			$query = "DELETE FROM mails WHERE user_id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
 			if ($res === false) {
-				$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
 			
@@ -2700,7 +2707,7 @@ Masked out for better security.  See prior DevNote.
 			$query = "DELETE FROM conf WHERE user_id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
 			if ($res === false) {
-				$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
 			
@@ -2708,7 +2715,7 @@ Masked out for better security.  See prior DevNote.
 			$query = "DELETE FROM accounts WHERE user_id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
 			if ($res === false) {
-				$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
 			
@@ -2716,19 +2723,19 @@ Masked out for better security.  See prior DevNote.
 			$query = "DELETE FROM addresses WHERE user_id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
 			if ($res === false) {
-				$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
 					
 			$query = "DELETE FROM users WHERE id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
 			if ($res === false) {
-				$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
 			
 			session_destroy();
-			$this->messagebox($_SESSION["strings"]["l_UserDeleted2"], $_SESSION["strings"]["l_UserDeleted1"], $_SESSION["strings"]["l_UserDeleted1"]);
+			$this->messagebox($_SESSION['strings']['l_UserDeleted2'], $_SESSION['strings']['l_UserDeleted1'], $_SESSION['strings']['l_UserDeleted1']);
 			exit;
 		}	
 	}
@@ -2736,7 +2743,7 @@ Masked out for better security.  See prior DevNote.
 
 	function show_config() {
 		
-		echo($_SESSION["strings"]["l_Language"].": <select name=\"language\">");
+		echo($_SESSION['strings']['l_Language'].": <select name=\"language\">");
 		$dirhandle = opendir("./lang");
 		while ($filename = readdir($dirhandle)) {
 			if (preg_match("/^lang\.(.*)\.inc\.php$/", $filename, $match)) {
@@ -2750,108 +2757,108 @@ Masked out for better security.  See prior DevNote.
 		closedir($dirhandle);
 		
 		echo("</select>\n<br><br><hr>");
-		echo("<center><input type=\"submit\" name=\"changepwd\" value=\"".$_SESSION["strings"]["l_ChangePwd"]."\">&nbsp;");
-		echo("<input type=\"submit\" name=\"deluser\" value=\"".$_SESSION["strings"]["l_DelUser"]."\"></center>");
+		echo("<center><input type=\"submit\" name=\"changepwd\" value=\"".$_SESSION['strings']['l_ChangePwd']."\">&nbsp;");
+		echo("<input type=\"submit\" name=\"deluser\" value=\"".$_SESSION['strings']['l_DelUser']."\"></center>");
 		echo("<br><fieldset>");
 	
 			echo('<input type="checkbox" name="keep" value="1"');
 			if ($this->config["keep"] == 1) {
 				echo(' checked');
 			}
-			echo("> ".$_SESSION["strings"]["l_Keep"]."<br>");
+			echo("> ".$_SESSION['strings']['l_Keep']."<br>");
 			
 			echo('<input type="checkbox" name="server_del" value="1"');
 			if ($this->config["server_del"]) {
 				echo(' checked');
 			}		
-			echo("> ".$_SESSION["strings"]["l_RemoveDel"]."<br>");
+			echo("> ".$_SESSION['strings']['l_RemoveDel']."<br>");
 			
 			echo('<input type="checkbox" name="auto_check" value="1"');
 			if ($this->config["auto_check"]) {
 				echo(' checked');
 			}			
-			echo("> ".$_SESSION["strings"]["l_CheckMails"]."<br>");
+			echo("> ".$_SESSION['strings']['l_CheckMails']."<br>");
 			
 			echo('<input type="checkbox" name="send_direct" value="1"');		
 			if ($this->config[send_direct]) {
 				echo(' checked');
 			}			
-			echo("> ".$_SESSION["strings"]["l_SendDirect"]."<br>");		
+			echo("> ".$_SESSION['strings']['l_SendDirect']."<br>");		
 	
 			echo('<input type="checkbox" name="add_address" value="1"');		
 			if ($this->config[add_address]) {
 				echo(' checked');
 			}			
-			echo("> ".$_SESSION["strings"]["l_AddAddress"]."<br><hr>");
-			echo($_SESSION["strings"]["l_CheckRep"].' <input name="check_int" value="'.$this->config["check_int"].'" size="2"> '.$_SESSION["strings"]["l_Minutes"].'<br><br>');
+			echo("> ".$_SESSION['strings']['l_AddAddress']."<br><hr>");
+			echo($_SESSION['strings']['l_CheckRep'].' <input name="check_int" value="'.$this->config["check_int"].'" size="2"> '.$_SESSION['strings']['l_Minutes'].'<br><br>');
 			
-			echo("</fieldset>\n<br><fieldset><legend><b>".$_SESSION["strings"]["l_View"]."</b></legend>\n");
+			echo("</fieldset>\n<br><fieldset><legend><b>".$_SESSION['strings']['l_View']."</b></legend>\n");
 			echo('<table cellspacing="2" cellpadding="2" width="100%">');	
 	
-			echo("\n<tr><td style=\"width: 35%;\"><input type=\"radio\" name=\"view\" value=\"".FULL_VIEW."\"");
-			if ($this->config["view"] == FULL_VIEW) {
+			echo("\n<tr><td style=\"width: 35%;\"><input type=\"radio\" name=\"view\" value=\"".$_SESSION['FULL_VIEW']."\"");
+			if ($this->config["view"] == $_SESSION['FULL_VIEW']) {
 				echo(" checked");
 			}
-			echo("> ".$_SESSION["strings"]["l_FullView"]."</td><td style=\"width: 65%;\">\n");
-			echo("\n<input type=\"radio\" name=\"mailview\" value=\"".IN_VIEW."\"");
-			if ($this->config["mailview"] == IN_VIEW) {
+			echo("> ".$_SESSION['strings']['l_FullView']."</td><td style=\"width: 65%;\">\n");
+			echo("\n<input type=\"radio\" name=\"mailview\" value=\"".$_SESSION['IN_VIEW']."\"");
+			if ($this->config["mailview"] == $_SESSION['IN_VIEW']) {
 				echo(" checked");
 			}		
-			echo("> ".$_SESSION["strings"]["l_InView"]."</td></tr><tr>\n");		
+			echo("> ".$_SESSION['strings']['l_InView']."</td></tr><tr>\n");		
 	
-			echo("<td><input type=\"radio\" name=\"view\" value=\"".MID_VIEW."\"");
-			if ($this->config["view"] == MID_VIEW) {
+			echo("<td><input type=\"radio\" name=\"view\" value=\"".$_SESSION['MID_VIEW']."\"");
+			if ($this->config["view"] == $_SESSION['MID_VIEW']) {
 				echo(" checked");
 			}		
-			echo("> ".$_SESSION["strings"]["l_MidView"]."</td><td>\n");
+			echo("> ".$_SESSION['strings']['l_MidView']."</td><td>\n");
 			
-			echo("\n<input type=\"radio\" name=\"mailview\" value=\"".SEP_VIEW."\"");
-			if ($this->config["mailview"] == SEP_VIEW) {
+			echo("\n<input type=\"radio\" name=\"mailview\" value=\"".$_SESSION['SEP_VIEW']."\"");
+			if ($this->config["mailview"] == $_SESSION['SEP_VIEW']) {
 				echo(" checked");
 			}		
-			echo("> ".$_SESSION["strings"]["l_SepView"]."</td></tr><tr>\n");
+			echo("> ".$_SESSION['strings']['l_SepView']."</td></tr><tr>\n");
 			
-			echo("<td><input type=\"radio\" name=\"view\" value=\"".MIN_VIEW."\"");
-			if ($this->config["view"] == MIN_VIEW) {
+			echo("<td><input type=\"radio\" name=\"view\" value=\"".$_SESSION['MIN_VIEW']."\"");
+			if ($this->config["view"] == $_SESSION['MIN_VIEW']) {
 				echo(" checked");
 			}		
-			echo("> ".$_SESSION["strings"]["l_MinView"]."</td>\n");
-			echo("<td><input type=\"radio\" name=\"mailview\" value=\"".POPUP_VIEW."\"");
-			if ($this->config["mailview"] == POPUP_VIEW) {
+			echo("> ".$_SESSION['strings']['l_MinView']."</td>\n");
+			echo("<td><input type=\"radio\" name=\"mailview\" value=\"".$_SESSION['POPUP_VIEW']."\"");
+			if ($this->config["mailview"] == $_SESSION['POPUP_VIEW']) {
 				echo(" checked");
 			}		
-			echo("> ".$_SESSION["strings"]["l_PopupView"]."</td></tr>\n");
+			echo("> ".$_SESSION['strings']['l_PopupView']."</td></tr>\n");
 			
 			echo("<tr><td>&nbsp;</td>");
-			echo("<td><input type=\"radio\" name=\"mailview\" value=\"".FRAME_VIEW."\"");
-			if ($this->config["mailview"] == FRAME_VIEW) {
+			echo("<td><input type=\"radio\" name=\"mailview\" value=\"".$_SESSION['FRAME_VIEW']."\"");
+			if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 				echo(" checked");
 			}		
-			echo("> ".$_SESSION["strings"]["l_FrameView"]."</td></tr>");
+			echo("> ".$_SESSION['strings']['l_FrameView']."</td></tr>");
 				
 			echo("</table><br><table width=\"100%\">");
 		
-			echo('<tr><td width="50%">'.$_SESSION["strings"]["l_Show"].' <input name="mails_per_page" value="'.$this->config["mails_per_page"].'" size="2"> '.$_SESSION["strings"]["l_MailsPerPage"].'</td>');
-			echo('<td>'.$_SESSION["strings"]["l_Show"].' <input name="mail_rows" value="'.$this->config["mail_rows"].'" size="2"> '.$_SESSION["strings"]["l_Lines"].'</td>');
+			echo('<tr><td width="50%">'.$_SESSION['strings']['l_Show'].' <input name="mails_per_page" value="'.$this->config["mails_per_page"].'" size="2"> '.$_SESSION['strings']['l_MailsPerPage'].'</td>');
+			echo('<td>'.$_SESSION['strings']['l_Show'].' <input name="mail_rows" value="'.$this->config["mail_rows"].'" size="2"> '.$_SESSION['strings']["l_Lines"].'</td>');
 			echo('</tr><tr>');
-			echo('<td>'.$_SESSION["strings"]["l_Show"].' <input name="subject_size" value="'.$this->config["subject_size"].'" size="2"> '.$_SESSION["strings"]["l_SubjectSize"].'</td>');
-			echo('<td>'.$_SESSION["strings"]["l_Show"].' <input name="address_size" value="'.$this->config["address_size"].'" size="2"> '.$_SESSION["strings"]["l_AddressSize"].'</td>');
+			echo('<td>'.$_SESSION['strings']['l_Show'].' <input name="subject_size" value="'.$this->config["subject_size"].'" size="2"> '.$_SESSION['strings']['l_SubjectSize'].'</td>');
+			echo('<td>'.$_SESSION['strings']['l_Show'].' <input name="address_size" value="'.$this->config["address_size"].'" size="2"> '.$_SESSION['strings']['l_AddressSize'].'</td>');
 			
 			echo('</tr><tr>');
-			echo('<td>'.$_SESSION["strings"]["l_Show"].' <input name="folder_view_width" value="'.$this->config["folder_view_width"].'" size="2"> '.$_SESSION["strings"]["l_FolderViewWidth"].'</td>');
+			echo('<td>'.$_SESSION['strings']['l_Show'].' <input name="folder_view_width" value="'.$this->config["folder_view_width"].'" size="2"> '.$_SESSION['strings']['l_FolderViewWidth'].'</td>');
 			echo('<td>&nbsp;</td>');		
 			
 			echo('</tr></table>');
 		echo("</fieldset><br><fieldset>");
-			echo("<legend><b>".$_SESSION["strings"]["l_Singature"]."</b></legend>");
+			echo("<legend><b>".$_SESSION['strings']['l_Singature']."</b></legend>");
 			echo('<textarea name="signature" cols="50" rows="4">');
-			echo($this->config[signature]);
+			echo($this->config['signature']);
 			echo('</textarea><br><br>');
 			echo('<input type="checkbox" name="app_sig" value="1"');
 			if ($this->config[app_sig]) {
 				echo(' checked');
 			}			
-			echo('> '.$_SESSION["strings"]["l_AppSig"].'<br><br>');
+			echo('> '.$_SESSION['strings']['l_AppSig'].'<br><br>');
 		echo("</fieldset>");
 		
 	}
@@ -2861,7 +2868,7 @@ Masked out for better security.  See prior DevNote.
 		global $subject_size, $check_int, $address_size, $app_sig, $send_direct, $mail_rows;
 		global $mails_per_page, $add_address, $folder_view_width;
 
-		if (isset($conf_submit) && $conf_submit == $_SESSION["strings"]["l_Store"]) {
+		if (isset($conf_submit) && $conf_submit == $_SESSION['strings']['l_Store']) {
 			$query  = "UPDATE conf SET send_direct='$send_direct', keep='$keep', check_int='$check_int', ";
 			$query .= "server_del='$server_del', auto_check='$auto_check', signature='$signature', ";
 			$query .= "app_sig='$app_sig', mails_per_page='$mails_per_page', mail_rows='$mail_rows', ";
@@ -2898,11 +2905,11 @@ Masked out for better security.  See prior DevNote.
 		global $pwd, $pwd2;
 		
 		if (empty($pwd)) {
-			$this->show_in_window("changepwd", $_SESSION["strings"]["l_EmptyPwd1"], $_SESSION["strings"]["l_EmptyPwd2"]);
+			$this->show_in_window("changepwd", $_SESSION['strings']['l_EmptyPwd1'], $_SESSION['strings']['l_EmptyPwd2']);
 			return;
 		}
 		if ($pwd != $pwd2) {
-			$this->show_in_window("changepwd", $_SESSION["strings"]["l_PwdMismatch1"], $_SESSION["strings"]["l_PwdMismatch2"]);
+			$this->show_in_window("changepwd", $_SESSION['strings']['l_PwdMismatch1'], $_SESSION['strings']['l_PwdMismatch2']);
 			return;
 		}
 		
@@ -2910,11 +2917,11 @@ Masked out for better security.  See prior DevNote.
 		$res = $this->db_tool->db_query($query);
 
 		if ($res === false) {
-			$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_DBError"]);
+			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return false;
 		}
 		
-		$this->show_form("main", $_SESSION["strings"]["l_PwdChanged"]);
+		$this->show_form("main", $_SESSION['strings']['l_PwdChanged']);
 	}
 	
 
@@ -2976,10 +2983,10 @@ Masked out for better security.  See prior DevNote.
 			// When the mail could be send, we move the mail to the "sent" folder
 			if ($ret) {
 				$send_counter++;
-				$query = "UPDATE mails SET folder='sent', was_read = ".MAIL_READ." WHERE id='$row[id]' AND user_id='$this->userid'";
+				$query = "UPDATE mails SET folder='sent', was_read = ".$_SESSION['MAIL_READ']." WHERE id='$row[id]' AND user_id='$this->userid'";
 				$update_res = $this->db_tool->db_query($query);
 				if ($update_res === false) {
-					$this->report_error($this->db_tool->db_error(), $_SESSION["strings"]["l_FolderMoveFail"].": ".$_SESSION["strings"]["l_Sent"]);
+					$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_FolderMoveFail'].": ".$_SESSION['strings']['l_Sent']);
 					return;
 				}
 			}
@@ -2989,11 +2996,11 @@ Masked out for better security.  See prior DevNote.
 		//$this->next_timer($t, "fertig");
 		$errors = $count - $send_counter;
 
-		$msg = $_SESSION["strings"]["l_MailSentSucc"].": $send_counter. $errors ".$_SESSION["strings"]["l_Error"];
+		$msg = $_SESSION['strings']['l_MailSentSucc'].": $send_counter. $errors ".$_SESSION['strings']['l_Error'];
 	}
 	
 	function set_version() {
-		$this->version = (defined("POPPER_VERSION") ? POPPER_VERSION : "??.??");
+		$this->version = ($_SESSION['POPPER_VERSION'] ? $_SESSION['POPPER_VERSION'] : "??.??");
 	}
 	
 	function get_version() {

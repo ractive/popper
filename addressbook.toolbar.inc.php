@@ -2,7 +2,7 @@
 		<td colspan="3">
 		<img src="graphics/toolbar_left.gif" alt="|">
 		<?php 
-			if ($this->config["mailview"] != FRAME_VIEW) {
+			if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 				echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=$this->folder\"><img src=\"graphics/home.gif\" alt=\"".$_SESSION["strings"]["l_MainView"]."\" title=\"".$_SESSION["strings"]["l_MainView"]."\" border=\"0\"></a>");
 				echo("<img src=\"graphics/spacing.gif\" alt=\"|\">");
 			}

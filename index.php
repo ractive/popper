@@ -32,6 +32,10 @@ and MySQL [mysql_real_escape_string()] injection attacks.
 	$_SESSION['confirm_code']     = (!isset($_REQUEST['confirm_code']) ? "" : htmlspecialchars($_REQUEST['confirm_code']));
 	$_SESSION['ok'] 		  = (!isset($_REQUEST['ok']) ? "" : strtolower(htmlspecialchars($_REQUEST['ok'])));
 	$_SESSION['what']		  = (!isset($_REQUEST['what']) ? "" : htmlspecialchars($_REQUEST['what']));
+	$_SESSION['order']		  = (!isset($_REQUEST['order']) ? "" : htmlspecialchars($_REQUEST['order']));
+	$_SESSION['name']		  = (!isset($_REQUEST['name']) ? "" : htmlspecialchars($_REQUEST['name']));
+	$_SESSION['pwd']		  = (!isset($_REQUEST['pwd']) ? "" : htmlspecialchars($_REQUEST['pwd']));
+	$_SESSION['set_cookie']		  = (!isset($_REQUEST['set_cookie']) ? "" : htmlspecialchars($_REQUEST['set_cookie']));
 	
 	@set_time_limit(60);
 
@@ -96,20 +100,19 @@ function set_language() {
 }
 
 function process_login() {
-	global $name, $pwd, $set_cookie;
 	
-	if (!isset($name) || !isset($pwd)) {
+	if (!isset($_SESSION['name']) || !isset($_SESSION['pwd'])) {
 		$msg = $_SESSION["strings"]["l_FillInAll"];
 		$_SESSION['popper']->show_in_window("login", $_SESSION["strings"]["l_Login"], $_SESSION["strings"]["l_FillInAll"]);
 		exit_popper();
 	}
 	
-	if (!$_SESSION['popper']->pwd_check($name, $pwd)) {
+	if (!$_SESSION['popper']->pwd_check($_SESSION['name'], $_SESSION['pwd'])) {
 		$_SESSION['popper']->show_in_window("login", $_SESSION["strings"]["l_Login"], $_SESSION["strings"]["l_LoginFail"]);
 		exit_popper();
 	}
 	
-	if (!$_SESSION['popper']->is_activated($name)) {
+	if (!$_SESSION['popper']->is_activated($_SESSION['name'])) {
 		$_SESSION['popper']->messagebox($_SESSION["strings"]["l_AccActivation1"], $_SESSION["strings"]["l_AccActivation2"], $_SESSION["strings"]["l_AccActivation2"], $_SESSION["strings"]["l_Welcome"]);		
 		return;			
 	}
@@ -119,20 +122,20 @@ function process_login() {
 /*DevNote: roytoo
 Setting $_SESSION['logged_in'] = 1 is a security hole since it is easy to guess and gain access 
 to a valid user's accounts.  It is better to set $_SESSION['logged_in'] to a hash composed of 
-the PHPSESSID, users name and password [i.e. md5($_SESSION['PHPSESSID']+$name+$pwd)].  
+the PHPSESSID, users name and password [i.e. md5($_SESSION['PHPSESSID']+$_SESSION['name']+$_SESSION['pwd'])].  
 Even this is not completely secure if an attacker has access to the server's session
 save path and popper is not on an https:// server.
 
 Need to add info about this topic to INSTALL?
 :DevNote*/
 	$_SESSION['logged_in'] = 1;	
-	$_SESSION['popper']->set_user($name);
+	$_SESSION['popper']->set_user($_SESSION['name']);
 	
-	if ($_COOKIE["poppercookie"] && $set_cookie != "on") {
+	if ($_COOKIE["poppercookie"] && ($_SESSION['set_cookie'] != "on")) {
 		cookie_unset();
 	}
 
-	if (isset($set_cookie) && $set_cookie && !$_COOKIE["poppercookie"]) {
+	if (isset($_SESSION['set_cookie']) && $_SESSION['set_cookie'] && !$_COOKIE["poppercookie"]) {
 		cookie_set();
 	}
 	
@@ -179,7 +182,7 @@ Will need to be re-implemented, most likely by dynamically changing the value of
 upon the contents of $_SESSION['last_action'].
 :DevNote*/
 	/*if ($_SESSION['ok'] == "ok") {
-		if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+		if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			$_SESSION['popper']->show_frame_list();
 		}
 		else {
@@ -242,7 +245,7 @@ upon the contents of $_SESSION['last_action'].
 /*DevNote: roytoo
 Functionalize this one.
 :DevNote*/
-		if (isset($_SESSION['old_uri']) && $_SESSION['popper']->config["mailview"] != FRAME_VIEW) {
+		if (isset($_SESSION['old_uri']) && ($_SESSION['popper']->config["mailview"] != $_SESSION['FRAME_VIEW'])) {
 			Header("Location: ".$_SESSION['old_uri']);
 		}
 		else {
@@ -266,7 +269,7 @@ Functionalize this one.
 Functionalize this one.
 :DevNote*/
 		$msg = $_SESSION['popper']->store_mail();
-		if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+		if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			$_SESSION['popper']->show_form("main");
 		}
 		else {
@@ -296,7 +299,7 @@ Functionalize this one.
 Functionalize this one.
 :DevNote*/
 		if (!isset($_SESSION['what'])) {
-			if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+			if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 				$_SESSION['popper']->show_small_window("sendreceive", $_SESSION["strings"]["l_SendReceive"]);
 			}
 			else {
@@ -350,7 +353,7 @@ Functionalize this one.
 		}
 		else if (isset($GLOBALS["add_addr_x"])) {
 			$_SESSION['popper']->add_sel_addr();
-			if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+			if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 				$_SESSION['popper']->show_frame_list();
 			}
 			else {
@@ -376,10 +379,10 @@ Functionalize this one.
 Functionalize this one.
 :DevNote*/
 		$_SESSION['popper']->send_notification();
-		if ($_SESSION['popper']->config["mailview"] == IN_VIEW) {
+		if ($_SESSION['popper']->config["mailview"] == $_SESSION['IN_VIEW']) {
 			Header("Location: ".$GLOBALS['PHP_SELF']."?action=showfolder&folder=".$_SESSION['popper']->folder."&mail_id=".$_SESSION['popper']->cur_message_id);
 		}
-		else if ($_SESSION['popper']->config["mailview"] == FRAME_VIEW) {
+		else if ($_SESSION['popper']->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			$_SESSION['popper']->show_mail_frame();
 		}
 		else {
@@ -407,7 +410,7 @@ Functionalize this one.
 function cookie_set() {
 	
 	// Set the cookies if the user wants that and if it's not set yet.
-	setcookie("poppercookie['user']", $name, time() + 365 * 24 * 3600);
+	setcookie("poppercookie['user']", $_SESSION['name'], time() + 365 * 24 * 3600);
 	setcookie("poppercookie['language']", $_SESSION['popper']->config["language"], time() + 365 * 24 * 3600);
 	$_SESSION["poppercookie"] = $_COOKIE["poppercookie"];
 }

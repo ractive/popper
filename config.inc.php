@@ -12,27 +12,27 @@ http://www.gnu.org/copyleft/gpl.html
 ==========================================================================*/
 	
 	// Application wide constants
-	define("POPPER_VERSION", "1.5-a1");
+	$_SESSION['POPPER_VERSION'] = "1.5-a1";
 	
-	define('MAIL_UNREAD', 0);
-	define('MAIL_READ', 1);
-	define('MAIL_REPLIED', 2);
-	define('MAIL_FORWARDED', 3);
+	$_SESSION['MAIL_UNREAD'] = 0;
+	$_SESSION['MAIL_READ'] = 1;
+	$_SESSION['MAIL_REPLIED'] = 2;
+	$_SESSION['MAIL_FORWARDED'] = 3;
 	
-	define('HIGHEST_PRIORITY', 1);
-	define('HIGH_PRIORITY', 2);
-	define('NORMAL_PRIORITY', 3);
-	define('LOW_PRIORITY', 4);
-	define('LOWEST_PRIORITY', 5);
+	$_SESSION['HIGHEST_PRIORITY'] = 1;
+	$_SESSION['HIGH_PRIORITY'] = 2;
+	$_SESSION['NORMAL_PRIORITY'] = 3;
+	$_SESSION['LOW_PRIORITY'] = 4;
+	$_SESSION['LOWEST_PRIORITY'] = 5;
 	
-	define('FULL_VIEW', 0);
-	define('MID_VIEW', 1);
-	define('MIN_VIEW', 2);
+	$_SESSION['FULL_VIEW'] = 0;
+	$_SESSION['MID_VIEW'] = 1;
+	$_SESSION['MIN_VIEW'] = 2;
 	
-	define('POPUP_VIEW', 0);
-	define('IN_VIEW', 1);
-	define('SEP_VIEW', 2);
-	define('FRAME_VIEW', 3);
+	$_SESSION['POPUP_VIEW'] = 0;
+	$_SESSION['IN_VIEW'] = 1;
+	$_SESSION['SEP_VIEW'] = 2;
+	$_SESSION['FRAME_VIEW'] = 3;
 	
 	// The file which describes the upper part of the HTML code
 	$_SESSION['top_part'] = "top.inc.php";

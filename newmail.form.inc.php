@@ -78,7 +78,7 @@ http://www.gnu.org/copyleft/gpl.html
 			$this->report_error($mailer->db_tool->db_error(), "DB Error");
 			return;
 		}
-		$read_status = MAIL_REPLIED;
+		$read_status = $_SESSION['MAIL_REPLIED'];
 		$query = "UPDATE mails SET was_read='$read_status' WHERE id='$this->cur_message_id' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 
@@ -92,7 +92,7 @@ http://www.gnu.org/copyleft/gpl.html
 			$this->report_error($mailer->db_tool->db_error(), "DB Error");
 			return;
 		}
-		$read_status = MAIL_FORWARDED;		
+		$read_status = $_SESSION['MAIL_FORWARDED'];		
 		$query = "UPDATE mails SET was_read='$read_status' WHERE id='$this->cur_message_id' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);		
 
@@ -139,18 +139,18 @@ http://www.gnu.org/copyleft/gpl.html
 		$priority = $mailer->headers->get("X-Priority");
 		$priority = $priority[0];	
 		if ($readonly) {
-			if (!empty($priority) && $priority != NORMAL_PRIORITY) {
+			if (!empty($priority) && $priority != $_SESSION['NORMAL_PRIORITY']) {
 				echo("<tr><td><b>".$_SESSION["strings"]["l_Priority"].":</b></td><td ");
-				if ($priority == HIGHEST_PRIORITY) {
+				if ($priority == $_SESSION['HIGHEST_PRIORITY']) {
 					echo("style=\"background-color: #ff3333;\">".$_SESSION["strings"]["l_HighestPriority"]);
 				}
-				if ($priority == HIGH_PRIORITY) {
+				if ($priority == $_SESSION['HIGH_PRIORITY']) {
 					echo("style=\"background-color: #ff6666;\">".$_SESSION["strings"]["l_HighPriority"]);
 				}			
-				else if ($priority == LOW_PRIORITY) {
+				else if ($priority == $_SESSION['LOW_PRIORITY']) {
 					echo("style=\"background-color: #9999ff; color: white;\">".$_SESSION["strings"]["l_LowPriority"]);
 				}
-				else if ($priority == LOWEST_PRIORITY) {
+				else if ($priority == $_SESSION['LOWEST_PRIORITY']) {
 					echo("style=\"background-color: #4444ff; color: white;\">".$_SESSION["strings"]["l_LowestPriority"]);
 				}			
 				echo("</td></tr>");
@@ -159,11 +159,11 @@ http://www.gnu.org/copyleft/gpl.html
 		else {
 			echo("<tr><td><b>".$_SESSION["strings"]["l_Priority"].":</b></td>\n");
 			echo("<td><select name=\"priority\" style=\"width: 100%;\">");
-			echo("<option value=\"".NORMAL_PRIORITY."\"></option>\n");
-			echo("<option value=\"".HIGHEST_PRIORITY."\" style=\"background-color: #ff3333;\">".$_SESSION["strings"]["l_HighestPriority"]."</option>\n");
-			echo("<option value=\"".HIGH_PRIORITY."\" style=\"background-color: #ff6666;\">".$_SESSION["strings"]["l_HighPriority"]."</option>\n");								
-			echo("<option value=\"".LOW_PRIORITY."\" style=\"background-color: #9999ff;\">".$_SESSION["strings"]["l_LowPriority"]."</option>\n");				
-			echo("<option value=\"".LOWEST_PRIORITY."\" style=\"background-color: #4444ff;\">".$_SESSION["strings"]["l_LowestPriority"]."</option>\n");				
+			echo("<option value=\"".$_SESSION['NORMAL_PRIORITY']."\"></option>\n");
+			echo("<option value=\"".$_SESSION['HIGHEST_PRIORITY']."\" style=\"background-color: #ff3333;\">".$_SESSION["strings"]["l_HighestPriority"]."</option>\n");
+			echo("<option value=\"".$_SESSION['HIGH_PRIORITY']."\" style=\"background-color: #ff6666;\">".$_SESSION["strings"]["l_HighPriority"]."</option>\n");								
+			echo("<option value=\"".$_SESSION['LOW_PRIORITY']."\" style=\"background-color: #9999ff;\">".$_SESSION["strings"]["l_LowPriority"]."</option>\n");				
+			echo("<option value=\"".$_SESSION['LOWEST_PRIORITY']."\" style=\"background-color: #4444ff;\">".$_SESSION["strings"]["l_LowestPriority"]."</option>\n");				
 			echo("</optgroup></td>");
 			echo("</td></tr>");
 		}

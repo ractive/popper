@@ -2,7 +2,7 @@
 <?php
 	//$this->load_config();
 	
-	if ($this->config["view"] == MIN_VIEW) {
+	if ($this->config["view"] == $_SESSION['MIN_VIEW']) {
 		$width = "1%";
 		$style = "style=\"background-color: gray;\"";
 	}
@@ -13,8 +13,8 @@
 	echo("<td width=\"$width\" valign=\"top\" $style>");
 
 		$this->show_folders();
-		// Show the addresslist only in FULL_VIEW
-		if ($this->config["view"] == FULL_VIEW) {
+		// Show the addresslist only in $_SESSION['FULL_VIEW']
+		if ($this->config["view"] == $_SESSION['FULL_VIEW']) {
 ?>
 		
 			<p class="windowtitle">

@@ -2,7 +2,7 @@
 <?php
 	// Don't show the scrollbar and the folder title in Mainview because all mails are shown
 	// and the title is shown in the frame
-	if ($this->config["mailview"] != FRAME_VIEW) {
+	if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 		echo("<tr><td class=\"windowtitle\">");
 		echo($this->get_foldername());
 		echo("</td>");
@@ -37,7 +37,7 @@
 		</td>
 
 <?php
-		if ($this->config["mailview"] != FRAME_VIEW) {
+		if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 			echo("<td class=\"scrollbar\" valign=\"bottom\">");				
 			$fromto = $_SESSION["strings"]["l_FromTo"]." ";
 			$fromto .= ($page_no + 1) * $this->config["mails_per_page"] + 1;
@@ -63,7 +63,7 @@
 </table>
 <?php
 	// Does the user want to see tha mail in the main window?
-	if ($this->config["mailview"] == IN_VIEW) {
+	if ($this->config["mailview"] == $_SESSION['IN_VIEW']) {
 ?>
 <table width="100%" border="0" cellpadding="4" cellspacing="0" class="windowtitle">
 <tr>
@@ -91,7 +91,7 @@
 </form>
 <?php
 	}
-	else if ($this->config["mailview"] == FRAME_VIEW) {
+	else if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 		echo("<iframe src=\"$GLOBALS[PHP_SELF]?action=mail_cont\" scrolling=\"yes\" name=\"mail\" width=\"100%\" style=\"height: ".$this->config["mail_rows"]."em; border-top: medium solid silver;\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\"></iframe>");		
 	}
 ?>

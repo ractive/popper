@@ -4,7 +4,7 @@
 <?php	
 		global $mail_id;
 		
-		if ($this->config["mailview"] == SEP_VIEW && $_SESSION['action'] != "getattachment") {
+		if (($this->config["mailview"] == $_SESSION['SEP_VIEW']) && ($_SESSION['action'] != "getattachment")) {
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=showfolder&folder=".$this->folder."&mail_id=$mail_id\">");			
 			echo("<img src=\"graphics/home.gif\" alt=\"".$_SESSION["strings"]["l_MainView"]."\" title=\"".$_SESSION["strings"]["l_MainView"]."\" border=\"0\"></a>\n");
 			echo("<img src=\"graphics/spacing.gif\" alt=\"|\">");				
@@ -30,7 +30,7 @@
 		// Enable the Reply, forward etc. buttons only when a message is selected and
 		// if we're not in the outbox
 
-		$disable = ($this->cur_message_id == 0 || $this->folder == "outbox" || $this->folder == "sent");
+		$disable = (($this->cur_message_id == 0) || ($this->folder == "outbox") || ($this->folder == "sent"));
 		if ($disable) {
 			echo("<img style=\"margin: 0px, 1px, 0px, 1px;\" src=\"graphics/reply_dis.gif\" alt=\"".$_SESSION["strings"]["l_Select"]."\" title=\"".$_SESSION["strings"]["l_Select"]."\">\n");
 			echo("<img style=\"margin: 0px, 1px, 0px, 1px;\" src=\"graphics/replytoall_dis.gif\" alt=\"".$_SESSION["strings"]["l_Select"]\" title=\"".$_SESSION["strings"]["l_Select"]."\">\n");
@@ -45,7 +45,7 @@
 
 		echo("<a href=\"$GLOBALS[PHP_SELF]?action=printmail&mail_id=$mail_id\" target=\"blank_\"><img src=\"graphics/print.gif\" alt=\"".$_SESSION["strings"]["l_Print"]."\" title=\"".$_SESSION["strings"]["l_Print"]."\" border=\"0\"></a>\n");
 		
-		if ($this->config["mailview"] != POPUP_VIEW) {	
+		if ($this->config["mailview"] != $_SESSION['POPUP_VIEW']) {	
 			echo("<a href=\"$GLOBALS[PHP_SELF]?action=deletemail&mail_id=$mail_id\"><img src=\"graphics/cancel.gif\" alt=\"".$_SESSION["strings"]["l_DeleteSel"]."\" title=\"".$_SESSION["strings"]["l_DeleteSel"]."\" border=\"0\"></a>\n");
 		}
 		

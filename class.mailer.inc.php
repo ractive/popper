@@ -150,22 +150,22 @@ class mailer extends mail {
 		$from_name = addslashes($this->get_pretty_header("From"));
 		$subject = addslashes($this->headers->get("Subject"));
 		if ($this->headers->get("X-MSMail-Priority") == "High") {
-			$priority = HIGH_PRIORITY;
+			$priority = $_SESSION['HIGH_PRIORITY'];
 		}
 		else if ($this->headers->get("X-MSMail-Priority") == "Low") {
-			$priority = LOW_PRIORITY;
+			$priority = $_SESSION['LOW_PRIORITY'];
 		}
 		else {
-			$priority = NORMAL_PRIORITY;
+			$priority = $_SESSION['NORMAL_PRIORITY'];
 		}
 		if ($this->headers->get("X-MSMail-Priority") == "High") {
-			$priority = HIGH_PRIORITY;
+			$priority = $_SESSION['HIGH_PRIORITY'];
 		}
 		else if ($this->headers->get("X-MSMail-Priority") == "Low") {
-			$priority = LOW_PRIORITY;
+			$priority = $_SESSION['LOW_PRIORITY'];
 		}
 		else {
-			$priority = NORMAL_PRIORITY;
+			$priority = $_SESSION['NORMAL_PRIORITY'];
 		}
 
 		$priority_header = $this->headers->get("X-Priority");
@@ -175,22 +175,22 @@ class mailer extends mail {
 		if (isset($priority_header)) {
 			switch($priority_header) {
 				case "1";
-					$priority = HIGHEST_PRIORITY;
+					$priority = $_SESSION['HIGHEST_PRIORITY'];
 					break;
 				case "2";
-					$priority = HIGH_PRIORITY;
+					$priority = $_SESSION['HIGH_PRIORITY'];
 					break;
 				case "3";
-					$priority = NORMAL_PRIORITY;
+					$priority = $_SESSION['NORMAL_PRIORITY'];
 					break;
 				case "4";
-					$priority = LOW_PRIORITY;
+					$priority = $_SESSION['LOW_PRIORITY'];
 					break;
 				case "5";
-					$priority = LOWEST_PRIORITY;
+					$priority = $_SESSION['LOWEST_PRIORITY'];
 					break;
 				default:
-					$priority = NORMAL_PRIORITY;
+					$priority = $_SESSION['NORMAL_PRIORITY'];
 					break;
 			}
 			
@@ -200,10 +200,10 @@ class mailer extends mail {
 		
 		$date = $this->make_timestamp($this->headers->get("Date"));
 		if ($folder == "sent") {
-			$was_read = MAIL_READ;
+			$was_read = $_SESSION['MAIL_READ'];
 		}
 		else {
-			$was_read = MAIL_UNREAD;
+			$was_read = $_SESSION['MAIL_UNREAD'];
 		}
 		
 		// Some POP server list uidls on request, but don't store them in
