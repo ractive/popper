@@ -1,0 +1,418 @@
+/*========================================================================
+A POP3 web mail-client written in PHP
+Copyright (C) 2000 by Jean-Pierre Bergamin
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License.
+
+For more information see the file gpl.txt or go to
+http://www.gnu.org/copyleft/gpl.html
+
+==========================================================================*/
+
+<?php
+
+class mimepart {
+
+	var $headers = array();
+	var $body;
+	var $mimeparts = array();
+	var $offset;
+	var $part_count;
+	var $boundary;
+
+	function mimepart($part = 0) {
+		if ($part) {
+			$this->from_text($part);
+		}
+	}
+
+	function from_text(&$part) {
+		$this->headers = $this->extract_headers($part);
+		$this->body = $this->extract_whole_body($part);	
+	}
+
+	function get_header_str(&$part) {
+		$pos = strpos($part, "\r\n\r\n");
+		return substr($part, 0, $pos);
+	}
+
+	function extract_whole_body(&$mail) {
+		$divider = "\r\n\r\n";
+		$pos = strpos($mail, $divider);
+		return substr($mail, $pos + strlen($divider));		
+	}
+
+	function get_text_body() {
+		$c_type = $this->get_header("Content-Type");
+		$type = $c_type["Content-Type"];
+
+		if ($type == "multipart/mixed" || $type == "multipart/alternative") {
+			$this->extract_part(1);
+			return $this->mimeparts[1]->decode($this->mimeparts[1]->get_text_body());
+		}
+		else {
+			return $this->decode($this->body);
+		}
+	}
+	
+	function charset_decode($string) {
+		return str_replace("_", " ", preg_replace("/=\?(.*?)\?([QB])\?(.*?)\?=/sexi", "$this->decode('\\3', '\\2')", $string));
+	}	
+	
+	// Strip Header comments from the string
+	// Comments are in brackets outside of quotes
+	function strip_comment($string) {
+		$len = strlen($string);
+		$ret_str = "";
+		$quoted = false;
+		$in_brackets = 0;
+		for($i = 0; $i < $len; $i++) {
+			$char = $string[$i];
+
+			if (!$quoted && $in_brackets && $char == ')') {
+				$in_brackets--;
+				continue;
+			}
+			if (!$quoted && $char == '(') {
+				$in_brackets++;
+				continue;
+			}
+			if (!$quoted && $in_brackets) {
+				continue;
+			}
+			if ($char == '"') {
+				$quoted = !$quoted;
+			}
+			// We are not in brackets. Copy the character to the new string
+			$str_ret .= $char;
+		}
+		return $str_ret;
+	}
+	
+	function get_pretty_header($name) {
+		$header = $this->get_header($name);
+		// Decode the charset
+		$cont = $this->charset_decode($header[$name]);
+		
+		if ($name != "Subject") {
+			// Strip out header comments
+			$cont = $this->strip_comment($cont);
+		}
+		
+		// Get the parts that are either quoted or in angle brackets
+		preg_match("/(\"(.*?)\"\s*)*<(.*?)>/", $cont, $matches);
+
+		// We prefer the quoted representation
+		if (!empty($matches[2])) {
+			return $matches[2];
+		}
+		// Then the string in brackets
+		if (!empty($matches[3])) {
+			return $matches[3];
+		}
+		// If nothing did match, we just return the original header content
+
+		return $header[$name];
+	}
+	
+	function decode($data = "", $encoding = "") {
+		if (empty($data)) {
+			$data = $this->body;
+		}
+		if (empty($encoding)) {
+			$ctf = $this->get_header("Content-Transfer-Encoding");
+			if (!$ctf) {
+				return $data;
+			}
+			if (strcasecmp($ctf["Content-Transfer-Encoding"], "quoted-printable") == 0) {
+				$encoding = "Q";
+			}
+			else if (strcasecmp($ctf["Content-Transfer-Encoding"], "base64") == 0) {
+				$encoding = "B";
+			}	
+		}
+
+		if ($encoding == "Q") {
+			return quoted_printable_decode($data);
+		}
+		else if ($encoding == "B") {
+			return base64_decode($data);
+		}
+		else {
+			return $data;
+		}
+	}
+	
+	function get_header($name) {
+		$header = $this->headers[$name];
+		if (!$header) {
+			return false;
+		}
+		$parameter = $this->split_header($header, ";");
+
+		$header_arr[$name] = $parameter[0];
+		reset($parameter);
+		next($parameter);
+		while(list($key, $p) = each($parameter)) {
+			$split = $this->split_header($p, "=");
+			$header_arr[$split[0]] = $this->un_quote($split[1]);
+		}
+				
+		return $header_arr;
+	}
+
+	// Extract part number $num
+	function extract_part($num) {
+	
+		// Did we extract this part already?
+		if (isset($this->mimeparts[$num]) && !empty($this->mimeparts[$num])) {
+			// Yes, we extracted it
+			return true;
+		}
+		
+		// Get the boundary
+		$c_type = $this->get_header("Content-Type");
+		$boundary = "\r\n--".$c_type["boundary"]."\r\n";
+
+		if (!isset($this->part_count) || empty($this->part_count)) {
+			$this->part_count = substr_count($this->body, $boundary);
+		}
+		if ($num > $this->part_count) {
+			return false;
+		}
+
+		$endboundary = "\r\n--".$c_type["boundary"]."--";
+		$pos = 0;
+
+		// We get all the parts from 1 to $num
+		for($i = 1; $i <= $num; $i++) {
+			
+			// Check if we already extracted this part
+			if (isset($this->mimeparts[$i]) && !empty($this->mimeparts[$i])) {
+				// Yes, we extracted it, so keep on going
+				continue;
+			}
+			
+			if ($i > 1) {
+				// The startposition is the offset of the previous part
+				$pos = $this->mimeparts[$i - 1]->offset;
+			}
+			else {
+				// This is the first part. Search for the first boundary
+				$pos = strpos($this->body, $boundary);
+				if ($pos === false) {
+					// No boundary was found
+
+					return false;
+				}
+				
+				$pos += strlen($boundary);
+			}
+			
+			// Search the boundary that closes this part
+			$pos2 = strpos($this->body, $boundary, $pos);
+			if ($pos2 === false) {
+				// The 2nd boundary was not found. Check for end boundary
+				$pos2 = strpos($this->body, $endboundary, $pos);
+				if ($pos2 === false) {
+					// The endboundary is also not present. The mail is corrupt.
+					// We assume that the end of the mail is the end of the part
+					$pos2 = strlen($this->body);
+				}
+				$end = true;
+			}
+			$part_str = substr($this->body, $pos, $pos2 - $pos);
+			
+			$part = new mimepart($part_str);
+			// This is the offset in the body where the part ends
+			$part->offset = $pos2 + strlen($boundary);
+
+			$this->mimeparts[$i] = $part;
+			
+			if ($end)
+				break;
+		}
+		
+		return true;
+	}
+
+	function get_attachment($num) {
+		if (!$this->extract_part($num)) {
+			return false;
+		}
+
+		return $this->mimeparts[$num]->decode($this->mimeparts[$num]->body);
+	}
+
+	function get_attachment_name($num) {
+		if (!$this->extract_part($num)) {
+			return false;
+		}
+		
+		$c_type = $this->mimeparts[$num]->get_header("Content-Type");	
+		return $c_type["name"];
+	}
+
+	function get_attachment_type($num) {
+		if (!$this->extract_part($num)) {
+			return false;
+		}
+		$c_type = $this->mimeparts[$num]->get_header("Content-Type");	
+		return $c_type["Content-Type"];
+	}
+
+	function extract_headers(&$part) {
+		$header_arr = array();
+		$header_str = $this->get_header_str($part)."\r\n";
+		$line = strtok($header_str, "\n");
+		while(1) {
+			// Remove trailing whitespaces (the \r)
+			$line = rtrim($line);
+
+			if (preg_match("/^\s/", $line)) {
+				// The new line starts with a whitespace. This indicates
+				// That the headerpart is "folded" (multiline) and that
+				// the current line belongs to the same header entity
+				$header .= " $line";
+				$line = strtok("\n");
+				continue;
+			}
+			else if (!empty($header)) {
+				// The $header now contains a header which we split up into its parts now
+				if (preg_match("/^(.*?): (.*)$/", $header, $matches)) {
+					$header_arr[$matches[1]] = $matches[2];
+				}
+			}
+
+			if (!$line) {
+				// This was the last line
+				break;
+			}
+					
+			// A new header entity begins
+			$header = $line;
+
+			$line = strtok("\n");
+		}
+		
+		return $header_arr;
+	}
+	
+	function un_quote($string) {
+		preg_match("/\"(.*?)\"/", trim($string), $matches);
+		return $matches[1];
+	}
+	
+	function split_header ($string, $split_char) {
+		$quoted = false; // true if in a quoted part
+		$in_brackets = 0; // Reference counter of open brackets
+		$split_arr = array();
+		$old_pos = 0; // The last position of the $split_char
+		$len = strlen($string);
+		// Run throught the string
+		for($i = 0; $i < $len; $i++) {
+			$char = $string[$i];
+
+			// $quoted == true after the first occurence of "
+			// $quoted == false after the 2nd occurence of "
+			// Quotes inside brackets are ignored
+			if (!$in_brackets && $char == '"') {
+				$quoted = !$quoted;
+				continue;
+			}
+			// Brackets inside a quote are ignored
+			else if (!$quoted && $char == '(') {
+				$in_brackets++; // Increase the open brackets reference counter
+				continue;
+			}
+			// Check for closing bracket if one was opened previously
+			// Brackets inside a quote are ignored	
+			else if (!$quoted && $in_brackets && $char == ')') {
+				$in_brackets--; // Decrease the open brackets reference counter
+				continue;
+			}
+			
+			if (!$in_brackets && !$quoted && $char == $split_char) {
+				// We found a string. Add it to the array
+				$s = trim(substr($string, $old_pos, $i - $old_pos));
+				$split_arr[] = $s;
+				$old_pos = $i + 1;
+			}
+			
+		}
+		
+		// Add the last part of the string to the array
+		$s = trim(substr($string, $old_pos, $len - $old_pos));
+		if (!empty($s)) {
+			$split_arr[] = $s;
+		}
+		
+		return $split_arr;
+	}
+	
+	function print_array($arr) {
+		foreach($arr as $key => $val) {
+			echo("$key --> $val<br>");
+		}
+	}
+	
+	function generate_header_str($all_headers = true) {
+		$header_str = "";
+		foreach($this->headers as $header_name => $header_content) {
+			// Don't include these two header fileds, because the PHP mail
+			// function will add them itself
+			if ($all_headers || ($header_name != "Subject" && $header_name != "To")) {
+				$header_str .= "$header_name: $header_content\r\n";
+			}
+		}
+		
+		return str_replace("\t", "\r\n\t", $header_str);
+	}
+	
+	function generate_parts() {
+		$body = "";
+		foreach($this->mimeparts as $key => $part) {
+			$body .= "\r\n--".$this->boundary."\r\n";
+			$body .= $this->mimeparts[$key]->generate_body(true, true)."\r\n";
+		}
+		
+		// Add the end boundary
+		$body .= "\r\n--".$this->boundary."--";
+		
+		return $body;
+	}	
+	
+	function generate_body($with_headers = true, $all_headers = true) {
+		if ($with_headers) {
+			$text = $this->generate_header_str($all_headers)."\r\n";
+		}
+		$text .= $this->body;
+		if (count($this->mimeparts) > 0) {
+			$text .= $this->generate_parts();
+		}
+
+		return $text;
+	}
+	
+	function attach_body() {
+		// Create a random boundary
+		srand((double)microtime()*1000000);
+		$boundary = '-NextPart---'.chr(rand(65, 91)).'---'.md5(uniqid(rand()).'---');
+		$this->boundary = $boundary;
+		$this->headers["Content-Type"] = "multipart/mixed;\tboundary=\"$boundary\"";
+		$this->headers["MIME-Version"] = "1.0";
+		// Create a mimepart out of the body
+		$msg = "Content-Type: text/plain;\tcharset=\"us-ascii\"\r\n";
+		$msg .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
+		$msg .= $this->body;
+		$this->body = "This is a multi-part message in MIME format.\r\n";
+		
+		$body_part = new mimepart($msg);
+		
+		// Push the body part onto the beginning of the array
+		$this->mimeparts[1] = $body_part;
+	}
+}
+
+?>
