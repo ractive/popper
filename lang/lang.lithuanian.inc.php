@@ -66,7 +66,7 @@
 	$strings["l_Welcome"]		= "Svieki atvyke";
 	$strings["l_Login"]			= "Login";
 	$strings["l_NewUser"]		= "Sukurti nauja vartotoja";
-	$strings["l_PwdFail"]		= "Jusu slaptazodis buvo klaidingas. Prasom pakartoti"	;
+   $strings["l_LoginFail"]		= "Jusu vardas buvo klaidingas. Prasom pakartoti";
 	$strings["l_AccActivation1"]= "Jusu saskaita kol kas neaktyvuota! Prasom sekite instrukcijas gautas pastu (adresu jus ivedet sukurdami saskaita)";
 	$strings["l_AccActivation2"]= "Saskaita neaktyvuota";
 	$strings["l_AccActivation3"]= "Jusu saskaita negali buti aktyvuota. Duomenu baze neivykde uzklausos";

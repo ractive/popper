@@ -66,7 +66,7 @@
 	$strings["l_Welcome"]		= "Willkommen";
 	$strings["l_Login"]			= "Anmelden";
 	$strings["l_NewUser"]		= "Neuer Benutzer";
-	$strings["l_PwdFail"]		= "Ihr Password war nicht korrekt. Bitte wiederholen Sie die Eingabe";
+	$strings["l_LoginFail"]		= "Ihr Anmelde-Informationen war nicht korrekt. Bitte wiederholen Sie die Eingabe.";
 	$strings["l_AccActivation1"]= "Ihr Konto wurde noch nicht aktiviert! Bitte befolgen Sie die Anweisungen, die sie per E-Mail erhalten haben";
 	$strings["l_AccActivation2"]= "Konto nicht aktiviert";
 	$strings["l_AccActivation3"]= "Ihr Konto konnte nicht aktiviert werden.";
@@ -213,7 +213,6 @@
 	$strings["l_UserExists1"]	= "Benutzer existiert bereits";
 	$strings["l_UserExists2"]	= "Es existiert bereits ein Benutzer mit dem Namen";	
 	$strings["l_PwdChanged"]	= "Das Passwort wurde ge&auml;ndert";
-	$strings["l_PwdWrong"]		= "Das Passwort das eingegeben wurde ist falsch. Bitte wiederholen Sie die Eingabe";
 	$strings["l_UserNotFound"]	= "Der Benutzer $name wurde nicht in der Datenbank gefunden. Erstellen Sie bitte ein Konto.";
 	$strings["l_DelUser"]		= "Benutzerkonto l&ouml;schen";
 	$strings["l_DelUserQuest"]	= "Wollen Sie wirklich ihr Benutzerkonto l&ouml;schen? Alle Ihre Nachrichten und Kontoinformationen werden unwiederruflich gel&ouml;scht!";
@@ -221,8 +220,8 @@
 	$strings["l_UserDeleted2"]	= "Ihr Benutzerkonto und alle Daten wurden gel&ouml;scht. Vielen Dank, dass Sie diesen Service benutzt haben";
 	$strings["l_LostPwd"]		= "Passwort vergessen?";
 	$strings["l_LostPwdEx"]		= "Geben Sie Ihren Benuternamen ein. Das Password wird Ihnen and die E-Mail Adresse geschickt, die sie bei der Anmeldung angegeben haben";
-	$strings["l_LostPwdMail1"]	= "Nachstehend finden sie das Passwort f¸r Ihr Webmail-Konto bei";
-	$strings["l_LostPwdMail2"]	= "Vielen Dank f¸r die Benutzung dieser Dienstleistung";
+	$strings["l_LostPwdMail1"]	= "Nachstehend finden sie das Passwort f∂År Ihr Webmail-Konto bei";
+	$strings["l_LostPwdMail2"]	= "Vielen Dank f∂År die Benutzung dieser Dienstleistung";
 	$strings["l_LostPwdMail3"]	= "Das Passwort wurde per Mail verschickt";
 	$strings["l_LostPwdMail4"]	= "Passwort gesendet";
 	$strings["l_LostPwdMail5"]	= "Das Passwort konnte nicht per Mail verschickt werden. Haben Sie bei der Registrierung eine g&uuml;ltige Adresse angegeben?";		

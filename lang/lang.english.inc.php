@@ -31,7 +31,7 @@
 	$strings["l_AccountName"]	= "Account name";
 	$strings["l_ReplyTo"]		= "Reply to E-mail";
 	$strings["l_POPServer"]		= "POP-Server";
-	$strings["l_POPLogin"]		= "POP Login-name";	
+	$strings["l_POPLogin"]		= "POP Login name";	
 	$strings["l_Server"]		= "Server";
 	$strings["l_Keep"]			= "Keep mails on server";
 	$strings["l_RemoveDel"]		= "Remove mails from server after deletion (from the recycle bin)";
@@ -66,7 +66,7 @@
 	$strings["l_Welcome"]		= "Welcome";
 	$strings["l_Login"]			= "Login";
 	$strings["l_NewUser"]		= "Create new User";
-	$strings["l_PwdFail"]		= "Your password was not correct. Please try again"	;
+	$strings["l_LoginFail"]		= "Your login information was not correct. Please try again";
 	$strings["l_AccActivation1"]= "Your account is not activated yet! Please follow the instructions you got by mail (to the mail address you entered during the account creation)";
 	$strings["l_AccActivation2"]= "Account not activated";
 	$strings["l_AccActivation3"]= "Your account could not be activated. The database refused the request";
@@ -83,7 +83,7 @@
 	$strings["l_Error"]			= "Error";
 	$strings["l_UserDel"]		= "The user and all mails have been deleted from the database";
 	$strings["l_UserDel2"]		= "User deleted";
-	$strings["l_LoggedOff"]		= "logged off";
+	$strings["l_LoggedOff"]		= "Logged Off";
 	$strings["l_LogoffMsg"]		= "Thanks for your visit and come back soon ;-)";
 	$strings["l_GoodBye"]		= "Good bye";
 	$strings["l_NewMail"]		= "New mail";
@@ -97,7 +97,7 @@
 	$strings["l_FillInAll"]		= "Please fill in all fields!";
 	$strings["l_SendReceive"]	= "Send and receive";
 	$strings["l_Config"]		= "Configuration";
-	$strings["l_LoginName"]		= "Login-name";
+	$strings["l_LoginName"]		= "Login name";
 	$strings["l_Pwd"]			= "Password";
 	$strings["l_Select"]		= "Select a mail first";
 	$strings["l_DeleteMultiple"]= "Delete selected mails";
@@ -153,6 +153,7 @@
 	$strings["l_Remember"]		= "Set cookie to remember me";
 	$strings["l_SubjectSize"]	= "characters of the subject";
 	$strings["l_AddressSize"]	= "characters of the address";
+	$strings["l_FolderViewWidth"]	= "% of the page";
 	$strings["l_Store"]			= "Store";
 	$strings["l_Reset"]			= "Reset";
 	$strings["l_NewAddress"]	= "Enter the address book entry";
@@ -213,8 +214,7 @@
 	$strings["l_UserExists1"]	= "Username already exists";
 	$strings["l_UserExists2"]	= "There's already an account with this username";	
 	$strings["l_PwdChanged"]	= "The password was changed";
-	$strings["l_PwdWrong"]		= "The password you entered was invalid. Please try again";
-	$strings["l_UserNotFound"]	= "The user $name was not found in the database. Create a new account.";
+	//$strings["l_UserNotFound"]	= "The user $name was not found in the database. Create a new account.";
 	$strings["l_DelUser"]		= "Delete useraccount";
 	$strings["l_DelUserQuest"]	= "Are you sure you want to delete your useraccount? All you messages and account informations will be deleted!";
 	$strings["l_UserDeleted1"]	= "Useraccount deleted";
@@ -223,7 +223,7 @@
 	$strings["l_LostPwdEx"]		= "Please enter your username. The password will be sent to the e-mail address you entered during the subscription.";	
 	$strings["l_LostPwdMail1"]	= "Please find the account information for the webmail service at";
 	$strings["l_LostPwdMail2"]	= "Thank you for using this service";
-	$strings["l_LostPwdMail3"]	= "The password has been sent by mail";
-	$strings["l_LostPwdMail4"]	= "Password sent";
-	$strings["l_LostPwdMail5"]	= "The password could not be sent. Do you have entered a valid e-mail address during the registration?";		
+	$strings["l_LostPwdMail3"]	= "The password has been sent by email.";
+	$strings["l_LostPwdMail4"]	= "Password sent.";
+	$strings["l_LostPwdMail5"]	= "The password could not be sent. Did you enter a valid e-mail address during the registration?";		
 ?>

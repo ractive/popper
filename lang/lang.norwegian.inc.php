@@ -66,7 +66,7 @@
 	$strings["l_Welcome"]		= "Velkommen";
 	$strings["l_Login"]			= "Logg inn";
 	$strings["l_NewUser"]		= "Legg til ny bruker";
-	$strings["l_PwdFail"]		= "Feil passord. Vennligst pr&#xF8;v igjen"	;
+   $strings["l_LoginFail"]		= "Feil logginformasjonen. Vennligst pr&#xF8;v igjen"	;
 	$strings["l_AccActivation1"]= "Kontoen din er ikke aktivert! Vennligst f&#xF8;lg instruksjoner du har mottat p&#229; e-mail. (Den e-mail adressen du skrev inn da du opprettet kontoen din)";
 	$strings["l_AccActivation2"]= "Kontoen er ikke aktivert";
 	$strings["l_AccActivation3"]= "Kontoen din kunne ikke bli aktivert. Databasen avviste foresp&#xF8;rselen.";
@@ -213,7 +213,6 @@
 	$strings["l_UserExists1"]	= "Username already exists";
 	$strings["l_UserExists2"]	= "There's already an account with this username";	
 	$strings["l_PwdChanged"]	= "The password was changed";
-	$strings["l_PwdWrong"]		= "The password you entered was invalid. Please try again";
 	$strings["l_UserNotFound"]	= "The user $name was not found in the database. Create a new account.";
 	$strings["l_DelUser"]		= "Delete useraccount";
 	$strings["l_DelUserQuest"]	= "Are you sure you want to delete your useraccount? All you messages and account informations will be deleted!";
