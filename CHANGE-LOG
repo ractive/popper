@@ -37,3 +37,12 @@ Version 1.2
 - Sender of incoming mails can be automatically added to the addressbook
 - Some other bug-fixing
 - Help page added
+
+Version 1.21
+============
+- Heavily improved handling of attachments
+- multipart/related type supported
+- message/rfc822 type supported (this is an attached mail :-)
+- Own X-UIDL implementation for POP-server that don't support that
+  This prevents that mails are downloaded multiple times
+- more bug-fixes
