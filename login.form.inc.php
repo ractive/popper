@@ -1,4 +1,3 @@
-<?php global $poppercookie;?>
 
 <center>
 <h2>Popper Login</h2>
@@ -7,7 +6,7 @@
 	<table cellpadding="5">
 		<tr>
 			<td><?php echo($_SESSION["strings"]["l_LoginName"]);?>:</td>
-			<td><input type="text" name="name" value="<?php echo($poppercookie["user"]);?>"><br></td>
+			<td><input type="text" name="name" value="<?php echo($_SESSION["poppercookie"]["user"]);?>"><br></td>
 		</tr>
 		<tr>
 			<td><?php echo($_SESSION["strings"]["l_Pwd"]);?>:</td>
@@ -16,7 +15,7 @@
 	</table>
 	<input type="checkbox" name="set_cookie"
 	<?php
-		if ($poppercookie["user"]) {
+		if ($_SESSION["poppercookie"]["user"]) {
 			echo(" checked");
 		}
 	?>

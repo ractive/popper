@@ -140,7 +140,7 @@ function setup_session() {
 }
 
 function process_login() {
-	global $name, $pwd, $set_cookie, $poppercookie;
+	global $name, $pwd, $set_cookie;
 	
 	if (!isset($name) || !isset($pwd)) {
 		$msg = $_SESSION["strings"]["l_FillInAll"];
@@ -174,11 +174,11 @@ Need to add info about this topic to INSTALL?
 	
 	$_SESSION["logged_in"] = $logged_in;
 	
-	if ($HTTP_COOKIE_VARS["poppercookie"] && $set_cookie != "on") {
+	if ($_COOKIE["poppercookie"] && $set_cookie != "on") {
 		cookie_unset();
 	}
 
-	if (isset($set_cookie) && $set_cookie && !$HTTP_COOKIE_VARS["poppercookie"]) {
+	if (isset($set_cookie) && $set_cookie && !$_COOKIE["poppercookie"]) {
 		cookie_set();
 	}
 	
@@ -217,7 +217,7 @@ function process_confirmation($code) {
 }
 
 function process_action() {
-	global $action, $ok, $what, $poppercookie;
+	global $action, $ok, $what;
 	
 	// Remove previously created tmp-files
 	$_SESSION['popper']->unlink_tmp();
@@ -454,26 +454,26 @@ Functionalize this one.
 }
 
 function cookie_set() {
+	
 	// Set the cookies if the user wants that and if it's not set yet.
 	setcookie("poppercookie['user']", $name, time() + 365 * 24 * 3600);
 	setcookie("poppercookie['language']", $_SESSION['popper']->config["language"], time() + 365 * 24 * 3600);
+	$_SESSION["poppercookie"] = $_COOKIE["poppercookie"];
 }
 
 function cookie_unset() {
-	global $poppercookie;
 	
 	// This indicates that the user previously set the cookie, but does
 	// not want to have it anymore.  So, we delete the cookies
 	setcookie ("poppercookie['user']", "", time() - 3600);		
 	setcookie ("poppercookie['language']", "", time() - 3600);
-	unset($poppercookie);
+	$_SESSION["poppercookie"] = false;
 }
 
 function language_get() {
-	global $_SESSION['popper'], $poppercookie;
 	
-	if ($poppercookie["language"]) {
-		$langfile = "lang/lang.".$poppercookie["language"].".inc.php";
+	if ($_SESSION["poppercookie"]["language"]) {
+		$langfile = "lang/lang.".$_SESSION["poppercookie"]["language"].".inc.php";
 	}
 	else {
 		if (isset($_SESSION['popper']->config["language"]) && !empty($_SESSION['popper']->config["language"])) {

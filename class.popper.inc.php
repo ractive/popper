@@ -180,7 +180,7 @@ class popper {
 	}
 
 	function update_lang() {
-		global $poppercookie;
+		
 		$lang_file = "lang/lang.".$this->config["language"].".inc.php";
 		
 		if (!file_exists($lang_file)) {
@@ -197,8 +197,8 @@ class popper {
 		$this->folders["bin"]["name"] = $_SESSION["strings"]["l_RecycleBin"];
 		$this->folders["drafts"]["name"] = $_SESSION["strings"]["l_Drafts"];				
 		$this->folders["cal"]["name"] = $_SESSION["strings"]["l_Calendar"];	
-		if ($poppercookie[language]) {
-			setcookie("poppercookie[language]", $this->config["language"], time() + 365 * 24 * 3600);
+		if ($_SESSION["poppercookie"]["language"]) {
+			setcookie("poppercookie['language']", $this->config["language"], time() + 365 * 24 * 3600);
 		}
 	}
 	
@@ -2888,7 +2888,7 @@ Masked out for better security.  See prior DevNote.
 	function store_config() {
 		global $conf_submit, $view, $mailview, $keep, $server_del, $auto_check, $signature, $language;
 		global $subject_size, $check_int, $address_size, $app_sig, $send_direct, $mail_rows;
-		global $mails_per_page, $add_address, $poppercookie, $folder_view_width;
+		global $mails_per_page, $add_address, $folder_view_width;
 
 		if (isset($conf_submit) && $conf_submit == $_SESSION["strings"]["l_Store"]) {
 			$query  = "UPDATE conf SET send_direct='$send_direct', keep='$keep', check_int='$check_int', ";
