@@ -14,7 +14,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 class db_tool {
 
-	var $db_data_inc = "";			// contains the vars $host, $user, $pass
+	var $db_data_inc = "";	// contains the vars $db_host, $db_user, $db_pass
 	var $db_link;
 	// Overridable methods
 	//
@@ -23,8 +23,8 @@ class db_tool {
 		$this->db_data_inc = $data_inc;
 	}
 
-	function db_connect($host, $user, $pwd) {
-		return @mysql_connect($host, $user, $pwd);
+	function db_connect($db_host, $db_user, $db_pwd) {
+		return @mysql_connect($db_host, $db_user, $db_pwd);
 	}
 
 	function fetch_array($res) {
@@ -74,10 +74,10 @@ class db_tool {
 		}
 		$path .= "/".$this->db_data_inc;
 		require($path);
-		$this->db_link = $this->db_connect($host, $user, $pass)
+		$this->db_link = $this->db_connect($db_host, $db_user, $db_pass)
 			or die ($_SESSION["strings"]["l_ServerConnect"]."<br>".$this->db_error());
 
-		$query = "USE $dbname";
+		$query = "USE $db_name";
 		
 		$this->query($query, $this->db_link)
 			or die ($_SESSION["strings"]["l_OpenDB"]."<br>".$this->db_error());
