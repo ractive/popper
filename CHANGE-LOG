@@ -69,3 +69,12 @@ Version 1.32
 - Calendar "localized"
 - Date/Time localized
 - Grrr. update131.mysql was missing :-(
+
+Version 1.4b1
+=============
+- Russian language file added. They don't work yet :-(
+  The charset has to be choosen manually in the browser for a correct display.
+- Message-Disposition-Notification (MDN) added. You can request read notification for outging
+  mails.
+- You can send MDNs for mails that request that
+- Small bug-fixes
