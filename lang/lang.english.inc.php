@@ -142,7 +142,7 @@
 	$strings["l_MailStoreFail"]	= "The mail could not be stored in the database";
 	$strings["l_MailSentSucc"]	= "Successfully sent mail";
 	$strings["l_DelAddress"]	= "Delete address";
-	$strings["l_DelAddressConf"]= "Confirm the deletion or this address";
+	$strings["l_DelAddressConf"]= "Confirm the deletion of this address";
 	$strings["l_AddressDel"]	= "The address was deleted";
 	$strings["l_AddressDelFail"]= "The address could not be deleted";	
 	$strings["l_DelAccount"]	= "Delete account";
@@ -171,5 +171,14 @@
 	$strings["l_MinWndInfo"]	= "Interval";	
 	$strings["l_Previous"]		= "Previous";
 	$strings["l_Current"]		= "Current";
-	$strings["l_Next"]			= "Next";	
+	$strings["l_Next"]			= "Next";
+	$strings["l_Priority"]		= "Priority";		
+	$strings["l_LowPriority"]	= "Low priority";
+	$strings["l_HighPriority"]	= "High priority";
+	$strings["l_Notification"]	= "Request read notification";
+	$strings["l_NotifyQuest"]	= "The sender requested a read-notification.";
+	$strings["l_NotifyQuest2"]	= "Do you want to send it?";
+	$strings["l_SendNot"]		= "Send notification";
+	$strings["l_NotMsg"]		= "The following message has been displayed.\r\nThis is no guarantee that the message has been read or understood.";
+	$strings["l_Notification"]	= "Notification";	
 ?>

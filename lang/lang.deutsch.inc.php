@@ -172,4 +172,15 @@
 	$strings["l_Previous"]		= "Zur&uuml;ck";
 	$strings["l_Current"]		= "Heute";
 	$strings["l_Next"]			= "Weiter";
+	$strings["l_Priority"]		= "Priorit&auml;t";
+	$strings["l_LowPriority"]	= "Niedrige Dringlichkeitsstufe";
+	$strings["l_HighPriority"]	= "Hohe Dringlichkeitsstufe";
+	$strings["l_Notification"]	= "Lesebest&auml;tigung anfordern";
+	$strings["l_NotifyQuest"]	= "Der Sender hat eine Lesebest&auml;tigung angefordert.";
+	$strings["l_NotifyQuest2"]	= "Wollen Sie die Best&auml;tigung schicken?";
+	$strings["l_SendNot"]		= "Best&auml;tigung senden";	
+	$strings["l_NotMsg"]		= "Die folgende Nachricht wurde angezeigt.\r\nDas ist keine Garantie, dass die Nachricht gelesen oder verstanden wurde.";	
+	$strings["l_SentAt"]		= "Gesendet am";
+	$strings["l_ReadAt"]		= "Gelesen am";
+	$strings["l_Notification"]	= "Gelesen";
 ?>

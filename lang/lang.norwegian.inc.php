@@ -171,5 +171,15 @@
 	$strings["l_MinWndInfo"]	= "Intervall";
 	$strings["l_Previous"]		= "Previous";
 	$strings["l_Current"]		= "Current";
-	$strings["l_Next"]			= "Next";			
+	$strings["l_Next"]			= "Next";
+	$strings["l_Priority"]		= "Priority";			
+	$strings["l_LowPriority"]	= "Low priority";
+	$strings["l_HighPriority"]	= "High priority";
+	$strings["l_Notification"]	= "Request read notification";				
+	$strings["l_NotifyQuestion"]= "The sender requested a read-notification. Do you want to send it?";
+	$strings["l_NotifyQuest"]	= "The sender requested a read-notification.";
+	$strings["l_NotifyQuest2"]	= "Do you want to send it?";
+	$strings["l_SendNot"]		= "Send notification";
+	$strings["l_NotMsg"]		= "The following message has been displayed.\r\nThis is no guarantee that the message has been read or understood.";
+	$strings["l_Notification"]	= "Notification";				
 ?>
