@@ -1,5 +1,6 @@
 <form class="mail" action="<?php echo("$GLOBALS[PHP_SELF]?action=choosen")?>" method="post">
 <?php
+
 	$this->show_recipients();
 ?>
 <br>

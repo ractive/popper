@@ -274,14 +274,16 @@ class popper {
 	
 
 	function show_in_window($form, $title="", $status_msg="", $msgboxtext = "", $msgboxhead="") {
-		global $top_part, $bottom_part, $strings;
+		global $top_part, $bottom_part, $strings, $action;
 		
-		if ($this->config["mailview"] == FRAME_VIEW) {
-			$this->show_small_window($form);
+		if ($this->config["mailview"] == FRAME_VIEW && $form != "config" && $form != "changepwd" && $form != "newmail") {
+			$this->show_small_window($form, $title, $status_msg, $msgboxtext, $msgboxhead);
 			return;
 		}
 		
-		$this->set_cur();
+		if ($form != "choose" && $action != "choosen") {
+			$this->set_cur();
+		}
 
 		include($top_part);
 		include("titlebar.inc.php");
@@ -290,17 +292,17 @@ class popper {
 		include($bottom_part);
 	}
 	
-	function show_small_window($form, $title = "") {
+	function show_small_window($form, $title = "", $status_msg = "", $msgboxtext = "", $msgboxhead = "") {
 		global $strings;
 
 		$this->frame_header();
 		echo("<table class=\"windowborder\" width=\"50%\" border=\"0\" align=\"center\" style=\"margin-top: 2em;\">");
-		echo("<tr class=\"titlebar\"><td>Popper</td></tr>");
+		echo("<tr class=\"titlebar\"><td>$title</td></tr>");
 		echo("<tr class=\"childwindow\"><td>");
 		if (file_exists($form.".toolbar.inc.php")) {	
 			include($form.".toolbar.inc.php");
 		}
-				include($form.".form.inc.php");
+		include($form.".form.inc.php");
 		echo("</td></tr></table>");					
 		$this->frame_footer();
 	}
@@ -317,7 +319,7 @@ class popper {
 			$this->cur_address_id = $addr_id;
 		}
 		global $top_part, $bottom_part;
-		if ($this->config["mailview"] == FRAME_VIEW && ($action == "addressbook" || $action == "accounts")) {
+		if ($this->config["mailview"] == FRAME_VIEW && ($form == "addressbook" || $form == "accounts")) {
 			$this->frame_header();
 			echo("<table class=\"windowborder\" width=\"100%\" border=\"0\" align=\"center\">");
 		}
@@ -459,7 +461,7 @@ class popper {
 		}
 	}
 	function mail_selected($message) {
-		if ($this->cur_message_id == $message) {
+		if (($this->config["mailview"] == IN_VIEW || $this->config["mailview"] == SEP_VIEW) && $this->cur_message_id == $message) {
 			echo(" style=\"background-color: Blue; color: White;\" ");
 		}
 	}
@@ -505,7 +507,7 @@ class popper {
 			echo("\" title=\"$strings[l_ShowDetails]\"");
 			$this->address_selected($row[id]);
 			echo(">".$this->extract_disp_name(stripslashes($row[name]))."</a></td>\n");
-			echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"$strings[l_SendMail]\">".stripslashes($row["email"])."</a></td></tr>\n");
+			echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"$strings[l_SendMail]\" target=\"_parent\">".stripslashes($row["email"])."</a></td></tr>\n");
 		}
 		echo("</table>\n");
 	}
@@ -716,6 +718,18 @@ class popper {
 		return stripslashes($row[0]);
 	}
 
+	function show_ack($title = "", $status_msg = "") {
+		if ($this->config["mailview"] == FRAME_VIEW) {
+			$this->show_small_window("ack", $title, $status_msg);
+		}
+		else {
+			$this->show_in_window("ack", $title, $status_msg);
+		}
+		
+		
+	}
+	
+
 	function del_address() {
 		global $ack, $strings;
 		
@@ -731,7 +745,7 @@ class popper {
 			// The address was not blocked. Delete it
 			$name = $this->get_address_name();
 			if (!isset($ack) || empty($ack) ) {
-				$this->show_in_window("ack", $strings["l_DelAddress"].": $name", $strings["l_DelAddressConf"]);
+				$this->show_ack($strings["l_DelAddress"].": $name", $strings["l_DelAddressConf"]);
 				return;
 			}
 			else if($ack == "No") {
@@ -762,7 +776,7 @@ class popper {
 		global $ack, $strings;;
 		$accountname = $this->get_account_name();
 		if (!isset($ack) || empty($ack) ) {
-			$this->show_in_window("ack", $strings["l_DelAccount"]." $accountname", $strings["l_DelAccountConf"]);
+			$this->show_ack($strings["l_DelAccount"]." $accountname", $strings["l_DelAccountConf"]);
 			return;
 		}
 		else if($ack == "No") {
@@ -1302,7 +1316,7 @@ class popper {
 		else {
 			$this->frame_header();
 			$this->show_frame_head();
-			echo("<span style=\"font-family: courier\">");			
+			echo("<span style=\"font-family: monospace\">");			
 			$content = nl2br($content);
 
 			// Convert http:// entries to hyperlinks
@@ -1500,7 +1514,8 @@ class popper {
 	}
 
 	function make_clickable(&$content) {
-		$content = preg_replace("|(\s+)(http://.*)(\s+)|U", "\\1<a href=\"\\2\" target=\"_blank\">\\2</a>\\3", $content);
+		$content = preg_replace("|(\s+)(http://.*)(\s+)|U", "\\1<a href=\"\\2\" target=\"_blank\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2</a>\\3", $content);
+		$content = preg_replace("|(\s*)([a-zA-Z0-9.-_]*@[a-zA-Z0-9.-_]*)(\s+)|U", "\\1<a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr=\\2\" target=\"_parent\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2</a>\\3", $content);
 	}
 	
 
@@ -2126,7 +2141,7 @@ class popper {
 			// If $ack is not set, we pop-up the confirmation window
 			if (!isset($ack) || empty($ack) ) {
 				$this->del = $this->cur_message_id;
-				$this->show_in_window("ack", $strings["l_DelMail"], $strings["l_DelMailQuest"]);
+				$this->show_ack($strings["l_DelMail"], $strings["l_DelMailQuest"]);
 				return;
 			}
 			else if($ack == "No") {
@@ -2187,7 +2202,7 @@ class popper {
 		if ($this->folder == "bin") {
 			// If $ack is not set, we pop-up the confirmation window
 			if (!isset($ack) || empty($ack) ) {
-				$this->show_in_window("ack", $strings["l_DelMails"], $strings["l_DelMailsQuest"]);
+				$this->show_ack($strings["l_DelMails"], $strings["l_DelMailsQuest"]);
 				return;
 			}
 			else if($ack == "No") {
@@ -2428,12 +2443,12 @@ class popper {
 			return;
 		}
 		echo('<table width="100%" align="center" border="1">');
-		echo('<tr style="text-align: left;"><th>&nbsp;</th><th>$strings[l_Name]</th><th>E-Mail</th></tr>');
+		echo('<tr style="text-align: left;"><th>&nbsp;</th><th>'.$strings[l_Name].'</th><th>E-Mail</th></tr>');
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr>\n<td>\n");
 			echo('<input type="checkbox" name="rec[]" value="'.$row[id].'"></td>');
-			echo("<td>".htmlspecialchars($row[name])."</td><td>");
-			echo(htmlspecialchars($row[email])."</td></tr>\n");
+			echo("<td>".htmlspecialchars(stripslashes($row[name]))."</td><td>");
+			echo(htmlspecialchars(stripslashes($row[email]))."</td></tr>\n");
 		}
 		echo('</table>');
 	}
@@ -2473,8 +2488,8 @@ class popper {
 		else if ($what == "sendandreceive") {
 			$msg = $this->send_outbox();
 			$this->get_mails();
-			$this->show("sent", $msg);
-			return;
+			/*$this->show("sent", $msg);
+			return;*/
 		}
 		else if ($what == "getall") {
 			$this->get_mails();
@@ -2634,7 +2649,7 @@ class popper {
 					$this->add_address($mailer);
 				}
 			}
-			
+	
 			$pop3->quit();
 		}
 	}
@@ -2681,7 +2696,7 @@ class popper {
 		
 		// If $ack is not set, we pop-up the confirmation window
 		if (!isset($ack) || empty($ack) ) {
-			$this->show_in_window("ack", $strings["l_DelUser"], $strings["l_DelUserQuest"]);
+			$this->show_ack($strings["l_DelUser"], $strings["l_DelUserQuest"]);
 			return;
 		}
 		else if($ack == "No") {
@@ -2754,101 +2769,102 @@ class popper {
 		echo("</select>\n<br><br><hr>");
 		echo("<center><input type=\"submit\" name=\"changepwd\" value=\"$strings[l_ChangePwd]\">&nbsp;");
 		echo("<input type=\"submit\" name=\"deluser\" value=\"$strings[l_DelUser]\"></center>");
-		echo("<hr><br>");
-
-		echo('<input type="checkbox" name="keep" value="1"');
-		if ($this->config[keep] == 1) {
-			echo(' checked');
-		}
-		echo("> $strings[l_Keep]<br>");
-		
-		echo('<input type="checkbox" name="server_del" value="1"');
-		if ($this->config[server_del]) {
-			echo(' checked');
-		}		
-		echo("> $strings[l_RemoveDel]<br>");
-		
-		echo('<input type="checkbox" name="auto_check" value="1"');
-		if ($this->config[auto_check]) {
-			echo(' checked');
-		}			
-		echo("> $strings[l_CheckMails]<br>");
-		
-		echo('<input type="checkbox" name="send_direct" value="1"');		
-		if ($this->config[send_direct]) {
-			echo(' checked');
-		}			
-		echo("> $strings[l_SendDirect]<br>");		
-
-		echo('<input type="checkbox" name="add_address" value="1"');		
-		if ($this->config[add_address]) {
-			echo(' checked');
-		}			
-		echo("> $strings[l_AddAddress]<br><hr>");
-		echo($strings["l_CheckRep"].' <input name="check_int" value="'.$this->config[check_int].'" size="2"> '.$strings[l_Minutes].'<br><hr>');
-		echo("<b>".$strings["l_View"]."</b><br>\n");
-		
-		
-		echo('<table cellspacing="2" cellpadding="2" width="100%">');	
-
-		echo("\n<tr><td style=\"width: 35%;\"><input type=\"radio\" name=\"view\" value=\"".FULL_VIEW."\"");
-		if ($this->config["view"] == FULL_VIEW) {
-			echo(" checked");
-		}
-		echo("> $strings[l_FullView]</td><td style=\"width: 65%;\">\n");
-		echo("\n<input type=\"radio\" name=\"mailview\" value=\"".IN_VIEW."\"");
-		if ($this->config["mailview"] == IN_VIEW) {
-			echo(" checked");
-		}		
-		echo("> $strings[l_InView]</td></tr><tr>\n");		
-
-		echo("<td><input type=\"radio\" name=\"view\" value=\"".MID_VIEW."\"");
-		if ($this->config["view"] == MID_VIEW) {
-			echo(" checked");
-		}		
-		echo("> $strings[l_MidView]</td><td>\n");
-		
-		echo("\n<input type=\"radio\" name=\"mailview\" value=\"".SEP_VIEW."\"");
-		if ($this->config["mailview"] == SEP_VIEW) {
-			echo(" checked");
-		}		
-		echo("> $strings[l_SepView]</td></tr><tr>\n");
-		
-		echo("<td><input type=\"radio\" name=\"view\" value=\"".MIN_VIEW."\"");
-		if ($this->config["view"] == MIN_VIEW) {
-			echo(" checked");
-		}		
-		echo("> $strings[l_MinView]</td>\n");
-		echo("<td><input type=\"radio\" name=\"mailview\" value=\"".POPUP_VIEW."\"");
-		if ($this->config["mailview"] == POPUP_VIEW) {
-			echo(" checked");
-		}		
-		echo("> $strings[l_PopupView]</td></tr>\n");
-		
-		echo("<tr><td>&nbsp;</td>");
-		echo("<td><input type=\"radio\" name=\"mailview\" value=\"".FRAME_VIEW."\"");
-		if ($this->config["mailview"] == FRAME_VIEW) {
-			echo(" checked");
-		}		
-		echo("> $strings[l_FrameView]</td></tr>");
-			
-		echo("</table><br><table width=\"100%\">");
-
+		echo("<br><fieldset>");
 	
-		echo('<tr><td width="50%">'.$strings[l_Show].' <input name="mails_per_page" value="'.$this->config[mails_per_page].'" size="2"> '.$strings[l_MailsPerPage].'</td>');
-		echo('<td>'.$strings[l_Show].' <input name="mail_rows" value="'.$this->config[mail_rows].'" size="2"> '.$strings[l_Lines].'</td>');
-		echo('</tr><tr>');
-		echo('<td>'.$strings[l_Show].' <input name="subject_size" value="'.$this->config[subject_size].'" size="2"> '.$strings[l_SubjectSize].'<br>');
-		echo('<td>'.$strings[l_Show].' <input name="address_size" value="'.$this->config[address_size].'" size="2"> '.$strings[l_AddressSize].'<br>');		
-		echo('</tr></table>');
-		echo('<hr><b>'.$strings[l_Singature].'</b><br><br><textarea name="signature" cols="50" rows="4">');
-		echo($this->config[signature]);
-		echo('</textarea><br><br>');
-		echo('<input type="checkbox" name="app_sig" value="1"');
-		if ($this->config[app_sig]) {
-			echo(' checked');
-		}			
-		echo('> '.$strings[l_AppSig]);
+			echo('<input type="checkbox" name="keep" value="1"');
+			if ($this->config[keep] == 1) {
+				echo(' checked');
+			}
+			echo("> $strings[l_Keep]<br>");
+			
+			echo('<input type="checkbox" name="server_del" value="1"');
+			if ($this->config[server_del]) {
+				echo(' checked');
+			}		
+			echo("> $strings[l_RemoveDel]<br>");
+			
+			echo('<input type="checkbox" name="auto_check" value="1"');
+			if ($this->config[auto_check]) {
+				echo(' checked');
+			}			
+			echo("> $strings[l_CheckMails]<br>");
+			
+			echo('<input type="checkbox" name="send_direct" value="1"');		
+			if ($this->config[send_direct]) {
+				echo(' checked');
+			}			
+			echo("> $strings[l_SendDirect]<br>");		
+	
+			echo('<input type="checkbox" name="add_address" value="1"');		
+			if ($this->config[add_address]) {
+				echo(' checked');
+			}			
+			echo("> $strings[l_AddAddress]<br><hr>");
+			echo($strings["l_CheckRep"].' <input name="check_int" value="'.$this->config[check_int].'" size="2"> '.$strings[l_Minutes].'<br><br>');
+			
+		echo("</fieldset>\n<br><fieldset><legend><b>$strings[l_View]</b></legend>\n");
+			echo('<table cellspacing="2" cellpadding="2" width="100%">');	
+	
+			echo("\n<tr><td style=\"width: 35%;\"><input type=\"radio\" name=\"view\" value=\"".FULL_VIEW."\"");
+			if ($this->config["view"] == FULL_VIEW) {
+				echo(" checked");
+			}
+			echo("> $strings[l_FullView]</td><td style=\"width: 65%;\">\n");
+			echo("\n<input type=\"radio\" name=\"mailview\" value=\"".IN_VIEW."\"");
+			if ($this->config["mailview"] == IN_VIEW) {
+				echo(" checked");
+			}		
+			echo("> $strings[l_InView]</td></tr><tr>\n");		
+	
+			echo("<td><input type=\"radio\" name=\"view\" value=\"".MID_VIEW."\"");
+			if ($this->config["view"] == MID_VIEW) {
+				echo(" checked");
+			}		
+			echo("> $strings[l_MidView]</td><td>\n");
+			
+			echo("\n<input type=\"radio\" name=\"mailview\" value=\"".SEP_VIEW."\"");
+			if ($this->config["mailview"] == SEP_VIEW) {
+				echo(" checked");
+			}		
+			echo("> $strings[l_SepView]</td></tr><tr>\n");
+			
+			echo("<td><input type=\"radio\" name=\"view\" value=\"".MIN_VIEW."\"");
+			if ($this->config["view"] == MIN_VIEW) {
+				echo(" checked");
+			}		
+			echo("> $strings[l_MinView]</td>\n");
+			echo("<td><input type=\"radio\" name=\"mailview\" value=\"".POPUP_VIEW."\"");
+			if ($this->config["mailview"] == POPUP_VIEW) {
+				echo(" checked");
+			}		
+			echo("> $strings[l_PopupView]</td></tr>\n");
+			
+			echo("<tr><td>&nbsp;</td>");
+			echo("<td><input type=\"radio\" name=\"mailview\" value=\"".FRAME_VIEW."\"");
+			if ($this->config["mailview"] == FRAME_VIEW) {
+				echo(" checked");
+			}		
+			echo("> $strings[l_FrameView]</td></tr>");
+				
+			echo("</table><br><table width=\"100%\">");
+		
+			echo('<tr><td width="50%">'.$strings[l_Show].' <input name="mails_per_page" value="'.$this->config[mails_per_page].'" size="2"> '.$strings[l_MailsPerPage].'</td>');
+			echo('<td>'.$strings[l_Show].' <input name="mail_rows" value="'.$this->config[mail_rows].'" size="2"> '.$strings[l_Lines].'</td>');
+			echo('</tr><tr>');
+			echo('<td>'.$strings[l_Show].' <input name="subject_size" value="'.$this->config[subject_size].'" size="2"> '.$strings[l_SubjectSize].'<br>');
+			echo('<td>'.$strings[l_Show].' <input name="address_size" value="'.$this->config[address_size].'" size="2"> '.$strings[l_AddressSize].'<br>');		
+			echo('</tr></table>');
+		echo("</fieldset><br><fieldset>");
+			echo("<legend><b>$strings[l_Singature]</b></legend>");
+			echo('<textarea name="signature" cols="50" rows="4">');
+			echo($this->config[signature]);
+			echo('</textarea><br><br>');
+			echo('<input type="checkbox" name="app_sig" value="1"');
+			if ($this->config[app_sig]) {
+				echo(' checked');
+			}			
+			echo('> '.$strings[l_AppSig].'<br><br>');
+		echo("</fieldset>");
 		
 	}
 
@@ -2902,12 +2918,7 @@ class popper {
 			return false;
 		}
 		
-		if ($this->config["mailview"] == FRAME_VIEW) {
-			$this->show_frame_list();
-		}
-		else {
-			$this->show_form("main", $strings["l_PwdChanged"]);
-		}		
+		$this->show_form("main", $strings["l_PwdChanged"]);
 	}
 	
 

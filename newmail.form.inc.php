@@ -21,18 +21,30 @@ http://www.gnu.org/copyleft/gpl.html
 		}
 		$to_row = $this->db_tool->fetch_array($to_res);
 	}
+	else if (isset($GLOBALS[addr]) && !empty($GLOBALS[addr])) {
+		$to_row["email"] = $GLOBALS["addr"];
+		$to_row["name"] = "";
+	}
+	
 
 	// Check if we come from the "Choose recipients" form
 	if (isset($GLOBALS[rec])) {
 		$in = implode(", ", $GLOBALS[rec]);
-		$query = "SELECT email FROM addresses WHERE user_id='$this->userid' AND id IN ($in)";
+		$query = "SELECT email, name FROM addresses WHERE user_id='$this->userid' AND id IN ($in)";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
 			$this->report_error($this->db_tool->db_error(), "Could not fetch recipients");
 			return;
 		}
 		while($row = $this->db_tool->fetch_array($res)) {
-			$rec .= stripslashes($row["email"]).", "; 
+			if (!empty($row[name])) {
+				$rec .= "\"".$row["name"]."\" <";
+			}
+			$rec .= stripslashes($row["email"]);
+			if (!empty($row[name])) {
+				$rec .= ">";
+			}
+			$rec .= ", "; 
 		}
 		// Remove the last ", "
 		$rec = trim(substr($rec, 0, strlen($rec) - 2));
@@ -52,7 +64,9 @@ http://www.gnu.org/copyleft/gpl.html
 		$mailer = $this->cur_mailer;
 	}
 	else {
-		$mailer = new mailer($this->userid);	
+		dbg("NEW CUR_MAILER");
+		$this->cur_mailer = new mailer($this->userid);	
+		$mailer = $this->cur_mailer;
 	}
 
 	if (isset($GLOBALS[action]) && ($GLOBALS[action] == "reply" || $GLOBALS[action] == "replytoall")) {
@@ -146,11 +160,11 @@ http://www.gnu.org/copyleft/gpl.html
 			echo("<tr><td><b>$strings[l_Priority]:</b></td>\n");
 			echo("<td><select name=\"priority\" style=\"width: 100%;\">");
 			echo("<option value=\"".NORMAL_PRIORITY."\"></option>\n");
-			echo("<option value=\"".HIGHEST_PRIORITY."\" style=\"background-color: #ff3333;\">$strings[l_HighestPriority]</option>\n");	
+			echo("<option value=\"".HIGHEST_PRIORITY."\" style=\"background-color: #ff3333;\">$strings[l_HighestPriority]</option>\n");
 			echo("<option value=\"".HIGH_PRIORITY."\" style=\"background-color: #ff6666;\">$strings[l_HighPriority]</option>\n");								
 			echo("<option value=\"".LOW_PRIORITY."\" style=\"background-color: #9999ff;\">$strings[l_LowPriority]</option>\n");				
 			echo("<option value=\"".LOWEST_PRIORITY."\" style=\"background-color: #4444ff;\">$strings[l_LowestPriority]</option>\n");				
-			echo("</select></td>");
+			echo("</optgroup></td>");
 			echo("</td></tr>");
 		}
 		
@@ -190,13 +204,14 @@ http://www.gnu.org/copyleft/gpl.html
 			echo("<td><input style=\"vertical-align: middle;\" name=\"to\" type=\"image\" src=\"graphics/small_address.gif\" alt=\"$strings[l_To]:\" value=\"to\"> <label for=\"tos\" accesskey=\"T\">$strings[l_To]:</label></td>");						
 			// When the user clicked on an address in the addressbook, the $to_row is set (from above)
 			if ($to_row) {
+				dbg("TO_ROW: $to_row[email]");
 ?>
-				<td><input name="tos" style="width: 100%" value="<?php echo(stripslashes($to_row["email"])); ?>"></td>
+				<td><input name="tos" size="80" value="<?php echo(stripslashes($to_row["email"])); ?>"></td>
 <?php
 			}
 			else {
 ?>
-				<td><input name="tos" style="width: 100%" value="<?php echo(htmlspecialchars(stripslashes($mailer->headers->get("To")))); ?>"></td>
+				<td><input name="tos" size="80" value="<?php echo(htmlspecialchars(stripslashes($mailer->headers->get("To")))); ?>"></td>
 <?php
 			}
 		}
@@ -210,7 +225,7 @@ http://www.gnu.org/copyleft/gpl.html
 		}
 		else {
 			echo("<td><input style=\"vertical-align: middle;\" name=\"cc\" type=\"image\" src=\"graphics/small_address.gif\" alt=\"CC:\" value=\"cc\"> <label for=\"ccs\" accesskey=\"C\">CC:</label></td>");			
-			echo("<td><input name=\"ccs\" style=\"width: 100%\" value=\"".htmlspecialchars($mailer->cc())."\"></td>");
+			echo("<td><input name=\"ccs\" size=\"80\" value=\"".htmlspecialchars(stripslashes($mailer->headers->get("Cc")))."\"></td>");
 		}
 ?>
 	</tr>
@@ -222,7 +237,7 @@ http://www.gnu.org/copyleft/gpl.html
 		}
 		else {
 			echo("<td><input style=\"vertical-align: middle;\" name=\"bcc\" type=\"image\" src=\"graphics/small_address.gif\" alt=\"BCC:\" value=\"bcc\"> <label for=\"bccs\" accesskey=\"B\">BCC:</label></td>");			
-			echo("<td><input name=\"bccs\" style=\"width: 100%\" value=\"".htmlspecialchars($mailer->bcc())."\"></td>");
+			echo("<td><input name=\"bccs\" size=\"80\" value=\"".htmlspecialchars(stripslashes($mailer->headers->get("bcc")))."\"></td>");
 		}
 ?>
 	</tr>
@@ -233,7 +248,7 @@ http://www.gnu.org/copyleft/gpl.html
 			echo("<td>".htmlspecialchars($mailer->charset_decode($mailer->subject()))."</td>\n");
 		}
 		else {
-			echo("<td><input name=\"subject\" style=\"width: 100%\" value=\"".htmlspecialchars($mailer->charset_decode($mailer->subject()))."\"></td>");
+			echo("<td><input name=\"subject\" size=\"80\" value=\"".htmlspecialchars($mailer->charset_decode($mailer->subject()))."\"></td>");
 		}
 ?>
 	</tr>

@@ -74,6 +74,11 @@ textarea {
 	padding: 0, 0, 0, 0;
 }
 
+.window fieldset {
+	margin: 3px, 3px, 3px, 3px;
+	padding: 5px, 5px, 5px, 5px;	
+}
+
 /*****************************
 
  Mailwindow
@@ -246,7 +251,7 @@ td.scrollbar {
 	color: Black;
 	background-color: silver;
 	border: thin outset silver;
-	width: 50%;
+	width: 60%;
 	margin-top: 5%;
 	margin-bottom: 5%;
 }

@@ -1,4 +1,7 @@
 <?php
+	$default_charset		= "koi8-r";
+	$default_encoding		= "7bit";
+
 	$strings["l_Inbox"]			= "Входящие";
 	$strings["l_Outbox"]		= "Исходящие";
 	$strings["l_SentMail"]		= "Отправленные";
@@ -9,7 +12,7 @@
 	$strings["l_ShowDetails"]	= "Показать подробней";
 	$strings["l_SendMail"]		= "Отправить почту";
 	$strings["l_ClickName"]		= "Нажмите на имя чтобы увидеть подробности...";
-	$strings["l_NoMails"]		= "Нет писем в этой папке";
+	$strings["l_NoMails	"]		= " Нет писем в этой папке";
 	$strings["l_To"]			= "Для";
 	$strings["l_From"]			= "От";
 	$strings["l_Date"]			= "Дата";

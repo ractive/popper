@@ -172,17 +172,27 @@ http://www.gnu.org/copyleft/gpl.html
 	else if (is_logged_in()) {
 		// Remove previously created tmp-files
 		$popper->unlink_tmp();
+
+		if ($ok == "OK") {
+			if ($popper->config["mailview"] == FRAME_VIEW) {
+				$popper->show_frame_list();
+			}
+			else {
+				$popper->show("main");
+			}
+			return;
+		}	
 		
 		if (isset($action)) {
 			
 			$popper->pre_frame();
-			
+
 			if ($action == "showfolder") {
 				$popper->show($folder);
 			}
 			else if ($action == "list") {
 				$popper->show_frame_list();
-			}
+			}		
 			else if ($action == "mail_cont") {
 				$popper->show_mail_frame();
 			}							
@@ -223,7 +233,7 @@ http://www.gnu.org/copyleft/gpl.html
 				$popper->show_in_window("newmail", $strings["l_Choosen"]);
 			}			
 			else if ($action == "cancel") {
-				if (isset($old_uri)) {
+				if (isset($old_uri) && $popper->config["mailview"] != FRAME_VIEW) {
 					Header("Location: $old_uri");
 				}
 				else {
@@ -245,7 +255,12 @@ http://www.gnu.org/copyleft/gpl.html
 			}
 			else if ($action == "storemail") {
 				$msg = $popper->store_mail();
-				Header("Location: $old_uri");
+				if ($popper->config["mailview"] == FRAME_VIEW) {
+					$popper->show_form("main");
+				}
+				else {		
+					Header("Location: $old_uri");
+				}
 				//$popper->show_form("main", $msg);
 			}
 			else if ($action == "storeaccount") {
@@ -268,7 +283,7 @@ http://www.gnu.org/copyleft/gpl.html
 			else if ($action == "sendandreceive") {
 				if (!isset($what)) {
 					if ($popper->config["mailview"] == FRAME_VIEW) {
-						$popper->show_small_window("sendreceive");
+						$popper->show_small_window("sendreceive", $strings["l_SendReceive"]);
 					}
 					else {
 						$popper->show_in_window("sendreceive", $strings["l_SendReceive"]);

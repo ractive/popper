@@ -72,7 +72,12 @@ class db_tool {
 	function link_db() {
 		global $strings;
 		$doc_root = getenv("DOCUMENT_ROOT");
-		require("$doc_root/../$this->db_data_inc");
+		$path = $doc_root;
+		if ($GLOBALS["in_docroot"] === false) {
+			$path .= "/..";
+		}
+		$path .= "/".$this->db_data_inc;
+		require($path);
 		$this->db_link = $this->db_connect($host, $user, $pass)
 			or die ($strings["l_ServerConnect"]."<br>".$this->db_error());
 
