@@ -13,7 +13,7 @@ http://www.gnu.org/copyleft/gpl.html
 ==========================================================================*/
 
 	if ($GLOBALS["update"] == 1) {
-		$query = "SELECT * FROM accounts WHERE id = '$this->cur_account_id' AND user_id='$this->userid'";
+		$query = "SELECT * FROM accounts WHERE id = '$this->cur_account_id' AND user_id='$this->user_id'";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
 			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);

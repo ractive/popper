@@ -20,12 +20,16 @@ class mailer extends mail {
 	var $user_id;
 	var $acc_id;
 	var $folder;
+	var $max_size;
 
 	function mailer($user_id, $acc_id = 0) {
 		$this->headers = new headers;
 		$this->db_tool = new db_tool("popper.inc.php");
 		$this->user_id = $user_id;
 		$this->acc_id = $acc_id;
+		$this->max_size = $this->db_tool->get_max_size();
+		//dbg("REPORTED MAX_SIZE: ".$this->max_size);
+		$this->max_size -= 10000;		
 	}
 
 	function load($id) {
@@ -37,8 +41,21 @@ class mailer extends mail {
 		}
 
 		$row = $this->db_tool->fetch_array($res);
-		$this->from_text(stripslashes($row["mail"]));
-		$this->userid = $row["user_id"];
+		$mail = stripslashes($row["mail"]);
+		$query = "SELECT data, part_no FROM mail_parts WHERE mail_id='$row[id]' ORDER by part_no";
+		$res = $this->db_tool->db_query($query);
+		
+		if ($this->db_tool->affected_rows($res) > 0) {
+
+			while($part_row = $this->db_tool->fetch_row($res)) {
+				dbg("PART_NO: ".$part_row[1]);
+				$mail .= stripslashes($part_row[0]);
+			}
+			
+		}
+		dbg("LOADED mail: ".strlen($mail));
+		$this->from_text($mail);
+		$this->user_id = $row["user_id"];
 		$this->folder = $row["folder"];
 		$this->id = $row["id"];
 		$this->acc_id = $row["acc_id"];
@@ -211,10 +228,51 @@ class mailer extends mail {
 		if ($server_uidl != 0 && !$uidl) {
 			$uidl = $server_uidl;
 		}
-		$query = "INSERT INTO mails (tos, froms, from_name, subject, date, folder, user_id, mail, uidl, acc_id, is_mime, was_read, priority) VALUES ('$tos', '$froms', '$from_name', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl', '$this->acc_id', '$is_mime', '$was_read', '$priority')";
-		$res = $this->db_tool->db_query($query);
 
-		return $this->db_tool->insert_id();	
+		
+		dbg("MAX_SIZE: ".$this->max_size);		
+		dbg("SIZE: ".strlen($msg));
+
+		if (($size = strlen($msg)) > $this->max_size) {
+			// We have to split the mail up in pieces
+			// Get the first part
+			dbg("First-part");
+			$part = substr($msg, 0, $this->max_size);
+		}
+		else {
+			$part = &$msg;
+		}
+		dbg("PART-SIZE: ".strlen($part));
+		$query = "INSERT INTO mails (tos, froms, from_name, subject, date, folder, user_id, mail, uidl, acc_id, is_mime, was_read, priority) VALUES ('$tos', '$froms', '$from_name', '$subject', $date, '$folder', '$this->user_id', '$part', '$uidl', '$this->acc_id', '$is_mime', '$was_read', '$priority')";
+		$res = $this->db_tool->db_query($query);
+		dbg("DB_ERROR:".$this->db_tool->db_error());
+		if ($res == 0) {
+			return false;
+		}
+		
+		$ins_id = $this->db_tool->insert_id();	
+		
+		if ($size > $this->max_size) {
+			// Now add the additinal parts to the DB
+
+			$pos = $this->max_size;
+			$part_no = 0;
+			while($pos < $size) {
+				dbg("PART_NO: $part_no");
+				$part = substr($msg, $pos, $this->max_size);
+				$query = "INSERT INTO mail_parts (mail_id, part_no, data) VALUES ('$ins_id', '$part_no', '$part')";
+				dbg("QUERY: ".$query);
+				dbg("DB_ERROR: ".$this->db_tool->db_error());
+				$res = $this->db_tool->db_query($query);	
+				if ($res == 0) {
+					return false;
+				}
+				$part_no++;
+				$pos += $this->max_size;
+			}
+		}		
+		
+		return $ins_id;
 	}
 
 	function start_timer($event) {

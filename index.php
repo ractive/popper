@@ -52,9 +52,10 @@ http://www.gnu.org/copyleft/gpl.html
 	@set_time_limit(60);
 
 	include("class.popper.inc.php");
-	include("class.cal.inc.php");	
+	include("class.cal.inc.php");
 	session_start();
 
+	
 	if ($poppercookie["language"]) {
 		$lang_file = "lang/lang.".$poppercookie["language"].".inc.php";
 	}
@@ -80,7 +81,7 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 	
 	if (!isset($cal) || !is_object($cal)) {
-		$cal = new cal;
+		$cal = new cal();
 	}	
 	
 	if (isset($action) && $action == "lostpwd") {
@@ -122,25 +123,33 @@ http://www.gnu.org/copyleft/gpl.html
 			// We delete the cookies
 			setcookie ("poppercookie[user]", "", time() - 3600);		
 			setcookie ("poppercookie[language]", "", time() - 3600);
+			setcookie ("poppercookie[theme]", "", time() - 3600);			
 			unset($poppercookie);
 		}
 
 		// The password was ok. Now we start the session
 		$logged_in = 1;
 		$popper->set_user($name);
-		
-		session_register("popper", "logged_in");
+		$month = 0;
+		session_register("popper", "logged_in", "month");
 
 		if (isset($set_cookie) && $set_cookie && !$HTTP_COOKIE_VARS["poppercookie"]) {
 			// Set the cookies if the user wants that and if it's not set yet.
 			setcookie("poppercookie[language]", $popper->config["language"], time() + 365 * 24 * 3600);
 			setcookie("poppercookie[user]", $name, time() + 365 * 24 * 3600);
+			setcookie("poppercookie[theme]", $popper->config["theme"], time() + 365 * 24 * 3600);
 		}
 		
 		if (!$popper->has_account()) {
 			$popper->show_in_window("newaccount", $strings["l_Account"], $strings["l_AccInfo"]);		
 			return;
 		}
+		
+		// Make sure the bin is empty also if the user did not logoff
+		if ($popper->config["clean_bin"] == 1) {
+			$popper->clean_bin();
+		}		
+		
 		//$popper->show();
 		// This allows a reload of the page
 		Header("Location: $PHP_SELF");
@@ -204,8 +213,13 @@ http://www.gnu.org/copyleft/gpl.html
 				$popper->show_sources();
 			}
 			else if ($action == "logoff") {
+				if ($popper->config["clean_bin"] == 1) {
+					$popper->clean_bin("s");
+				}
 				session_destroy();
 				$popper->messagebox($strings["l_LogoffMsg"], $strings["l_Logoff"], "$popper->name ".$strings["l_LoggedOff"], $strings["l_GoodBye"]);
+				unset($popper);
+				$popper = 0;
 				return;
 			}
 			else if ($action == "newmail") {
@@ -326,7 +340,13 @@ http://www.gnu.org/copyleft/gpl.html
 			}
 			else if ($action == "selected") {
 				if (isset($GLOBALS["delete_x"]) || isset($GLOBALS["ack"])) {
-					$popper->delete_mails();
+					$msg = $popper->delete_mails();
+					if ($popper->config["mailview"] == FRAME_VIEW) {
+						$popper->show_frame_list();
+					}
+					else {
+						$popper->show_form("main", $msg);
+					}					
 				}
 				else if (isset($GLOBALS["add_addr_x"])) {
 					$popper->add_sel_addr();
@@ -342,7 +362,13 @@ http://www.gnu.org/copyleft/gpl.html
 					// Mark the senders as blocked
 					$popper->add_sel_addr(true);
 					// Delete the mails
-					$popper->delete_blocked();					
+					$msg = $popper->delete_blocked();
+					if ($popper->config["mailview"] == FRAME_VIEW) {
+						$popper->show_frame_list();
+					}
+					else {
+						$popper->show_form("main", $msg);
+					}									
 				}
 				else if (isset($GLOBALS["move"])) {
 					//$popper->move_to();
@@ -350,7 +376,13 @@ http://www.gnu.org/copyleft/gpl.html
 				}				
 			}
 			else if ($action == "deleteall") {
-				$popper->delete_all();
+				$msg = $popper->delete_all();
+				if ($popper->config["mailview"] == FRAME_VIEW) {
+					$popper->show_frame_list();
+				}
+				else {
+					$popper->show_form("main", $msg);
+				}					
 			}
 			else if ($action == "notification") {
 				$popper->send_notification();

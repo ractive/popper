@@ -16,7 +16,8 @@ http://www.gnu.org/copyleft/gpl.html
 	// The file which describes the bottom part of the HTML code
 	$bottom_part = "bottom.inc.php";
 	
-	// Allow the access to other mail-servers than localhost? true/false
+	// Allow only access to the localhost mail-server? true/false
+	// false for access to ANY server
 	$only_localhost = false;
 	
 	// Allow the access to the mail-servers in the array. Add as much as you like.

@@ -13,7 +13,7 @@ http://www.gnu.org/copyleft/gpl.html
 ==========================================================================*/
 
 	if ($GLOBALS[update]) {
-		$query = "SELECT * FROM addresses WHERE id = '$this->cur_address_id' AND user_id='$this->userid'";
+		$query = "SELECT * FROM addresses WHERE id = '$this->cur_address_id' AND user_id='$this->user_id'";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
 			$this->report_error($this->db_tool->db_error(), "DB Error");

@@ -125,10 +125,8 @@ All the above products are freely available!
    MAKE SURE THAT popper.inc.php IS NOT IN THE DOCUMENT ROOT ANY MORE!
    
    If you don't have access to the directory above your document-root,
-   put it in the document-root itself and change line 74
-   of class.db_tool.inc.php to:
-   
-   		require("$doc_root/$this->db_data_inc");
+   put it in the document-root itself and change $in_docroot in
+   config.inc.php to "true"
 
 5. Edit config.inc.php and change the settings to your needs.
 

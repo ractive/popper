@@ -226,4 +226,6 @@
 	$strings["l_LostPwdMail3"]	= "The password has been sent by mail";
 	$strings["l_LostPwdMail4"]	= "Password sent";
 	$strings["l_LostPwdMail5"]	= "The password could not be sent. Do you have entered a valid e-mail address during the registration?";		
+	$strings["l_Folders"]		= "Folders";	
+	$strings["l_Theme"]			= "Theme";
 ?>

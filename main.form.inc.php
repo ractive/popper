@@ -9,7 +9,9 @@
 	}
 	
 	echo("<td width=\"$width\" valign=\"top\" $style>");
-
+		echo("<p class=\"windowtitle\">");
+		echo($strings["l_Folders"]);
+		echo("</p>");
 		$this->show_folders();
 		// Show the addresslist only in FULL_VIEW
 		if ($this->config["view"] == FULL_VIEW) {

@@ -1,0 +1,1 @@
+ALTER TABLE conf ADD clean_bin TINYINT(1) DEFAULT 0;

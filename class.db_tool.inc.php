@@ -16,6 +16,7 @@ class db_tool {
 
 	var $db_data_inc = "";			// contains the vars $host, $user, $pass
 	var $db_link;
+	var $max_size = 0;
 	// Overridable methods
 	//
 	// Adapt to other databases
@@ -195,6 +196,31 @@ class db_tool {
 		}
 	}
 
+	// Get the max. size of a DB entry
+	function get_max_size() {
+		// Is it already calculated
+		if ($this->max_size != 0) {
+			return $this->max_size;
+		}
+		
+		// Assume default
+		$max_size = 1000000;
+		
+		$query = "SHOW VARIABLES";
+		$res = $this->db_query($query);
+		if ($res == 0) {
+			return $max_size;
+		}
+		// Search the varible max_allowed_packet
+		while($row = $this->fetch_array($res)) {
+			if ($row["Variable_name"] == "max_allowed_packet") {
+				// We got it
+				$max_size = $row["Value"];
+				break;
+			}
+		}
+		return $max_size;
+	}
 
 }
 ?>

@@ -12,7 +12,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 ==========================================================================*/
 
-	$query = "SELECT id, name FROM accounts WHERE user_id = '$this->userid'";
+	$query = "SELECT id, name FROM accounts WHERE user_id = '$this->user_id'";
 	$res = $this->db_tool->db_query($query);
 	if ($res == 0) {
 		$this->report_error($this->db_tool->db_error(), "DB Error");

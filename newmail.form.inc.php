@@ -13,7 +13,7 @@ http://www.gnu.org/copyleft/gpl.html
 ==========================================================================*/
 
 	if (isset($GLOBALS[addr_id]) && $GLOBALS[addr_id] != 0) {
-		$query = "SELECT email, name FROM addresses WHERE id='$GLOBALS[addr_id]' AND user_id='$this->userid'";
+		$query = "SELECT email, name FROM addresses WHERE id='$GLOBALS[addr_id]' AND user_id='$this->user_id'";
 		$to_res = $this->db_tool->db_query($query);
 		if ($to_res == 0) {
 			$this->report_error($this->db_tool->db_error(), "DB Error");
@@ -30,7 +30,7 @@ http://www.gnu.org/copyleft/gpl.html
 	// Check if we come from the "Choose recipients" form
 	if (isset($GLOBALS[rec])) {
 		$in = implode(", ", $GLOBALS[rec]);
-		$query = "SELECT email, name FROM addresses WHERE user_id='$this->userid' AND id IN ($in)";
+		$query = "SELECT email, name FROM addresses WHERE user_id='$this->user_id' AND id IN ($in)";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
 			$this->report_error($this->db_tool->db_error(), "Could not fetch recipients");
@@ -65,7 +65,7 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 	else {
 		dbg("NEW CUR_MAILER");
-		$this->cur_mailer = new mailer($this->userid);	
+		$this->cur_mailer = new mailer($this->user_id);	
 		$mailer = $this->cur_mailer;
 	}
 
@@ -79,7 +79,7 @@ http://www.gnu.org/copyleft/gpl.html
 			return;
 		}
 		$read_status = MAIL_REPLIED;
-		$query = "UPDATE mails SET was_read='$read_status' WHERE id='$this->cur_message_id' AND user_id='$this->userid'";
+		$query = "UPDATE mails SET was_read='$read_status' WHERE id='$this->cur_message_id' AND user_id='$this->user_id'";
 		$res = $this->db_tool->db_query($query);
 
 	}
@@ -93,7 +93,7 @@ http://www.gnu.org/copyleft/gpl.html
 			return;
 		}
 		$read_status = MAIL_FORWARDED;		
-		$query = "UPDATE mails SET was_read='$read_status' WHERE id='$this->cur_message_id' AND user_id='$this->userid'";
+		$query = "UPDATE mails SET was_read='$read_status' WHERE id='$this->cur_message_id' AND user_id='$this->user_id'";
 		$res = $this->db_tool->db_query($query);		
 
 	}
@@ -122,7 +122,7 @@ http://www.gnu.org/copyleft/gpl.html
 	}
 	
 	if (!$readonly) {
-		$query = "SELECT id, replyto, name FROM accounts WHERE user_id='$this->userid'";
+		$query = "SELECT id, replyto, name FROM accounts WHERE user_id='$this->user_id'";
 		$acc_res = $this->db_tool->db_query($query);
 	}
 ?>
@@ -258,7 +258,7 @@ http://www.gnu.org/copyleft/gpl.html
 	echo($mailer->decode($mailer->get_text_body()));
 	// Show the signature if the user wants to...
 	if (!$readonly && !isset($GLOBALS[rec])) {
-		$query = "SELECT signature, app_sig FROM conf WHERE user_id = '$this->userid'";
+		$query = "SELECT signature, app_sig FROM conf WHERE user_id = '$this->user_id'";
 		$res = $this->db_tool->db_query($query);
 		if ($res) {
 			$row = $this->db_tool->fetch_array($res);

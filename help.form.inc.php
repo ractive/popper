@@ -314,7 +314,8 @@ Jean-Pierre Bergamin<br>
 <br>
 E-Mail: <a href="mailto:james@ractive.ch">james@ractive.ch</a><br>
 <br>
-Homepage: <a href="http://www.ractive.ch/gpl/popper.html">http://www.ractive.ch/gpl/popper.html</a>
+Homepage: <a href="http://popper.ractive.ch">http://popper.ractive.ch</a><br>
+Forum: <a href="http://forum.ractive.ch">http://forum.ractive.ch</a><br>
 <p>&nbsp;</p>
 	</td>
 	<td>

@@ -15,7 +15,8 @@ http://www.gnu.org/copyleft/gpl.html
 include("class.pop3.inc.php");
 include("class.mailer.inc.php");
 include("config.inc.php");
-include("class.db_tool.inc.php");
+include("class.db_man.inc.php");
+include("class.gui.inc.php");
 
 // Include the missing function array_diff for PHP 4.0.0
 
@@ -25,9 +26,10 @@ if (substr(phpversion(), 0, 5) == "4.0.0") {
 
 class popper {
 
-	var $db_tool;
+	var $db_man;
+	var $gui;
 	var $name = "";
-	var $userid = 0;
+	var $user_id = 0;
 	var $db;
 	var $folder = "";
 	var $cur_message_id = 0;
@@ -38,7 +40,6 @@ class popper {
 	var $tmp_files = array();
 	var $del;
 	var $to;
-	var $max_size;
 	var $language;
 	var $order = "date DESC";
 	var $folders = array(
@@ -73,26 +74,248 @@ class popper {
 				"cur_page" => 0
 			)
 		);
+		
 	var $config = array();
 
 	function popper() {
-		// Create the db_tool object
-		$this->db_tool = new db_tool("popper.inc.php");
-		
-		// Determine the max size of a mail you can
-		// store in the DB
-
-		$query = "SHOW VARIABLES";
-		$res = $this->db_tool->db_query($query);
-		while($row = $this->db_tool->fetch_array($res)) {
-			if ($row["Variable_name"] == "max_allowed_packet") {
-				$this->max_size = $row["Value"];
-				break;
-			}
-		}
+		// Create the db_man object
+		$this->db_man = new db_man(0);
+		$this->gui = new gui(0, 0);
 
 		$this->folder = "inbox";
 	}
+
+	function and_action() {
+		global $ok;
+		// Remove previously created tmp-files
+		$this->unlink_tmp();
+
+		if ($ok == "OK") {
+			if ($popper->config["mailview"] == FRAME_VIEW) {
+				$popper->show_frame_list();
+			}
+			else {
+				$popper->show("main");
+			}
+			return;
+		}	
+		
+		if (isset($action)) {
+			
+			$popper->pre_frame();
+
+			if ($action == "showfolder") {
+				$popper->show($folder);
+			}
+			else if ($action == "list") {
+				$popper->show_frame_list();
+			}		
+			else if ($action == "mail_cont") {
+				$popper->show_mail_frame();
+			}							
+			else if ($action == "showmail") {
+				$popper->show_popup_mail();
+				//$popper->show_form("newmail", $strings["l_ShowMail"]);
+			}			
+			else if ($action == "showsources") {
+				$popper->show_sources();
+			}
+			else if ($action == "logoff") {
+				if ($popper->config["clean_bin"] == 1) {
+					$popper->clean_bin("s");
+				}
+				session_destroy();
+				$popper->messagebox($strings["l_LogoffMsg"], $strings["l_Logoff"], "$popper->name ".$strings["l_LoggedOff"], $strings["l_GoodBye"]);
+				unset($popper);
+				$popper = 0;
+				return;
+			}
+			else if ($action == "newmail") {
+				$popper->show_in_window("newmail", $strings["l_NewMail"]);
+			}
+			else if ($action == "printmail") {
+				$popper->show_popup_mail();
+			}			
+			else if ($action == "reply") {
+				$popper->show_in_window("newmail", $strings["l_ReplyMail"]);
+			}
+			else if ($action == "replytoall") {
+				$popper->show_in_window("newmail", $strings["l_ReplyAllMail"]);
+			}
+			else if ($action == "forward") {
+				$popper->show_in_window("newmail", $strings["l_ForwardMail"]);
+			}
+			else if ($action == "showmail") {
+				$popper->show_popup_mail();
+			}
+			else if ($action == "openmail") {
+				$popper->show_in_window("newmail", $strings["l_ShowMail"]);			
+			}
+			else if ($action == "choosen") {
+				$popper->show_in_window("newmail", $strings["l_Choosen"]);
+			}			
+			else if ($action == "cancel") {
+				if (isset($old_uri) && $popper->config["mailview"] != FRAME_VIEW) {
+					Header("Location: $old_uri");
+				}
+				else {
+					$popper->show_form("main");
+				}
+				return;
+			}
+			else if ($action == "accounts") {
+				$popper->show_form("accounts");
+			}
+			else if ($action == "addressbook") {
+				$popper->show_form("addressbook");
+			}
+			else if ($action == "newaccount") {
+				$popper->show_in_window("newaccount", $strings["l_Account"], $strings["l_FillInAll"]);
+			}
+			else if ($action == "newaddress") {
+				$popper->show_in_window("newaddress", $strings["l_Address"]);
+			}
+			else if ($action == "storemail") {
+				$msg = $popper->store_mail();
+				if ($popper->config["mailview"] == FRAME_VIEW) {
+					$popper->show_form("main");
+				}
+				else {		
+					Header("Location: $old_uri");
+				}
+				//$popper->show_form("main", $msg);
+			}
+			else if ($action == "storeaccount") {
+				$popper->store_account();
+				$popper->show_form("accounts");
+			}
+			else if ($action == "storeaddress") {
+				$popper->store_address();
+				$popper->show_form("addressbook");
+			}
+			else if ($action == "deladdress") {
+				$popper->del_address();
+			}
+			else if ($action == "delaccount") {
+				$popper->del_account();
+			}
+			else if ($action == "checkrep") {
+				$popper->check_repetitive();
+			}			
+			else if ($action == "sendandreceive") {
+				if (!isset($what)) {
+					if ($popper->config["mailview"] == FRAME_VIEW) {
+						$popper->show_small_window("sendreceive", $strings["l_SendReceive"]);
+					}
+					else {
+						$popper->show_in_window("sendreceive", $strings["l_SendReceive"]);
+					}
+				}
+				else {
+					$popper->send_and_receive();
+				}
+			}
+			else if ($action == "getattachment") {
+				$popper->get_attachment();
+			}
+			else if ($action == "config") {
+				if (isset($GLOBALS[conf_submit])) {
+					$popper->store_config();
+		
+					$lang_file = "lang/lang.".$popper->config["language"].".inc.php";
+
+					include($lang_file);
+					
+					setlocale(LC_ALL, $locale);	
+					
+					$popper->show();
+				}
+				else if (isset($changepwd)) {
+					$popper->show_in_window("changepwd", $strings["l_ChangePwd"]);
+				}
+				else if (isset($deluser) || isset($ack)) {
+					$popper->delete_user();
+				}				
+				else {
+					$popper->show_in_window("config", $strings["l_Config"]);
+				}
+			}	
+			else if ($action == "changepwd") {
+				$popper->change_pwd();
+			}					
+			else if ($action == "deletemail") {
+				$popper->delete_mail();
+			}
+			else if ($action == "selected") {
+				if (isset($GLOBALS["delete_x"]) || isset($GLOBALS["ack"])) {
+					$msg = $popper->delete_mails();
+					if ($popper->config["mailview"] == FRAME_VIEW) {
+						$popper->show_frame_list();
+					}
+					else {
+						$popper->show_form("main", $msg);
+					}					
+				}
+				else if (isset($GLOBALS["add_addr_x"])) {
+					$popper->add_sel_addr();
+					if ($popper->config["mailview"] == FRAME_VIEW) {
+						$popper->show_frame_list();
+					}
+					else {
+						$popper->show();
+					}
+									
+				}
+				else if (isset($GLOBALS["block_x"])) {
+					// Mark the senders as blocked
+					$popper->add_sel_addr(true);
+					// Delete the mails
+					$msg = $popper->delete_blocked();
+					if ($popper->config["mailview"] == FRAME_VIEW) {
+						$popper->show_frame_list();
+					}
+					else {
+						$popper->show_form("main", $msg);
+					}									
+				}
+				else if (isset($GLOBALS["move"])) {
+					//$popper->move_to();
+					$popper->report_error("Not implemented yet", "Not implemented");
+				}				
+			}
+			else if ($action == "deleteall") {
+				$msg = $popper->delete_all();
+				if ($popper->config["mailview"] == FRAME_VIEW) {
+					$popper->show_frame_list();
+				}
+				else {
+					$popper->show_form("main", $msg);
+				}					
+			}
+			else if ($action == "notification") {
+				$popper->send_notification();
+				if ($popper->config["mailview"] == IN_VIEW) {
+					Header("Location: ".$GLOBALS[PHP_SELF]."?action=showfolder&folder=".$popper->folder."&mail_id=".$popper->cur_message_id);
+				}
+				else if ($popper->config["mailview"] == FRAME_VIEW) {
+					$popper->show_mail_frame();
+				}
+				else {
+					Header("Location: ".$GLOBALS[PHP_SELF]."?action=showmail&mail_id=".$popper->cur_message_id);				
+				}
+				
+				
+			}					
+			else {
+				$popper->show();
+			}
+		}
+		else {
+			$popper->show();
+		}
+	
+	}
+	
 
 	function pre_frame() {
 		global $mail_id;
@@ -124,7 +347,7 @@ class popper {
 			unset($this->att_mailer);
 			$this->att_mailer = array();		
 			unset($this->cur_mailer);
-			$this->cur_mailer = new mailer($this->userid);
+			$this->cur_mailer = new mailer($this->user_id);
 			$this->cur_mailer->load($mail_id);
 			$this->cur_message_id = $mail_id;
 		}
@@ -133,7 +356,7 @@ class popper {
 		
 	}
 	
-
+	// Delete all tmp files that were created during this seession
 	function unlink_tmp() {
 		foreach($this->tmp_files as $file) {
 			@unlink($file);
@@ -145,38 +368,21 @@ class popper {
 		if (empty($name)) {
 			$name = $this->name;
 		}
-		$query = "SELECT id FROM users WHERE STRCMP(name, '$name') = 0";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
+		
+		$id = $this->db_man->get_userid($name);
+		
+		if ($id === false) {
+			$this->gui->report_dberror($this->db_man->get_error());
 		}
-
-		$row = $this->db_tool->fetch_array($res);
-
-		if (isset($row[id]))
-			return $row[id];
-		else
-			return 0;
-	}
-
-	function get_list_db() {
-		$doc_root = getenv("DOCUMENT_ROOT");
-		require("$doc_root/../popper.inc.php");
-		$this->db = mysql_connect($host, $user, $pass)
-			or die ("Could not connect");
-
-		$query = "use $dbname";
-		mysql_query($query, $this->db)
-			or die ("Could not open mailinglist database");
-
-		return $this->db;
+		
+		return $id;
 	}
 
 	function set_user($name) {
 		global $strings;
 		$this->name = $name;
-		$this->userid = $this->get_userid();
+		$this->user_id = $this->get_userid($name);
+		$this->db_man->user_id = $this->user_id;
 		$this->load_config();
 		if ($this->config["auto_check"] == 1) {
 			$this->get_mails();
@@ -210,43 +416,28 @@ class popper {
 	
 	function load_config() {
 		global $strings;
+
+		$config = $this->db_man->get_config();
 		
-		$query = "SELECT * FROM conf WHERE user_id = '$this->userid'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_UserInfoFail"]);
-			return;
+		if ($config === false) {
+			$this->gui->report_error($this->db_man->get_error(), $strings["l_UserInfoFail"]);
 		}
 		
-		$row = $this->db_tool->fetch_array($res);
-		$this->config["keep"]			= $row["keep"];
-		$this->config["server_del"]		= $row["server_del"];
-		$this->config["auto_check"]		= $row["auto_check"];
-		$this->config["signature"]		= $row["signature"];
-		$this->config["app_sig"]		= $row["app_sig"];								
-		$this->config["send_direct"]	= $row["send_direct"];
-		$this->config["mails_per_page"] = $row["mails_per_page"];
-		$this->config["mail_rows"]		= $row["mail_rows"];
-		$this->config["add_address"]	= $row["add_address"];
-		$this->config["language"]		= $row["language"];
-		$this->config["subject_size"]	= $row["subject_size"];
-		$this->config["address_size"]	= $row["address_size"];
-		$this->config["check_int"]		= $row["check_int"];
-		$this->config["view"]			= $row["view"];	
-		$this->config["mailview"]		= $row["mailview"];			
+		$this->config = $config;
+					
 	}
 
 	function send_pwd() {
 		global $user, $strings;
 		
-		$query = "SELECT users.email as email, users.pwd as pwd, conf.language as lang FROM users LEFT JOIN conf ON conf.user_id = users.id WHERE users.name='$user'";
-		$res = $this->db_tool->db_query($query);
-		if ($this->db_tool->affected_rows($res) != 1) {
-			$this->show_in_window("lostpwd", $strings["l_LostPwd"], $strings["l_UserNotFound"]);
-			return;
+		$row = $this->db_man->get_pwd_info($name);
+		
+		if ($row === false) {
+			$this->gui->report_error($this->db_man->get_dberror());		
 		}
-	
-		$row = $this->db_tool->fetch_array($res);
+		else if ($row == -1) {
+			$this->show_in_window("lostpwd", $strings["l_LostPwd"], $strings["l_UserNotFound"]);		
+		}
 
 		$lang_file = "lang/lang.".$row["lang"].".inc.php";
 		if (!file_exists($lang_file)) {
@@ -274,7 +465,7 @@ class popper {
 	
 
 	function show_in_window($form, $title="", $status_msg="", $msgboxtext = "", $msgboxhead="") {
-		global $top_part, $bottom_part, $strings, $action;
+		global $top_part, $bottom_part, $strings, $action, $poppercookie;
 		
 		if ($this->config["mailview"] == FRAME_VIEW && $form != "config" && $form != "changepwd" && $form != "newmail") {
 			$this->show_small_window($form, $title, $status_msg, $msgboxtext, $msgboxhead);
@@ -308,7 +499,7 @@ class popper {
 	}
 	
 	function show_form($form, $status_msg = "") {
-		global $account_id, $addr_id, $strings, $action;
+		global $account_id, $addr_id, $strings, $action, $poppercookie;
 
 		$this->set_cur();
 
@@ -364,22 +555,20 @@ class popper {
 		
 		// Is there a notification header?
 		$notify = $this->cur_mailer->headers->get("Disposition-Notification-To");
-		if (!empty($notify)) {		
-			$query = "SELECT was_read FROM mails WHERE user_id = '$this->userid' AND id='$this->cur_message_id'";
-			$res = $this->db_tool->db_query($query);
-			if ($res != 0 && $row = $this->db_tool->fetch_array($res)) {
-				if ($row["was_read"] == MAIL_UNREAD) {
-					$options = $this->cur_mailer->get_header("Disposition-Notification-Options");
-					if ($options && $options["attribute"] == "important") {
-						// We don't know any options...
-						// Ignore the notification
-						return;
-					}
-					
-					echo("<tr class=\"childwindow\"><td>$strings[l_NotifyQuest]<br>$strings[l_NotifyQuest2]</td>\n");
-					echo("<td><form action=\"$GLOBALS[PHP_SELF]\" method=\"GET\">\n<input type=\"submit\" name=\"submit\" value=\"$strings[l_SendNot]\">");
-					echo("<input type=\"hidden\" name=\"action\" value=\"notification\"></form>\n</td>\n</tr>\n");
+		if (!empty($notify)) {
+			if ($this->db_man->get_read_status($this->cur_message_id) == MAIL_UNREAD) {
+				$options = $this->cur_mailer->get_header("Disposition-Notification-Options");
+				if ($options && $options["attribute"] == "important") {
+					// We don't know any options...
+					// Ignore the notification
+					return;
 				}
+				
+				$this->gui->show_notification_request();
+				
+				//echo("<tr class=\"childwindow\"><td>$strings[l_NotifyQuest]<br>$strings[l_NotifyQuest2]</td>\n");
+				//echo("<td><form action=\"$GLOBALS[PHP_SELF]\" method=\"GET\">\n<input type=\"submit\" name=\"submit\" value=\"$strings[l_SendNot]\">");
+				//echo("<input type=\"hidden\" name=\"action\" value=\"notification\"></form>\n</td>\n</tr>\n");
 			}
 		}
 		
@@ -388,14 +577,9 @@ class popper {
 	function send_notification() {
 		global $strings;
 
-		$not_mailer = new mailer($this->userid);
+		$not_mailer = new mailer($this->user_id);
 		$notify = $this->cur_mailer->headers->get("Disposition-Notification-To");
 		$from = $this->cur_mailer->headers->get("To");
-
-		/*echo "TO: $notify<br>";
-		echo("FROM: ".$this->cur_mailer->headers->get("To")."<br>");
-		echo("SUBJECT: Re: ".$this->cur_mailer->headers->get("Subject"));
-		echo("<br>");*/
 
 		$msg = $strings["l_NotMsg"]."\r\n\r\n";
 
@@ -423,9 +607,7 @@ class popper {
 	}
 
 	function has_account() {
-		$query = "SELECT id FROM accounts WHERE user_id='$this->userid'";
-		$res = $this->db_tool->db_query($query);
-		return $this->db_tool->affected_rows($res) > 0;
+		return $this->db_man->account_present();
 	}
 
 	function update_pageno($page, $mail_count) {
@@ -451,65 +633,43 @@ class popper {
 
 	function folder_selected($folder) {
 		if ($this->folder == $folder) {
-			echo(" style=\"background-color: Blue; color: White;\" ");
+			echo(" class=\"selected\" ");
 		}
 	}
 
 	function address_selected($address) {
 		if ($this->cur_address_id == $address) {
-			echo(" style=\"background-color: Blue; color: White;\" ");
+			echo(" class=\"selected\" ");
 		}
 	}
 	function mail_selected($message) {
 		if (($this->config["mailview"] == IN_VIEW || $this->config["mailview"] == SEP_VIEW) && $this->cur_message_id == $message) {
-			echo(" style=\"background-color: Blue; color: White;\" ");
+			echo(" class=\"selected\" ");
 		}
 	}
 
 	function account_selected($acc_id) {
 		if ($this->cur_account_id == $acc_id) {
-			echo(" style=\"background-color: Blue; color: White;\" ");
+			echo(" class=\"selected\" ");
 		}
 	}
 
 	function show_addresses($blocked = false) {
 		global $addr_id, $strings, $show;
 
-		if ($show == "blocked") {
-			$blocked = true;
-			echo("<h3>".$strings["l_Blocked"]."</h3>");
-		}
-		
+		$blocked = ($show == "blocked");
 
 		if (isset($addr_id) && !empty($addr_id)) {
 			$this->cur_address_id = $addr_id;
 		}
 
-		$query = "SELECT id, IF(LENGTH(name) > '".$this->config["address_size"]."', CONCAT(LEFT(name, '".$this->config["address_size"]."'), '...'), name) as name, IF(LENGTH(email) > '".$this->config["address_size"]."', CONCAT(LEFT(email, '".$this->config["address_size"]."'), '...'), email) as email FROM addresses WHERE user_id = '$this->userid' AND blocked='$blocked'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
-		}
-		if ($this->db_tool->affected_rows() < 1) {
-			echo($strings[l_NoAddress]);
-			return;
+		$addr = $this->db_man->get_addresses($this->config["address_size"], $blocked);
+		
+		if ($addr === false) {
+			$this->gui->report_dberror($this->db_man->get_error());
 		}
 
-		echo("<table>\n");
-		echo("<tr><th align=\"left\" width=\"50%\">Name</th><th align=\"left\">E-Mail</th></tr>\n");
-		while($row = $this->db_tool->fetch_array($res)) {
-			echo("<tr><td>\n");
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=addressbook&addr_id=$row[id]");
-			if ($blocked) {
-				echo("&show=blocked");
-			}
-			echo("\" title=\"$strings[l_ShowDetails]\"");
-			$this->address_selected($row[id]);
-			echo(">".$this->extract_disp_name(stripslashes($row[name]))."</a></td>\n");
-			echo("<td><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"$strings[l_SendMail]\" target=\"_parent\">".stripslashes($row["email"])."</a></td></tr>\n");
-		}
-		echo("</table>\n");
+		$this->gui->show_addresses($addr, $this->cur_address_id, $blocked);
 	}
 
 	function show_address() {
@@ -518,125 +678,31 @@ class popper {
 		if (isset($addr_id) && !empty($addr_id)) {
 			$this->cur_address_id = $addr_id;
 		}
-		$query = "SELECT * FROM addresses WHERE user_id='$this->userid' AND id='$this->cur_address_id'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
+		
+		$addr = $this->db_man->get_address($this->cur_address_id);
+		
+		if ($addr === false) {
+			$this->gui->report_dberror($this->db_man->get_error());
 		}
-		if ($this->db_tool->affected_rows() != 1) {
-			echo("$strings[l_ClickName]<br><br><br><br><br><br><br><br><br><br><br>");
-			return;
-		}
-		$row = $this->db_tool->fetch_array($res);
-?>
-		<table cellpadding="3" cellspacing="3">
-			<tr>
-				<td><b><?php echo($strings[l_Name]); ?>:</b></td>
-				<td><?php echo(stripslashes($row["name"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_LastName]); ?>:</b></td>
-				<td><?php echo(stripslashes($row["lastname"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_NickName]); ?>:</b></td>
-				<td><?php echo(stripslashes($row["nickname"])); ?></td>
-			</tr>
-			<tr>
-				<td><b>E-Mail:</b></td>
-				<td><?php echo(stripslashes($row["email"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_Address]); ?> 1:</b></td>
-				<td><?php echo(stripslashes($row["address1"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_Address]); ?> 2:</b></td>
-				<td><?php echo(stripslashes($row["address2"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_ZIP]); ?>:</b></td>
-				<td><?php echo(stripslashes($row["zip"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_Town]); ?>:</b></td>
-				<td><?php echo(stripslashes($row["town"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_State]); ?>:</b></td>
-				<td><?php echo(stripslashes($row["state"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_Country]); ?>:</b></td>
-				<td><?php echo(stripslashes($row["country"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_Phone]); ?>:</b></td>
-				<td><?php echo(stripslashes($row["phone"])); ?></td>
-			</tr>
-			<tr>
-				<td><b><?php echo($strings[l_MobilePhone]); ?>:</b></td>
-				<td><?php echo(stripslashes($row["mobile"])); ?></td>
-			</tr>
-			<tr>
-				<td><b>Homepage:</b></td>
-				<td>
-				<?php
-					if (!empty($row[homepage])) {
-						echo("<a href=\"$row[homepage]\">".stripslashes($row["homepage"])."</a>");
-					}
-				?>
-				</td>
-			</tr>
-		</table>
-<?php
+		
+		$this->gui->show_address($addr);
 	}
 
-	function show_account() {
 
+
+	function show_account() {
 		global $account_id, $strings;
 
 		if (isset($account_id) && !empty($account_id)) {
 			$this->cur_account_id = $account_id;
 		}
 
-		$query = "SELECT * FROM accounts WHERE user_id = '$this->userid' AND id = '$this->cur_account_id'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
+		$row = $this->db_man->get_account($this->cur_account_id);
+		if ($row === false) {
+			$this->gui->report_dberror($this->db_man->get_error());
 		}
-		if ($this->db_tool->affected_rows() != 1) {
-			echo("$strings[l_ClickName]<br><br><br><br><br><br><br><br><br><br><br>");
-			return;
-		}
-		$row = $this->db_tool->fetch_array($res);
-?>
-		<table cellpadding="3" cellspacing="3">
-			<tr>
-				<td><?php echo($strings[l_AccountName]); ?>:</td>
-				<td><?php echo(stripslashes($row["name"]));?></td>
-			</tr>
-			<tr>
-				<td><?php echo($strings[l_From]." ".$strings[l_Name]); ?>:</td>
-				<td><?php echo(stripslashes($row["fromname"]));?></td>
-			</tr>
-			<tr>
-				<td><?php echo($strings[l_ReplyTo]); ?>:</td>
-				<td><?php echo(stripslashes($row["replyto"]));?></td>
-			</tr>
-			<tr>
-				<td><?php echo($strings[l_POPServer]); ?>:</td>
-				<td><?php echo(stripslashes($row["popserver"]));?></td>
-			</tr>
-			<tr>
-				<td><?php echo($strings[l_POPLogin]); ?>:</td>
-				<td><?php echo(stripslashes($row["poplogin"]));?></td>
-			</tr>
-		</table>
-		<br><br><br>
-<?php
+		
+		$this->gui->show_account($row);
 	}
 
 	function show_accounts() {
@@ -646,87 +712,32 @@ class popper {
 			$this->cur_account_id = $account_id;
 		}
 
-		$query = "SELECT id, name, popserver FROM accounts WHERE user_id = '$this->userid'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
+		$acc = $this->db_man->get_accounts();
+		if ($addr === false) {
+			$this->gui->report_dberror($this->db_man->get_error());
 		}
 
-		echo("<table width=\"100%\">\n");
-		echo("<tr>");
-
-		echo("<th align=\"left\">$strings[l_Name]</th><th align=\"left\">$strings[l_Server]</th></tr>\n");
-		while($row = $this->db_tool->fetch_array($res)) {
-			echo("<tr><td>\n");
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=accounts&account_id=$row[id]\" title=\"$strings[l_ShowDetails]\"");
-			$this->account_selected($row[id]);
-			echo(">".stripslashes($row["name"])."</a></td>\n");
-			echo("<td>".stripslashes($row["popserver"])."</td></tr>\n");
-		}
-		echo("</table>\n");
+		$this->gui->show_accounts($acc, $this->cur_account_id);
 	}
 
 	function store_address() {
-		$GLOBALS["user_id"] = $this->userid;
-		$this->db_tool->store("addresses", "user_id", "email", "name", "lastname", "nickname", "address1", "address2", "zip", "town", "state", "country", "phone", "mobile", "homepage", "blocked", "id='$this->cur_address_id' AND user_id='$this->userid'");
+		$GLOBALS["user_id"] = $this->user_id;
+		$this->db_man->db_tool->store("addresses", "user_id", "email", "name", "lastname", "nickname", "address1", "address2", "zip", "town", "state", "country", "phone", "mobile", "homepage", "blocked", "id='$this->cur_address_id' AND user_id='$this->user_id'");
 	}
 
 	function store_account() {
-		$GLOBALS["user_id"] = $this->userid;
-		$this->db_tool->store("accounts", "user_id", "name", "fromname", "replyto", "popserver", "poplogin" ,"poppwd", "id='$this->cur_account_id' AND user_id='$this->userid'");
-	}
-
-	function get_account_name($id = "") {
-		global $strings;
-		if(!isset($id) || empty($id)) {
-			$id = $this->cur_account_id;
-		}
-		$query = "SELECT name FROM  accounts WHERE id=$id AND user_id='$this->userid'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
-		}
-		if ($this->db_tool->affected_rows($res) != 1) {
-			return "";
-		}
-
-		$row = $this->db_tool->fetch_row($res);
-
-		return stripslashes($row[0]);
-	}
-
-	function get_address_name($id = "") {
-		global $strings;
-		
-		if(!isset($id) || empty($id)) {
-			$id = $this->cur_address_id;
-		}
-		$query = "SELECT name FROM  addresses WHERE id='$id' AND user_id='$this->userid'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return "";
-		}
-		if ($this->db_tool->affected_rows($res) != 1) {
-			return "";
-		}
-
-		$row = $this->db_tool->fetch_row($res);
-
-		return stripslashes($row[0]);
+		$GLOBALS["user_id"] = $this->user_id;
+		$this->db_man->db_tool->store("accounts", "user_id", "name", "fromname", "replyto", "popserver", "poplogin" ,"poppwd", "id='$this->cur_account_id' AND user_id='$this->user_id'");
 	}
 
 	function show_ack($title = "", $status_msg = "") {
+		//$this->gui->show_ack($title, $status_msg);
 		if ($this->config["mailview"] == FRAME_VIEW) {
 			$this->show_small_window("ack", $title, $status_msg);
 		}
 		else {
 			$this->show_in_window("ack", $title, $status_msg);
 		}
-		
-		
 	}
 	
 
@@ -734,16 +745,15 @@ class popper {
 		global $ack, $strings;
 		
 		// First try to unblock the address
-		$query = "UPDATE addresses SET blocked=0 WHERE id = '$this->cur_address_id' AND user_id = '$this->userid' AND blocked=1";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
+		$unblock = $this->db_man->unblock_addr($id);
+
+		if ($unblockf === false) {
+			$this->gui->report_dberror($this->db_man->get_error());
 		}
 
-		if ($this->db_tool->affected_rows($res) == 0) {
+		if ($unblock == 0) {
 			// The address was not blocked. Delete it
-			$name = $this->get_address_name();
+			$name = $this->db_man->get_address_name($this->cur_address_id);
 			if (!isset($ack) || empty($ack) ) {
 				$this->show_ack($strings["l_DelAddress"].": $name", $strings["l_DelAddressConf"]);
 				return;
@@ -752,13 +762,12 @@ class popper {
 				$del_msg = "Deletion cancelled!";
 			}
 			else {
-				$query = "DELETE FROM addresses WHERE id = '$this->cur_address_id' AND user_id = '$this->userid'";
-				$res = $this->db_tool->db_query($query);
-				if ($res == 0) {
-					$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-					return;
+				$ret = $this->db_man->del_address($id);
+				if ($ret === false) {
+					$this->gui->report_dberror($this->db_man->get_error());				
 				}
-				if ($this->db_tool->affected_rows() > 0) {
+
+				if ($ret > 0) {
 					$del_msg = $strings["l_AddressDel"];
 				}
 				else {
@@ -774,7 +783,7 @@ class popper {
 
 	function del_account() {
 		global $ack, $strings;;
-		$accountname = $this->get_account_name();
+		$accountname = $this->db_man->get_account_name($this->cur_account_id);
 		if (!isset($ack) || empty($ack) ) {
 			$this->show_ack($strings["l_DelAccount"]." $accountname", $strings["l_DelAccountConf"]);
 			return;
@@ -783,13 +792,12 @@ class popper {
 			$del_msg = "Deletion cancelled!";
 		}
 		else {
-			$query = "DELETE FROM accounts WHERE id = '$this->cur_account_id' AND user_id = '$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-				return;
+			$ret = $this->db_man->del_account($this->cur_account_id);
+
+			if ($ret === false) {
+				$this->gui->report_dberror($this->db_man->get_error());
 			}
-			if ($this->db_tool->affected_rows() > 0) {
+			if ($ret > 0) {
 				$del_msg = $strings["l_AccountDel"];
 			}
 			else {
@@ -804,15 +812,13 @@ class popper {
 
 	function show_folders() {
 		$unread = MAIL_UNREAD;
-		$query = "SELECT folder, count(*) as count FROM mails WHERE was_read='$unread' AND user_id='$this->userid' GROUP BY folder";
-		$res = $this->db_tool->db_query($query);
-		if ($res != 0) {
-			while($row = $this->db_tool->fetch_array($res)) {
-				// Make an key-value array. Key = foldername, value=count of unread mails
-				$folder_info[$row[folder]] = $row[count];
-			}
-		}
 		
+		$folder_info = $this->db_man->get_folder_unread();
+
+		if ($folder_info === false) {
+			$this->gui->report_dberror($this->db_man->get_error());		
+		}
+	
 		if ($this->config["view"] == MIN_VIEW) {
 			$width = "100%";
 		}
@@ -865,22 +871,20 @@ class popper {
 	}
 
 	function count_mails() {
-		global $strings;
-		
-		$query = "SELECT COUNT(*) FROM mails WHERE user_id='$this->userid' AND folder='$this->folder'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
+		global $strings;		
+		$count = $this->db_man->count_mails($this->folder);
+
+		if ($count === false) {
+			$this->gui->report_dberror($this->db_man->get_error());		
 		}
-		$row = $this->db_tool->fetch_row($res);
-		return $row[0];
+
+		return $count;
 	}
 
-	function report_error($err_msg, $head) {
+	/*function report_error($err_msg, $head) {
 		$this->messagebox($err_msg, "ERROR", $head);
 		exit;
-	}
+	}*/
 
 	function show_frame_list() {
 		global $folder;
@@ -999,21 +1003,23 @@ class popper {
 			$pageno = $this->get_pageno() * $this->config["mails_per_page"];
 			$mails = $this->config["mails_per_page"];
 
-			$query = "SELECT id, tos, from_name as froms, subject, is_mime, date, was_read, priority FROM mails WHERE folder = '$this->folder' AND user_id = '$this->userid' ORDER BY $order";
+			//$query = "SELECT id, tos, from_name as froms, subject, is_mime, date, was_read, priority FROM mails WHERE folder = '$this->folder' AND user_id = '$this->user_id' ORDER BY $order";
+
+
 
 			// Show all mails in FRAME view
-			if ($this->config["mailview"] != FRAME_VIEW) {
-				$query .= " LIMIT $pageno, $mails";
+			if ($this->config["mailview"] == FRAME_VIEW) {
+				$mail_list = $this->db_man->get_mail_list($this->folder, $order);
+			}
+			else {
+				$mail_list = $this->db_man->get_mail_list($this->folder, $order, $pageno, $mails);			
 			}
 			
-			$res = $this->db_tool->db_query($query);
-
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-				return;
+			if ($mail_list === false) {
+				$this->gui->report_dberror($this->db_man->get_error());
 			}
 			// See how much mails we got
-			if (($count = $this->db_tool->affected_rows()) == 0) {
+			if (($count = sizeof($mail_list)) == 0) {
 				if ($this->get_pageno() > 0) {
 					// The user probably delete the last mail on the page.
 					// Make a new SELECT on the previous page
@@ -1033,8 +1039,11 @@ class popper {
 		}
 						
 		// Now fill in the mails
-		while ($row = $this->db_tool->fetch_array($res)) {
-			echo("<tr");
+		foreach($mail_list as $row) {
+			echo("<tr ");
+			if ($this->config["mailview"] != FRAME_VIEW) {
+				$this->mail_selected($row[id]);
+			}		
 			// If the mail was not read, display it bold
 			switch($row["was_read"]) {
 				case MAIL_UNREAD:
@@ -1166,7 +1175,8 @@ class popper {
 	function show_folder_content() {
 		if ($this->config["mailview"] == FRAME_VIEW) {
 			$height = $this->config["mails_per_page"];
-			echo("<iframe name=\"maillist\" src=\"$GLOBALS[PHP_SELF]?action=list\" width=\"100%\" style=\"height: ".$height."em;\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\"></iframe>");
+			//echo("<iframe name=\"maillist\" src=\"$GLOBALS[PHP_SELF]?action=list\" width=\"100%\" style=\"height: ".$height."em;\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\"></iframe>");
+			echo("<iframe name=\"maillist\" src=\"\" width=\"100%\" style=\"height: ".$height."em;\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\"></iframe>");			
 		}
 		else {
 			$this->show_list_headers();	
@@ -1228,14 +1238,9 @@ class popper {
 		$content = "";
 		if ($action == "showsources") {
 			if ($mail_id != "att") {
-				$query = "SELECT mail FROM mails WHERE id='$mail_id' AND user_id='$this->userid'";
-				$res = $this->db_tool->db_query($query);
-				if ($res == 0) {
+				$content = $this->db_man->get_mail($mail_id);
+				if ($content === false) {
 					$content = "\r\n\r\n  ======== ERROR while trying to get sources! ========";
-				}
-				else {
-					$row = $this->db_tool->fetch_row($res);
-					$content = $row[0];
 				}
 			}
 			else {
@@ -1358,43 +1363,18 @@ class popper {
 			return;
 		}
 
-		// Get all mail ids
-		$query = "SELECT id FROM mails WHERE user_id='$this->userid' ORDER BY $this->order";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			exit;	
+		if ($goto == "next") {
+			$id = $this->db_man->next_prev($mail_id, true, $this->order);
 		}
-
-		$old = 0;
-		
-		// Look for the current id
-		while($row = $this->db_tool->fetch_row($res)) {
-
-			if ($row[0] == $mail_id) {
-				if ($goto == "next") {
-					// Get the next entry.
-					// This is the new mail_id
-					$row = $this->db_tool->fetch_row($res);
-					$mail_id = $row[0];
-					dbg("NEW MAIL_ID: $mail_id");
-					return;
-				}
-				else if ($goto == "prev") {
-					// The old entry is the new mail id
-					// It it's null, we are at the top
-					if ($old == 0) {
-						return;
-					}
-					$mail_id = $old;
-					return;
-				}
-			}
-			$old = $row[0];
+		else {
+			$id = $this->db_man->next_prev($mail_id, false, $this->order);
 		}
 		
+		if ($id === false) {
+			return;
+		}
 		
-		
+		$mail_id = $id;
 	}
 	
 	function show_popup_mail($show_att_mail = false) {
@@ -1520,9 +1500,7 @@ class popper {
 	
 
 	function set_mail_read($mail_id) {
-		$query = "UPDATE mails SET was_read='".MAIL_READ."' WHERE id='$mail_id' AND user_id='$this->userid' AND was_read='".MAIL_UNREAD."'";
-		$this->db_tool->db_query($query);
-		echo $this->db_tool->db_error();
+		$this->db_man->set_mail_status($mail_id, MAIL_READ);
 	}
 
 	function get_foldername() {
@@ -1534,32 +1512,29 @@ class popper {
 		// Check if we were called with mailaddress and password to really login.
 
 		if (!empty($name) && !empty($pwd)) {
+			
+			$ret = $this->db_man->check_pwd($name, $pwd);
 
-			$res = $this->db_tool->db_query("SELECT name, pwd FROM users WHERE STRCMP(name, '$name') = 0");
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-				return;
+			if ($ret === false) {
+				$this->gui->report_dberror($this->db_man->get_error());
 			}
-			if ($this->db_tool->affected_rows() == 0) {
+			if ($ret == 0) {
 				unset($name);
 				unset($pwd);
 				$this->show_in_window("newuser", $strings[l_NewUser], $strings["l_UserNotFound"]);
 			}
 
-			$row = $this->db_tool->fetch_array($res)
-				or die (mysql_error());
-
-			if ($row[pwd] != $pwd) {
+			if ($ret == -1) {
 				unset($name);
 				unset($pwd);
 				$this->show_in_window("login", $strings["l_Login"], $strings["l_PwdWrong"]);
 			}
-			else {
-				return 1;
+			else if ($ret == 1) {
+				return true;
 			}
 		}
 
-		return 0;
+		return false;
 	}
 
 	function create_user() {
@@ -1586,23 +1561,17 @@ class popper {
 
 		// Everything is fine. Now we insert the new user into the DB
 		$activated = !$user_confirmation;
-		$query = "INSERT INTO users (name, pwd, email, activated) VALUES ('$name', '$pwd', '$email', '$activated')";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$error = mysql_error();
-			if (ereg("^Duplicate entry", $error)) {
-				$this->show_in_window("newuser", $strings["l_UserExists1"], $strins["l_UserExists2"]." ".$name);
-				return 0;
-			}
-			else {
-				$this->report_error($error, $strings["l_DBError"]);
-			}
+		$ret = $this->db_man->create_user($name, $pwd, $email, $activated);
+		if ($ret === false) {
+			$this->gui->report_dberror($this->db_man->get_error());
 		}
-		$this->userid = $this->db_tool->insert_id();
+		else if ($ret == -1) {
+			$this->show_in_window("newuser", $strings["l_UserExists1"], $strins["l_UserExists2"]." ".$name);
+			return 0;
+		}
 		
-		$query = "INSERT INTO conf (user_id, keep) VALUES ('$this->userid', 1)";
+		$this->user_id = $ret;
 		
-		$res = $this->db_tool->db_query($query);
 		$this->load_config();
 		$this->set_user($name);
 		
@@ -1610,27 +1579,24 @@ class popper {
 			$this->send_confirmation_mail($name, $email);
 		}
 
-		return ($this->userid > 0);
+		return ($this->user_id > 0);
 	}
 
 	function send_confirmation_mail($name, $email) {
 		global $strings;
 		
-		srand((double)microtime()*1000000);
-		$check = md5(rand());
+		$check = $this->db_man->creae_conf_check($id);
+		
+
+		if ($res == 0) {
+			$this->gui->report_dberror($this->db_man->get_error());
+		}
+		
 		$server = "http://".getenv("SERVER_NAME");
 		$href  = $server.$GLOBALS[PHP_SELF];
 		$href .= "?check=$check";
-
-		// Save it in the database
-		$query = "INSERT INTO confirmations (user_id, check) VALUES ('$this->userid', '$check')";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($strings["l_ConfFail"]."<br><br>".$this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
-		}
-
-		$mailer = new mailer($this->userid);
+		
+		$mailer = new mailer($this->user_id);
 		$mailer->to($email);
 		$mailer->subject($strings["l_ConfSubject"]);
 		$mailer->from("webmaster@".getenv("SERVER_NAME"));		
@@ -1646,41 +1612,21 @@ class popper {
 	function check_confirmation($check) {
 		global $strings;
 		
-		$query = "SELECT user_id FROM confirmations WHERE check='$check'";
-		$res = $this->db_tool->db_query($query);
-		$row = $this->db_tool->fetch_array($res);
-		$ret = $this->db_tool->affected_rows($res);
-		if ($res != 0 && $ret != 0) {
-			$query = "UPDATE users SET activated=1 WHERE id='$row[user_id]'";
-			$ret &= $this->db_tool->db_query($query);
-			
-			if ($ret != 0) {
-				$query = "DELETE FROM confirmations WHERE check='$check'";
-				$ret = $this->db_tool->db_query($query);
-			}
-
-			if ($ret == 0) {
-				$this->report_error($strings["l_AccActivation2"], $strings["l_DBError"]);
-				exit;
-			}			
-		}
+		$ret = $this->db_man->check_confirmation($check);
 		
-		return $ret;
+		if ($ret === false) {
+			$this->gui->report_dberror($this->db_man->get_error());		
+		}
+		else if ($ret == -1) {
+			// The $check was not found in the DB
+			$this->report_error($strings["l_AccActivation2"], $strings["l_DBError"]);
+		}
+		// Account activated
+		return true;
 	}
 
 	function is_activated($name) {
-		$id = $this->get_userid($name);
-		$query = "SELECT activated FROM users WHERE id='$id'";
-
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($strings["l_ActStatus"], $strings["l_DBError"]);
-			exit;
-		}
-		$row = $this->db_tool->fetch_array($res);
-		
-		return $row["activated"];
-		
+		return $this->db_man->is_activated($name);
 	}
 
 	function messagebox($msgtext, $msgtitle = "", $msghead = "", $msgstatus = "") {
@@ -1695,15 +1641,12 @@ class popper {
 		if (isset($to_x) || isset($cc_x) || isset($bcc_x)) {
 			$backup = true;
 		}
-
-		$query = "SELECT fromname, replyto FROM accounts WHERE id = '$replyaccount' AND user_id='$this->userid'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_AccInfoFail"]);
-			exit;
+		
+		$row = $this->db_man->quick_select("accounts", "fromname", "replyto", "id = '$replyaccount'");
+		if ($row === false) {
+			$this->gui->report_dberror($this->db_man->get_error());				
 		}
-		$row = $this->db_tool->fetch_array($res);
-
+		
 		if ($submit == $strings["l_Send"]) {
 			$folder = "outbox";
 		}
@@ -1715,7 +1658,7 @@ class popper {
 			$folder = "inbox";
 		}
 		$reply = "\"".$row["fromname"]."\" <".$row["replyto"].">";
-		$mailer = new mailer($this->userid, $replyaccount);
+		$mailer = new mailer($this->user_id, $replyaccount);
 		$mailer->create($tos, $reply, $subject, $body);
 		if (isset($ccs) && !empty($ccs)) {
 			$mailer->cc($ccs);
@@ -1815,7 +1758,8 @@ class popper {
 				$type_pic = "email.gif";
 				break;
 			case "audio/wav":
-			case "autio/mp3":
+			case "audio/mp3":
+			case "audio/mpeg":			
 				$type_pic = "sound.gif";
 				break;
 			default:
@@ -1896,7 +1840,7 @@ class popper {
 			$mailer = $of_part;
 		}
 		else if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {		
-			$this->cur_mailer = new mailer($this->userid);
+			$this->cur_mailer = new mailer($this->user_id);
 			$this->cur_mailer->load($this->cur_message_id);
 			$mailer = $this->cur_mailer;
 		}
@@ -1986,7 +1930,7 @@ class popper {
 			return;
 		}
 		if ($this->cur_mailer == 0 || $this->cur_mailer->id != $GLOBALS[mail_id]) {
-			$this->cur_mailer = new mailer($this->userid);
+			$this->cur_mailer = new mailer($this->user_id);
 			$this->cur_mailer->load($this->cur_message_id);
 		}
 
@@ -2054,7 +1998,7 @@ class popper {
 			$mail_id = substr($rand, 0, 4)."att";	*/
 			$mail_id = $mail_id."att";
 			if (!isset($this->att_mailer[$mail_id])) {
-				$m = new mailer($this->userid);
+				$m = new mailer($this->user_id);
 				$m->from_text($data);
 				$this->att_mailer[$mail_id] = $m;
 				dbg("NEW ATT_MAILER[ $mail_id ]");
@@ -2184,7 +2128,7 @@ class popper {
 		}
 	}
 
-	function delete_mails($pass_del = 0) {
+	function delete_mails($pass_del = 0, $ack_del = true) {
 		global $ack, $delete, $del, $strings;
 		
 		if (is_array($del)) {
@@ -2194,14 +2138,14 @@ class popper {
 		if ($pass_del != 0) {
 			$this->del = $pass_del;
 		}
-		else if (isset($del) && !empty($del)) {
+		else if (isset($del) && !empty($del) && sizeof($del) > 0) {
 			$this->del = $del;
 		}
 
 		// Decide if the mail is just moved to the bin or if it is really deleted
 		if ($this->folder == "bin") {
 			// If $ack is not set, we pop-up the confirmation window
-			if (!isset($ack) || empty($ack) ) {
+			if ($ack_del == true && (!isset($ack) || empty($ack))) {
 				$this->show_ack($strings["l_DelMails"], $strings["l_DelMailsQuest"]);
 				return;
 			}
@@ -2212,6 +2156,7 @@ class popper {
 			}
 			else {
 				$del = $this->del;
+				dbg("DEL: ".$this->del[0]);
 				if ((count($this->del) > 0)) {
 					$all_succ = $this->trash_mail($del);
 
@@ -2223,6 +2168,7 @@ class popper {
 					}
 				}
 				$this->del = "";
+				$del = "";
 			}
 		}
 		else if (count($this->del) > 0) {
@@ -2237,108 +2183,74 @@ class popper {
 
 		}
 
-		if ($this->config["mailview"] == FRAME_VIEW) {
+		return $del_msg;
+
+		/*if ($this->config["mailview"] == FRAME_VIEW) {
 			$this->show_frame_list();
 		}
 		else {
 			$this->show_form("main", $del_msg);
-		}
+		}*/
+
 	}
 	
 	function add_sel_addr($block = false) {
 		global $del, $strings;
 		
-		if (is_array($del)) {
-			$query = "SELECT froms FROM mails WHERE id IN (";
-			foreach($del as $in) {
-				$query .= $in.", ";
-			}
-			// Remove the last comma
-			$query = substr($query, 0, strlen($query) - 2);
-			$query .= ") AND user_id='$this->userid'";
-		}
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+		$ret = $this->db_man->get_form_names($del);
+		
+		if ($ret === false) {
+			$this->gui->report_dberror($this->db_man->get_error());	
 		}
 		
-		while ($row = $this->db_tool->fetch_array($res)) {
-			// Add the addresses to the DB
-			$this->add_address($row[froms], $block);
+		if (is_array($ret)) {
+			foreach($ret as $row) {
+				// Add the addresses to the DB
+				$this->add_address($row[froms], $block);
+			}
 		}
 	}
 	
 	function delete_blocked() {
-		// Delete all mails that contain blocked senders
-		$query = "SELECT email FROM addresses WHERE user_id='$this->userid' AND blocked=1";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);			
+		
+		$del = $this->db_man->get_blocked_mails($this->folder);
+		if ($del === false) {
+			$this->gui->report_dberror($this->db_man->get_error());			
 		}
 		
-		// Build the WHERE part for th query
-		while ($row = $this->db_tool->fetch_array($res)) {
-			$where .= " froms LIKE '%$row[email]%' OR";
-		}
-		if (!empty($where)) {
-			// Remove the last OR
-			$where = substr($where, 0, strlen($where) - 3);
-		}
-		
-		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='$this->folder' AND ".$where;
-
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);			
-		}
-
-		// Now delete these mails
-		while($row = $this->db_tool->fetch_array($res)) {
-			$del[] = $row[id];
-		}
-
-		$this->delete_mails($del);		
+		return $this->delete_mails($del);		
 	}
 		
-	function delete_all() {
-		// We build an array with all mail ids and pass that to $this->delete_mails()
-		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='$this->folder'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_AllDelFail"]);
-			exit;
-		}
+	function delete_all($ack_del = true) {
+		// Get the mail ids
+		$del = $this->db_man->get_mails_in_folder($this->folder);
 		
-		while($row = $this->db_tool->fetch_array($res)) {
-			$del[] = $row[id];
+		if ($del === false) {
+			$this->gui->report_dberror($this->db_man->get_error());		
 		}
-
-		$this->delete_mails($del);
+		else if ($del == -1) {
+			return "";
+		}
+		// Now delete the mails
+		return $this->delete_mails($del, $ack_del);
 	}
+
+	function clean_bin() {
+		$this->folder = "bin";
+		return $this->delete_all(false);
+	}	
 
 	function move_to_bin($id) {
-		if (is_array($id)) {
-			$query = "UPDATE mails SET folder='bin' WHERE id IN (";
-			foreach($id as $in) {
-				$query .= $in.", ";
-			}
-			// Remove the last comma
-			$query = substr($query, 0, strlen($query) - 2);
-			$query .= ") AND user_id='$this->userid'";
+		$ret = $this->db_man->move_to("bin", $id);
+		if ($ret === false) {
+			$this->gui->report_dberror($this->db_man->get_error());				
 		}
-		else {
-			// Move the mail to the bin folder
-			$query = "UPDATE mails SET folder='bin' WHERE id='$id' AND user_id='$this->userid'";
-		}
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			return false;
-		}
-		return true;
+		
+		return $ret;
 	}
 
 	function trash_mail($id) {
-		// If it's just a singel ID, we create an array of size 1
+		// If it's just a single ID, we create an array of size 1
 		if (!is_array($id)) {
 			$tmp = $id;
 			$id = array();
@@ -2346,12 +2258,14 @@ class popper {
 		}
 		// Get the account information about the mails
 		$query = "SELECT accounts.*, mails.uidl AS uidl FROM accounts LEFT JOIN mails ON mails.acc_id = accounts.id WHERE mails.id IN (";
+
 		foreach($id as $in) {
 			$query .= $in.", ";
 		}
 		// Remove the last comma
 		$query = substr($query, 0, strlen($query) - 2);
-		$query .= ") AND mails.user_id = '$this->userid' ORDER BY accounts.id";
+		$query .= ") AND mails.user_id = '$this->user_id' ORDER BY accounts.id";
+		dbg("$query");
 		$res = $this->db_tool->db_query($query);
 
 		$row = 0;
@@ -2419,7 +2333,7 @@ class popper {
 		}
 		// Remove the last comma
 		$query = substr($query, 0, strlen($query) - 2);		
-		$query .= ") AND user_id = '$this->userid' AND folder='bin'";
+		$query .= ") AND user_id = '$this->user_id' AND folder='bin'";
 
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
@@ -2435,45 +2349,12 @@ class popper {
 
 	function show_recipients() {
 		global $strings;
+		$ret = $this->db_man->quick_select("addresses", "id", "email", "name", "user_id='$this->user_id'");
+		if ($ret === false) {
+			$this->gui->report_dberror($this->db_man->get_error());	
+		}
 		
-		$query = "SELECT id, email, name FROM addresses WHERE user_id='$this->userid'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
-		}
-		echo('<table width="100%" align="center" border="1">');
-		echo('<tr style="text-align: left;"><th>&nbsp;</th><th>'.$strings[l_Name].'</th><th>E-Mail</th></tr>');
-		while($row = $this->db_tool->fetch_array($res)) {
-			echo("<tr>\n<td>\n");
-			echo('<input type="checkbox" name="rec[]" value="'.$row[id].'"></td>');
-			echo("<td>".htmlspecialchars(stripslashes($row[name]))."</td><td>");
-			echo(htmlspecialchars(stripslashes($row[email]))."</td></tr>\n");
-		}
-		echo('</table>');
-	}
-
-	// List all mails in the current folder
-	function show_del_mails() {
-		global $strings;
-		
-		$decoder = new mimepart;
-		$query = "SELECT id, tos, froms, subject, date FROM mails WHERE folder='$this->folder' AND user_id='$this->userid'";
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), "Could not fetch mail to delete");
-			return;
-		}
-		echo('<table width="100%" align="center" border="1">');
-		echo('<tr style="text-align: left;"><th>&nbsp;</th><th>'.$strings[l_To].'</th><th>'.$strings[l_From].'</th><th>'.$strings[l_Subject].'</th></tr>');
-		while($row = $this->db_tool->fetch_array($res)) {
-			echo("<tr>\n<td>\n");
-			echo('<input type="checkbox" name="del[]" value="'.$row[id].'"></td>');
-			echo("<td>".htmlspecialchars(stripslashes($decoder->charset_decode($row[tos])))."</td><td>");
-			echo(htmlspecialchars(stripslashes($decoder->charset_decode($row[froms])))."</td><td>");
-			echo(htmlspecialchars(stripslashes($decoder->charset_decode($row[subject])))."</td>\n</tr>\n");
-		}
-		echo('</table>');
+		$this->gui->show_recipients($ret);
 	}
 
 	function send_and_receive() {
@@ -2534,34 +2415,19 @@ class popper {
 	function get_mails($account = "") {
 		global $strings;
 		
-		// Make an array with all UIDLs we already have
-		$query = "SELECT uidl FROM mails WHERE user_id = '$this->userid' AND folder != 'outbox' AND folder != 'sent'";
-		$res = $this->db_tool->db_query($query);
+		$uidls = $this->db_man->get_uidls();
 
-		$uidls = array();
-
-		while($row = $this->db_tool->fetch_array($res)) {
-			if (!empty($row["uidl"])) {
-				$uidls[] = stripslashes($row["uidl"]);
-			}
+		if ($uidls === false) {
+			$this->gui->report_dberror($this->db_man->get_error());				
 		}
 
-		if (empty($account)) {
-			// Get all accounts of the user
-			$query = "SELECT * FROM accounts WHERE user_id = '$this->userid'";
+		$accs = $this->db_man->get_accounts_full($account);
+		
+		if ($accs === false) {
+			$this->gui->report_dberror($this->db_man->get_error());				
 		}
-		else {
-			// Just get the account with the given name
-			$query = "SELECT * FROM accounts WHERE user_id = '$this->userid' AND id = '$account'";
-		}
-
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return;
-		}
-
-		while($row = $this->db_tool->fetch_array($res)) {
+		
+		foreach($accs as $row) {
 			$pop3 = new pop3("$row[popserver]");
 			$count = $pop3->pop_login($row["poplogin"], $row["poppwd"]);
 			if ($count < 0 || $count === false) {
@@ -2594,7 +2460,7 @@ class popper {
 				echo("$key -> $val<br>");
 			}*/
 			
-			$mailer = new mailer($this->userid, $row[id]);
+			$mailer = new mailer($this->user_id, $row[id]);
 			reset($get);
 
 			foreach($get as $num => $uid) {
@@ -2609,18 +2475,16 @@ class popper {
 				$store_folder = "inbox";
 				
 				// Do we have blocked senders?
-				$query = "SELECT count(*) as counter FROM addresses WHERE blocked=1 AND user_id='$this->userid'";
-				$block_res = $this->db_tool->db_query($query);			
-				if ($this->db_tool->affected_rows($block_res) > 0) {
+				$blocked_addr = $this->db_man->get_blocked_addresses();
+				if (sizeof($blocked_addr) > 0) {
 					// Yes, the user defined blocked senders					
 					// Check if the mail is form a blocked sender
 					// This slows things down, because it has to analy
 					$from = $mailer->quick_from($mail);
 
 					if (!empty($from)) {
-						$query = "SELECT email FROM addresses WHERE blocked=1 AND user_id='$this->userid' AND email='$from'";
-						$block_res = $this->db_tool->db_query($query);
-						if ($this->db_tool->affected_rows($block_res) > 0) {
+						// Check if the sender is blocked
+						if (in_array($from, $blocked_addr)) {
 							// This sender is blocked!
 							// Store it in the bin folder;
 							$store_folder = "bin";
@@ -2637,8 +2501,7 @@ class popper {
 
 				if ($own_uidl) {
 					// If we use our own calculated uidls, we have to store it in the DB, too
-					$query = "UPDATE mails SET uidl='".$server_uidls[$num]."' WHERE user_id = '$this->userid' AND id = '$insert_id'";
-					$update_res = $this->db_tool->db_query($query);
+					$this->db_man->update_uidl($insert_id, $server_uidls[$num]);
 				}
 
 				if ($this->config["keep"] != 1) {
@@ -2661,7 +2524,7 @@ class popper {
 		}
 		else {
 			$from = $mailer;
-			$mailer = new mailer($this->userid);
+			$mailer = new mailer($this->user_id);
 		}
 		
 		$add = $mailer->get_address($from);
@@ -2670,7 +2533,7 @@ class popper {
 			$name = addslashes($add[name]);
 			$addr = addslashes($add[address]);
 			// Let's see if this entry already exists
-			$query = "SELECT name, email FROM addresses WHERE name='$name' AND email='$addr' AND user_id='$this->userid'";
+			$query = "SELECT name, email FROM addresses WHERE name='$name' AND email='$addr' AND user_id='$this->user_id'";
 			$res = $this->db_tool->db_query($query);
 			if ($this->db_tool->affected_rows() == 0) {
 				// Add the new entry
@@ -2683,7 +2546,7 @@ class popper {
 			if ($block) {
 				// Mark any other entries with the same e-mail address as blocked, too
 				// This is needed if an entry which should be blocked already exists
-				$query = "UPDATE addresses SET blocked=1 WHERE user_id='$this->userid' AND email='$addr'";
+				$query = "UPDATE addresses SET blocked=1 WHERE user_id='$this->user_id' AND email='$addr'";
 				$res = $this->db_tool->db_query($query);				
 			}
 			
@@ -2704,45 +2567,7 @@ class popper {
 			$msg = $strings["l_DelCancel"];
 		}
 		else {
-			// We remove the user...
-			$query = "DELETE FROM mails WHERE user_id='$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-				return false;
-			}
-			
-			// We remove the user...
-			$query = "DELETE FROM conf WHERE user_id='$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-				return false;
-			}
-			
-			// We remove the user...
-			$query = "DELETE FROM accounts WHERE user_id='$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-				return false;
-			}
-			
-			// We remove the user...
-			$query = "DELETE FROM addresses WHERE user_id='$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-				return false;
-			}
-					
-			$query = "DELETE FROM users WHERE id='$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-				return false;
-			}
-			
+			$this->db_man->remove_user();
 			session_destroy();
 			$this->messagebox($strings["l_UserDeleted2"], $strings["l_UserDeleted1"], $strings["l_UserDeleted1"]);
 			exit;
@@ -2766,7 +2591,25 @@ class popper {
 		}		
 		closedir($dirhandle);
 		
-		echo("</select>\n<br><br><hr>");
+		echo("</select> \n");
+		
+		echo($strings["l_Theme"].": <select name=\"theme\">");
+		$dirhandle = opendir("./themes");
+		while ($filename = readdir($dirhandle)) {
+			if (preg_match("/^(.*)\.inc\.php$/", $filename, $match)) {
+				echo("<option value=\"$match[1]\"");
+				if ($match[1] == $this->config["theme"]) {
+					echo(" selected");
+				}
+				include("themes/$filename");
+				echo(">$theme[name]</option>");
+			}
+		}		
+		closedir($dirhandle);
+		
+		echo("</select>\n<br><br><hr><br>");		
+		
+		
 		echo("<center><input type=\"submit\" name=\"changepwd\" value=\"$strings[l_ChangePwd]\">&nbsp;");
 		echo("<input type=\"submit\" name=\"deluser\" value=\"$strings[l_DelUser]\"></center>");
 		echo("<br><fieldset>");
@@ -2799,7 +2642,12 @@ class popper {
 			if ($this->config[add_address]) {
 				echo(' checked');
 			}			
-			echo("> $strings[l_AddAddress]<br><hr>");
+			echo("> $strings[l_AddAddress]<br>");
+			echo('<input type="checkbox" name="clean_bin" value="1"');		
+			if ($this->config[clean_bin]) {
+				echo(' checked');
+			}			
+			echo("> $strings[l_CleanBin]<br><hr>");			
 			echo($strings["l_CheckRep"].' <input name="check_int" value="'.$this->config[check_int].'" size="2"> '.$strings[l_Minutes].'<br><br>');
 			
 		echo("</fieldset>\n<br><fieldset><legend><b>$strings[l_View]</b></legend>\n");
@@ -2869,12 +2717,10 @@ class popper {
 	}
 
 	function store_config() {
-		global $conf_submit, $view, $mailview, $keep, $server_del, $auto_check, $signature, $language, $subject_size, $check_int, $address_size, $app_sig, $send_direct, $mail_rows, $mails_per_page, $add_address, $poppercookie, $strings;
+		global $poppercookie, $conf_submit, $strings, $view, $mailview, $keep, $server_del, $auto_check, $signature, $language, $subject_size, $check_int, $address_size, $app_sig, $send_direct, $mail_rows, $mails_per_page, $add_address, $clean_bin, $theme;
 
 		if (isset($conf_submit) && $conf_submit == $strings["l_Store"]) {
-			$query = "UPDATE conf SET send_direct='$send_direct', keep='$keep', check_int='$check_int', server_del='$server_del', auto_check='$auto_check', signature='$signature', app_sig='$app_sig', mails_per_page='$mails_per_page', mail_rows='$mail_rows', add_address='$add_address', language='$language', subject_size='$subject_size', address_size='$address_size', view='$view', mailview='$mailview' WHERE user_id = '$this->userid'";
-			$res = $this->db_tool->db_query($query);	
-			if ($res != 0) {
+			if ($this->db_man->store_config()) {
 				$this->config["keep"] = $keep;
 				$this->config["server_del"] = $server_del;
 				$this->config["auto_check"] = $auto_check;
@@ -2888,12 +2734,18 @@ class popper {
 				$this->config["address_size"] = $address_size;
 				$this->config["check_int"] = $check_int;
 				$this->config["view"] = $view;							
-				$this->config["mailview"] = $mailview;					
+				$this->config["mailview"] = $mailview;
+				$this->config["clean_bin"] = $clean_bin;
+				$this->config["theme"] = $theme;
 				if ($this->config["language"] != $language) {
 					$this->config["language"] = $language;
 					$this->update_lang();
 				}
 
+				if ($poppercookie[theme]) {
+					setcookie("poppercookie[theme]", $this->config["theme"], time() + 365 * 24 * 3600);
+					$poppercookie["theme"] = $this->config["theme"];
+				}				
 			}
 		}
 	}
@@ -2910,12 +2762,8 @@ class popper {
 			return;
 		}
 		
-		$query = "UPDATE users SET pwd='$pwd' WHERE id='$this->userid'";
-		$res = $this->db_tool->db_query($query);
-
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
-			return false;
+		if (!$this->db_man->update_pwd($pwd)) {
+			$this->gui->report_dberror($this->db_man->get_error());		
 		}
 		
 		$this->show_form("main", $strings["l_PwdChanged"]);
@@ -2943,16 +2791,14 @@ class popper {
 
 	function send_outbox() {
 		global $strings;
-		
-		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='outbox'";
 
-		$res = $this->db_tool->db_query($query);
-		if ($res == 0) {
-			$this->report_error($this->db_tool->db_error(), "DB Error");
-			return;
+		$out = $this->db_man->get_mails_in_folder("outbox");		
+
+		if ($out === false) {
+			$this->gui->report_dberror($this->db_man->get_error());			
 		}
-
-		$count = $this->db_tool->affected_rows();
+		
+		//$count = $this->db_tool->affected_rows();
 		
 		// Commented the progress stuff out...
 		/*$width = 110; //500/$count;
@@ -2967,8 +2813,8 @@ class popper {
   		//$t = $this->start_timer("Sending mail");
   		flush();*/
 
-		while($row = $this->db_tool->fetch_array($res)) {
-			$mailer = new mailer($this->userid);
+		foreach($out as $row) {
+			$mailer = new mailer($this->user_id);
 			$mailer->load($row[id]);
 
 
@@ -2981,11 +2827,8 @@ class popper {
 			// When the mail could be send, we move the mail to the "sent" folder
 			if ($ret) {
 				$send_counter++;
-				$query = "UPDATE mails SET folder='sent', was_read = ".MAIL_READ." WHERE id='$row[id]' AND user_id='$this->userid'";
-				$update_res = $this->db_tool->db_query($query);
-				if ($update_res == 0) {
-					$this->report_error($this->db_tool->db_error(), $strings["l_FolderMoveFail"].": ".$strings["l_Sent"]);
-					return;
+				if (!$this->db_man->set_mail_status($row[id], MAIL_READ)) {
+					$this->gui->report_dberror($this->db_man->get_error());	
 				}
 			}
 		}

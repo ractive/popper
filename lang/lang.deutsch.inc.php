@@ -18,7 +18,7 @@
 	$strings["l_Subject"]		= "Betreff";
 	$strings["l_GetAttachment"]	= "&ouml;ffne Anhang";
 	$strings["l_NoMsgSelected"]	= "Keine Nachricht ausgew&auml;hlt";
-	$strings["l_Name"]			= "Vorname";
+	$strings["l_Name"]			= "Name";
 	$strings["l_LastName"]		= "Nachname";
 	$strings["l_NickName"]		= "&uuml;bername";
 	$strings["l_Address"]		= "Adresse";
@@ -226,4 +226,7 @@
 	$strings["l_LostPwdMail3"]	= "Das Passwort wurde per Mail verschickt";
 	$strings["l_LostPwdMail4"]	= "Passwort gesendet";
 	$strings["l_LostPwdMail5"]	= "Das Passwort konnte nicht per Mail verschickt werden. Haben Sie bei der Registrierung eine g&uuml;ltige Adresse angegeben?";		
+	$strings["l_CleanBin"]		= "Gel&ouml;schte Nachrichten beim Abmelden endg&uuml;ltig l&ouml;schen";
+	$strings["l_Folders"]		= "Ordner";
+	$strings["l_Theme"]			= "Stil";
 ?>

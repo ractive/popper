@@ -1,1 +1,1 @@
-ALTER TABLE mails ADD from_name text;
+ALTER TABLE mails ADD priority tinyint(4) default '0';

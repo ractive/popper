@@ -13,32 +13,70 @@ http://www.gnu.org/copyleft/gpl.html
 
 class cal {
 
-	var $month = 0;
-
 	function cal() {
-		$this->month = 0;
+
 	}
 	
 
 	function show() {
-		if ($GLOBALS[show] == "next") {
-			$this->month++;
+		global $strings, $month, $show;
+
+		if ($show == "next") {
+			$month++;
 		}
-		else if ($GLOBALS[show] == "prev") {
-			$this->month--;
+		else if ($show == "prev") {
+			$month--;
 		}
-		else if ($GLOBALS[show] == "current") {
-			$this->month = 0;
+		else if ($show == "current") {
+			$month = 0;
 		}	
-		
-		$this->show_month();
+
+		$this->show_year();
+?>
+		<table width="100%">
+			<tr class="calcontrol">
+				<td>
+					 <a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=prev">&lt;&lt;&lt; <?php echo($strings["l_Previous"]);?></a>
+				</td>
+				<td colspan="2">
+				</td>
+				<td>
+					<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=current"><?php echo($strings["l_Current"]);?></a>
+				</td>
+				<td colspan="2">
+				</td>
+				<td>
+					<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=next"><?php echo($strings["l_Next"]);?> &gt;&gt;&gt;</a>
+				</td>
+			</tr>
+		</table>		
+<?php
 	}
 
-	function show_month() {
-		global $strings;
+	function show_year() {
+		global $month;
+		
+		echo("<table width=\"100%\" border=\"0\">");
+			for($row = 0; $row < 4; $row++) {
+				echo("<tr>");
+				for($col = 0; $col < 3; $col++) {
+					echo("<td>");
+					$this->show_month(true);
+					$month++;
+					echo("</td>");
+				}
+				echo("</tr>");
+			}
+		echo("</table>");
+		$month--;
+	}
+	
+
+	function show_month($small = false) {
+		global $strings, $month;
 		
 		$time = time();
-		$time = mktime(0, 0, 0, date("m", $time) + $this->month, date("j"), date("y", $time));
+		$time = mktime(0, 0, 0, date("m", $time) + $month, date("j"), date("y", $time));
 		$days_of_month = date("t", $time);
 		$days_of_last_month = date("t", mktime(0, 0, 0, date("m", $time) - 1, 1, date("y", $time)));
 		$start_day = (date("w", mktime(0, 0, 0, date("m", $time), 1, date("y", $time))) + 6) % 7;
@@ -46,21 +84,32 @@ class cal {
 	
 		// Get the past monday of this week
 		$monday = mktime(0, 0, 0, date("m"), date("j") - date("w") + 1, date("y"));
+		$border = $small ? 0 : 1;
+		$font = $small ? "normal" : "x-large";
 ?>		
-		<table width="100%" border="1">
-			<caption style="font-weight: bolder; font-size: x-large;"><?php echo(ucfirst(strftime("%B %Y", $time)));?></caption>
+		<table width="100%" cellspacing="1" border="<?php echo($border);?>">
+			<caption style="font-weight: bolder; background-color: silver; font-size: <?php echo($font);?>;"><?php echo(ucfirst(strftime("%B %Y", $time)));?></caption>
 			<tr>
-				<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", $monday)));?></th>
-				<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 1, date("y", $monday)))));?></th>
-				<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 2, date("y", $monday)))));?></th>
-				<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 3, date("y", $monday)))));?></th>
-				<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 4, date("y", $monday)))));?></th>
-				<th style="width: 14%; font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 5, date("y", $monday)))));?></th>
-				<th style="font-size: smaller;"><?php echo(ucfirst(strftime("%A", mktime(0, 0, 0, date("m", $monday), date("j", $monday) + 6, date("y", $monday)))));?></th>
+				<?php
+					// Show the weekdays
+					for($i = 0; $i < 7; $i++) {
+						$day = ucfirst(strftime("%A", $monday + $i * 3600 * 24));
+						if ($small) {
+							$day = $day[0];
+						}
+						echo("<th style=\"width: 14%; font-size: smaller; background-color: gray;\" align=\"center\">".$day."</th>");
+					}
+						
+				?>
 			</tr>
 <?php
 			for($i = 0; $i < 6 * 7; $i++) {
-				$style = "height: 5em; ";
+				if ($small) {
+					$style = "height: 1em; text-align: right; background-color: #DDDDDD;";
+				}
+				else {
+					$style = "height: 5em; ";
+				}
 				// The previous month
 				if ($i < $start_day) {
 					$cur_day = $days_of_last_month - $start_day + $i + 1;
@@ -70,7 +119,7 @@ class cal {
 				else if ($i >= $start_day && ($i - $start_day) < $days_of_month){
 					$cur_day = $i-$start_day + 1;
 					// If it's today, add a background color to the style
-					if ($cur_day == $today && $this->month == 0) {
+					if ($cur_day == $today && $month == 0) {
 						$style .= " font-weight: bolder; background-color: #FFFFDD;";
 					}
 				}
@@ -87,21 +136,6 @@ class cal {
 	
 ?>
 			</tr>
-			<tr class="calcontrol">
-				<td>
-					 <a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=prev">&lt;&lt;&lt; <?php echo($strings["l_Previous"]);?></a>
-				</td>
-				<td colspan="2">
-				</td>
-				<td>
-					<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=current"><?php echo($strings["l_Current"]);?></a>
-				</td>
-				<td colspan="2">
-				</td>
-				<td>
-					<a href="<?php echo("$GLOBALS[PHP_SELF]");?>?action=showfolder&folder=cal&show=next"><?php echo($strings["l_Next"]);?> &gt;&gt;&gt;</a>
-				</td>
-			</tr>
 		</table>	
 <?php
 	}
@@ -110,7 +144,7 @@ class cal {
 		global $strings;
 		
 		$time = time();
-		$time = mktime(0, 0, 0, date("m", $time) + $this->month, date("j"), date("y", $time));
+		$time = mktime(0, 0, 0, date("m", $time) + $month, date("j"), date("y", $time));
 		$days_of_month = date("t", $time);
 		$days_of_last_month = date("t", mktime(0, 0, 0, date("m", $time) - 1, 1, date("y", $time)));
 		$start_day = (date("w", mktime(0, 0, 0, date("m", $time), 1, date("y", $time))) + 6) % 7;
@@ -142,7 +176,7 @@ class cal {
 				else if ($i >= $start_day && ($i - $start_day) < $days_of_month){
 					$cur_day = $i-$start_day + 1;
 					// If it's today, add a background color to the style
-					if ($cur_day == $today && $this->month == 0) {
+					if ($cur_day == $today && $month == 0) {
 						$style .= " font-weight: bolder; background-color: #FFFFDD;";
 					}
 				}
