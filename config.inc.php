@@ -16,10 +16,6 @@ http://www.gnu.org/copyleft/gpl.html
 	// The file which describes the bottom part of the HTML code
 	$bottom_part = "bottom.inc.php";
 	
-	// Do you have PHP version 4.0.0 -> true
-	// Do you have PHP version 4.0.1 and above -> false
-	$is_php400 = false;
-	
 	// Allow the access to other mail-servers than localhost? true/false
 	$only_localhost = false;
 	
