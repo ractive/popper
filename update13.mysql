@@ -1,0 +1,3 @@
+ALTER TABLE conf ADD subject_size int DEFAULT 55;
+ALTER TABLE conf ADD address_size int DEFAULT 22;
+ALTER TABLE conf ADD check_int int DEFAULT 30;
