@@ -361,14 +361,20 @@ class popper {
 		}
 	}
 
-	function show_addresses() {
-		global $addr_id, $strings;
+	function show_addresses($blocked = false) {
+		global $addr_id, $strings, $show;
+
+		if ($show == "blocked") {
+			$blocked = true;
+			echo("<h3>".$strings["l_Blocked"]."</h3>");
+		}
+		
 
 		if (isset($addr_id) && !empty($addr_id)) {
 			$this->cur_address_id = $addr_id;
 		}
 
-		$query = "SELECT id, IF(LENGTH(name) > '".$this->config["address_size"]."', CONCAT(LEFT(name, '".$this->config["address_size"]."'), '...'), name) as name, IF(LENGTH(email) > '".$this->config["address_size"]."', CONCAT(LEFT(email, '".$this->config["address_size"]."'), '...'), email) as email FROM addresses WHERE user_id = '$this->userid'";
+		$query = "SELECT id, IF(LENGTH(name) > '".$this->config["address_size"]."', CONCAT(LEFT(name, '".$this->config["address_size"]."'), '...'), name) as name, IF(LENGTH(email) > '".$this->config["address_size"]."', CONCAT(LEFT(email, '".$this->config["address_size"]."'), '...'), email) as email FROM addresses WHERE user_id = '$this->userid' AND blocked='$blocked'";
 		$res = $this->db_tool->db_query($query);
 		if ($res == 0) {
 			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
@@ -383,7 +389,11 @@ class popper {
 		echo("<tr><th align=\"left\" width=\"50%\">Name</th><th align=\"left\">E-Mail</th></tr>\n");
 		while($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr><td>\n");
-			echo("<a href=\"$GLOBALS[PHP_SELF]?action=addressbook&addr_id=$row[id]\" title=\"$strings[l_ShowDetails]\"");
+			echo("<a href=\"$GLOBALS[PHP_SELF]?action=addressbook&addr_id=$row[id]");
+			if ($blocked) {
+				echo("&show=blocked");
+			}
+			echo("\" title=\"$strings[l_ShowDetails]\"");
 			$this->address_selected($row[id]);
 			echo(">".$this->extract_disp_name(stripslashes($row[name]))."</a></td>\n");
 			echo("<td wrap=\"virtual\"><a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr_id=$row[id]\" title=\"$strings[l_SendMail]\">".stripslashes($row["email"])."</a></td></tr>\n");
@@ -548,7 +558,7 @@ class popper {
 
 	function store_address() {
 		$GLOBALS["user_id"] = $this->userid;
-		$this->db_tool->store("addresses", "user_id", "email", "name", "lastname", "nickname", "address1", "address2", "zip", "town", "state", "country", "phone", "mobile", "homepage", "id='$this->cur_address_id' AND user_id='$this->userid'");
+		$this->db_tool->store("addresses", "user_id", "email", "name", "lastname", "nickname", "address1", "address2", "zip", "town", "state", "country", "phone", "mobile", "homepage", "blocked", "id='$this->cur_address_id' AND user_id='$this->userid'");
 	}
 
 	function store_account() {
@@ -600,31 +610,42 @@ class popper {
 	function del_address() {
 		global $ack, $strings;
 		
-		$name = $this->get_address_name();
-		if (!isset($ack) || empty($ack) ) {
-			$this->show_in_window("ack", $strings["l_DelAddress"].": $name", $strings["l_DelAddressConf"]);
+		// First try to unblock the address
+		$query = "UPDATE addresses SET blocked=0 WHERE id = '$this->cur_address_id' AND user_id = '$this->userid' AND blocked=1";
+		$res = $this->db_tool->db_query($query);
+		if ($res == 0) {
+			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
 			return;
 		}
-		else if($ack == "No") {
-			$del_msg = "Deletion cancelled!";
-		}
-		else {
-			$query = "DELETE FROM addresses WHERE id = '$this->cur_address_id' AND user_id = '$this->userid'";
-			$res = $this->db_tool->db_query($query);
-			if ($res == 0) {
-				$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+
+		if ($this->db_tool->affected_rows($res) == 0) {
+			// The address was not blocked. Delete it
+			$name = $this->get_address_name();
+			if (!isset($ack) || empty($ack) ) {
+				$this->show_in_window("ack", $strings["l_DelAddress"].": $name", $strings["l_DelAddressConf"]);
 				return;
 			}
-			if ($this->db_tool->affected_rows() > 0) {
-				$del_msg = $strings["l_AddressDel"];
+			else if($ack == "No") {
+				$del_msg = "Deletion cancelled!";
 			}
 			else {
-				$del_msg = $strings["l_AddressDelFail"];
+				$query = "DELETE FROM addresses WHERE id = '$this->cur_address_id' AND user_id = '$this->userid'";
+				$res = $this->db_tool->db_query($query);
+				if ($res == 0) {
+					$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+					return;
+				}
+				if ($this->db_tool->affected_rows() > 0) {
+					$del_msg = $strings["l_AddressDel"];
+				}
+				else {
+					$del_msg = $strings["l_AddressDelFail"];
+				}
 			}
+	
+			$this->cur_address_id = 0;
 		}
-
-		$this->cur_address_id = 0;
-
+		
 		$this->show_form("addressbook", $del_msg);
 	}
 
@@ -713,15 +734,17 @@ class popper {
 		}
 		
 		if (isset($GLOBALS[order]) && empty($this->order)) {
-			$this->order = $GLOBALS[order];
+			$desc = false;
 		}
 		else if (isset($this->order) && isset($GLOBALS[order])) {
 			//echo substr($this->order, -4);
 			if (substr($this->order, -4) == "DESC") {
 				$this->order = $GLOBALS[order];
+				$desc = false;
 			}
 			else {
 				$this->order = $GLOBALS[order]." DESC";
+				$desc = true;
 			}
 			
 		}
@@ -756,11 +779,22 @@ class popper {
 
 			break;
 		}
-		echo("<form class=\"mail\" action=\"$GLOBALS[PHP_SELF]?action=deletemails\" method=\"post\">");
+		$height = 21;
+		echo("<form class=\"mail\" action=\"$GLOBALS[PHP_SELF]?action=selected\" method=\"post\">");
+		echo("<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr style=\"border-top: 1px solid white; border-bottom: 2px groove white; border-left: none; border-right: 1px solid gray; background-color: silver;\">\n");
+		echo("<td><input type=\"radio\" name=\"selected\" value=\"delete\"><img src=\"graphics/del.gif\" alt=\"$strings[l_DeleteMultiple]\" title=\"$strings[l_DeleteMultiple]\" border=\"0\" style=\"vertical-align: middle;\"></td>");
+		echo("<td><input type=\"radio\" name=\"selected\" value=\"add_addr\"><img src=\"graphics/add_addr.gif\" alt=\"$strings[l_AddAddr]\" title=\"$strings[l_AddAddr]\" border=\"0\" style=\"vertical-align: middle;\"></td>");		
+		echo("<td><input type=\"radio\" name=\"selected\" value=\"block\"><img src=\"graphics/stop.gif\" alt=\"$strings[l_Block]\" title=\"$strings[l_Block]\" border=\"0\" style=\"vertical-align: middle;\"></td>");		
+		/*echo("<button type=\"submit\" value=\"delete\" name=\"delete\" style=\"width: $height px; height: $height px;\"> <img src=\"graphics/del.gif\" alt=\"$strings[l_DeleteMultiple]\" title=\"$strings[l_DeleteMultiple]\" border=\"0\" style=\"vertical-align: top;\"></button>\n");
+		echo("&nbsp;<button type=\"submit\" value=\"add_addr\" name=\"add_addr\" style=\"width: $height px; height: $height px;\"> <img src=\"graphics/add_addr.gif\" alt=\"$strings[l_AddAddr]\" title=\"$strings[l_AddAddr]\" border=\"0\" style=\"vertical-align: top;\"></button>\n");
+		echo("&nbsp;<button type=\"submit\" value=\"block\" name=\"block\" style=\"width: $height px; height: $height px;\"> <img src=\"graphics/stop.gif\" alt=\"$strings[l_Block]\" title=\"$strings[l_Block]\" border=\"0\" style=\"vertical-align: top;\"></button>\n");*/
+		//echo("<td><input type=\"radio\" name=\"selected\" value=\"move\"><select name=\"move_folder\"><option>$strings[l_MoveTo]</option><option>lajksdlkj</option></select></td>");
+		echo("<td><input type=\"submit\" value=\"Go...\" style=\"height: $height;\"></td>");
+		echo("</tr></table>\n");		
 		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");
 		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\">\n");
-		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<button type=\"submit\" value=\"delete\" name=\"delete\" style=\"width: 15px; height: 15px; border: none; background-color: silver;\">\n<img src=\"graphics/del.gif\" alt=\"$strings[l_DeleteMultiple]\" title=\"$strings[l_DeleteMultiple]\"></button></th>\n");
-		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"$strings[l_Order] $strings[l_Attachment]\"><img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Order] $strings[l_Attachment]\" align=\"center\" border=\"0\"></a></th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n&nbsp;</th>\n");
+		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"$strings[l_Order] $strings[l_Attachment]\"><img src=\"graphics/attachment_small.gif\" alt=\"$strings[l_Order] $strings[l_Attachment]\" align=\"center\" border=\"0\"></a>\n</th>\n");
 		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=priority\" title=\"$strings[l_Order] $strings[l_Priority]\"><img src=\"graphics/priority.gif\" alt=\"$strings[l_Order] $strings[l_Priority]\" align=\"center\" border=\"0\"></a></th>\n");
 		echo("<th style=\"text-align: left; border: thin outset silver;\" width=\"33%\">");
 		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=");
@@ -771,9 +805,35 @@ class popper {
 			echo("froms\" title=\"$strings[l_Order] $strings[l_From]\">".$strings[l_From]);
 		}
 
+		if ($GLOBALS[order] == "froms" || $GLOBALS[order] == "tos") {
+			if ($desc) {
+				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
+			}
+			else {
+				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");			
+			}
+		}		
 		echo("</a></th><th style=\"text-align: left; border: thin outset silver;\" width=\"40%\">\n");
-		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=subject\" title=\"$strings[l_Order] $strings[l_Subject]\">".$strings[l_Subject]."</a></th>\n");
-		echo("<th style=\"text-align: left; border: thin outset silver;\"><a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=date\" title=\"$strings[l_Order] $strings[l_Date]\">".$strings[l_Date]."</a></th></tr>\n");
+		echo("<a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=subject\" title=\"$strings[l_Order] $strings[l_Subject]\">".$strings[l_Subject]."");
+		if ($GLOBALS[order] == "subject") {
+			if ($desc) {
+				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
+			}
+			else {
+				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");			
+			}
+		}			
+		echo("</a></th>\n");
+		echo("<th style=\"text-align: left; border: thin outset silver;\"><a style=\"font-weight: bolder;\" href=\"$PHP_SELF?action=showfolder&folder=".$this->folder."&order=date\" title=\"$strings[l_Order] $strings[l_Date]\">".$strings[l_Date]);
+		if ($GLOBALS[order] == "date") {
+			if ($desc) {
+				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
+			}
+			else {
+				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");			
+			}
+		}			
+		echo("</a></th></tr>\n");
 
 		// Now fill in the mails
 		while ($row = $this->db_tool->fetch_array($res)) {
@@ -858,7 +918,8 @@ class popper {
 			echo("</td>\n<td>".$formatted_date."</td>");
 			echo("</tr>\n");
 		}
-		echo("</table></form>\n");
+		echo("</table>\n");
+		echo("</form>\n");
 
 		// If we have less then $minlines mails, we fill the rest with line-breaks
 
@@ -1616,6 +1677,8 @@ class popper {
 	function delete_mails($pass_del = 0) {
 		global $ack, $delete, $del, $strings;
 		
+		reset($del);
+		
 		if ($pass_del != 0) {
 			$this->del = $pass_del;
 		}
@@ -1665,7 +1728,62 @@ class popper {
 
 		$this->show_form("main", $del_msg);
 	}
+	
+	function add_sel_addr($block = false) {
+		global $del, $strings;
+		
+		if (is_array($del)) {
+			$query = "SELECT froms FROM mails WHERE id IN (";
+			foreach($del as $in) {
+				$query .= $in.", ";
+			}
+			// Remove the last comma
+			$query = substr($query, 0, strlen($query) - 2);
+			$query .= ") AND user_id='$this->userid'";
+		}
+		$res = $this->db_tool->db_query($query);
+		if ($res == 0) {
+			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);
+		}
+		
+		while ($row = $this->db_tool->fetch_array($res)) {
+			// Add the addresses to the DB
+			$this->add_address($row[froms], $block);
+		}
+	}
+	
+	function delete_blocked() {
+		// Delete all mails that contain blocked senders
+		$query = "SELECT email FROM addresses WHERE user_id='$this->userid' AND blocked=1";
+		$res = $this->db_tool->db_query($query);
+		if ($res == 0) {
+			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);			
+		}
+		
+		// Build the WHERE part for th query
+		while ($row = $this->db_tool->fetch_array($res)) {
+			$where .= " froms LIKE '%$row[email]%' OR";
+		}
+		if (!empty($where)) {
+			// Remove the last OR
+			$where = substr($where, 0, strlen($where) - 3);
+		}
+		
+		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='$this->folder' AND ".$where;
 
+		$res = $this->db_tool->db_query($query);
+		if ($res == 0) {
+			$this->report_error($this->db_tool->db_error(), $strings["l_DBError"]);			
+		}
+
+		// Now delete these mails
+		while($row = $this->db_tool->fetch_array($res)) {
+			$del[] = $row[id];
+		}
+
+		$this->delete_mails($del);		
+	}
+		
 	function delete_all() {
 		// We build an array with all mail ids and pass that to $this->delete_mails()
 		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='$this->folder'";
@@ -1966,8 +2084,32 @@ class popper {
 				if(empty($mail)) {
 					continue;
 				}
+				
+				$store_folder = "inbox";
+				
+				// Do we have blocked senders?
+				$query = "SELECT count(*) as counter FROM addresses WHERE blocked=1 AND user_id='$this->userid'";
+				$block_res = $this->db_tool->db_query($query);			
+				if ($this->db_tool->affected_rows($block_res) > 0) {
+					// Yes, the user defined blocked senders					
+					// Check if the mail is form a blocked sender
+					// This slows things down, because it has to analy
+					$from = $mailer->quick_from($mail);
 
-				if (($insert_id = $mailer->store("inbox", $mail, $server_uidls[$num])) == 0) {
+					if (!empty($from)) {
+						$query = "SELECT email FROM addresses WHERE blocked=1 AND user_id='$this->userid' AND email='$from'";
+						$block_res = $this->db_tool->db_query($query);
+						if ($this->db_tool->affected_rows($block_res) > 0) {
+							// This sender is blocked!
+							// Store it in the bin folder;
+							$store_folder = "bin";
+						}
+						
+					}
+				}
+								
+				// Try to store the mail in the DB
+				if (($insert_id = $mailer->store($store_folder, $mail, $server_uidls[$num])) == 0) {
 					$this->report_error($mailer->db_tool->db_error(), $strings["l_MailStoreFail"]);
 					exit;
 				}
@@ -1991,10 +2133,18 @@ class popper {
 		}
 	}
 
-	function add_address($mailer) {
+	function add_address($mailer, $block = false) {
 		// Get the from name from the mail
-		$from = $mailer->headers->get("From");
+		if (is_object($mailer)) {
+			$from = $mailer->headers->get("From");
+		}
+		else {
+			$from = $mailer;
+			$mailer = new mailer($this->userid);
+		}
+		
 		$add = $mailer->get_address($from);
+		
 		if (!empty($add["address"])) {
 			$name = addslashes($add[name]);
 			$addr = addslashes($add[address]);
@@ -2005,8 +2155,17 @@ class popper {
 				// Add the new entry
 				$GLOBALS["name"] = $add["name"];
 				$GLOBALS["email"] = $add["address"];
+				$GLOBALS["blocked"] = $block ? 1: 0;
 				$this->store_address();
 			}
+			
+			if ($block) {
+				// Mark any other entries with the same e-mail address as blocked, too
+				// This is needed if an entry which should be blocked already exists
+				$query = "UPDATE addresses SET blocked=1 WHERE user_id='$this->userid' AND email='$addr'";
+				$res = $this->db_tool->db_query($query);				
+			}
+			
 		}
 		
 	}

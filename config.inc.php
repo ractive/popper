@@ -24,11 +24,13 @@ http://www.gnu.org/copyleft/gpl.html
 	// Leave it empty to access ALL mail-servers.
 	$allowed_servers = array();
 	
-	// Login greeting
-	$greeting = "Willkommen beim Mailservice von Jameslinux";
-	
 	// If this value is set to true, the user needs to confirm the creation of the account
 	// He'll receive an E-mail with a link to activate it.
 	// Set it to false if you don't need this
 	$user_confirmation = true;
+
+	// Login greeting
+	$greeting = "Willkommen beim Mailservice von Jameslinux";
+	$titlebar = "Weblook - Benutzer ";
+	$browsertitle = "Weblook";
 ?>

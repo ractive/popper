@@ -53,6 +53,7 @@
 		</td>
 	</tr>
 </table>
+
 <table width="100%" height="100%" border="0" cellpadding="4" cellspacing="0" class="windowtitle">
 <tr>
 	<td>

@@ -190,5 +190,9 @@
 	$strings["l_FromTo"]		= "Zeige Mails";
 	$strings["l_ToM"]			= "bis";
 	$strings["l_Order"]			= "Sortieren nach";
-
+	$strings["l_AddAddr"]		= "Markierte Nachrichten ins Adressbuch &uuml;bernehmen";
+	$strings["l_Block"]			= "Markierte Absender blockieren";
+	$strings["l_MoveTo"]		= "Verschieben nach";
+	$strings["l_ShowBlocked"]	= "Zeige blockierte Absender";
+	$strings["l_Blocked"]		= "Blockierte Absender";
 ?>

@@ -79,12 +79,31 @@ Version 1.4b3
 - You can send MDNs for mails that request that
 - Small bug-fixes
 
-Version 1.4b3
+Version 1.4b5
 =============
 - You now can sort the columns in the main view (Form, subject, date etc.)
 - X-Priority tag supported and shown
-- Get all at the beginning of the "Send and receive" list (many request :-)
-- The print-view has clickable hyperlinks and shows the name and type of the attachments
+- Get all at the beginning of the "Send and receive" list (many requests :-)
+- The print-view has clickable hyperlinks (!) and shows the name and type of attachments
 - Attention! Mails stored in a previous version won't show the from part in the main view
   I will write an update script to fix that!!!
 - The usual bug-fixes :-)
+
+Version 1.4b6
+=============
+- New toolbar which allows to perform actions on selected mails:
+  * Delete the selected mails
+  * Add the addresses of the selected mails to the addressbook
+  * Block the senders of the selected mails
+  
+  The was, the toolbar looks like (with the radiobuttons) is ugly. But IE has a bad bug which left
+  me no other coice. IE is not capable to handle <button type="select"> buttons correctly! The sent
+  data is crap!
+  
+- Blocked sender feature! Select mails of senders you don't want to receive e-mails any more, select
+  "Block" in the new toolbar (followed by Go...) and mails from this sender will be automatically put
+  in the recycle bin.
+  You can see your blocked senders in the addressbook
+  
+- General tip! Update to MySQL 3.23! I (and others) had problems with MySQL 3.22 when deleting mails.
+  The DB crashed sometimes if one tried to delete many mails at once!

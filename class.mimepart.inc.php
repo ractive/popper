@@ -42,6 +42,21 @@ class mimepart {
 		return substr($mail, $pos + strlen($divider));		
 	}
 
+	function quick_from(&$mail) {
+		// The $header now contains a header which we split up into its parts now
+		if (preg_match("/^From: (.*)$/Um", $mail, $matches)) {
+				//if (preg_match("/^(.*?): (.*)$/", $header, $matches)) {			
+			if ($matches) {
+				$addr = $this->get_address($matches[1]);
+				return $addr["address"];
+			}
+			else {
+				return "";
+			}
+		}
+	}
+	
+
 	function get_text_body() {
 		$c_type = $this->get_header("Content-Type");
 		$type = $c_type["CONTENT-TYPE"];

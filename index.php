@@ -261,8 +261,24 @@ http://www.gnu.org/copyleft/gpl.html
 			else if ($action == "deletemail") {
 				$popper->delete_mail();
 			}
-			else if ($action == "deletemails") {
-				$popper->delete_mails();
+			else if ($action == "selected") {
+				if ($selected == "delete") {
+					$popper->delete_mails();
+				}
+				else if ($selected == "add_addr") {
+					$popper->add_sel_addr();
+					$popper->show();
+				}
+				else if ($selected == "block") {
+					// Mark the senders as blocked
+					$popper->add_sel_addr(true);
+					// Delete the mails
+					$popper->delete_blocked();					
+				}
+				else if ($selected == "move") {
+					//$popper->move_to();
+					$popper->report_error("Not implemented yet", "Not implemented");
+				}				
 			}
 			else if ($action == "deleteall") {
 				$popper->delete_all();

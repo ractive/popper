@@ -21,4 +21,5 @@
 			</table>
 		</td>
 	</tr>
-</table> 
+</table>
+</form>
