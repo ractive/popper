@@ -55,7 +55,14 @@ if ($isNS == 1) {
 }
 else {
 ?>
-<body>
+<body
+<?php 
+    if (in_array("Login", $_GET))
+    {
+      echo " onload='javascript: document.login.name.focus()'"; 
+    }
+    ?>
+>
 <?php
 }
 	// From here you can enter what you want.....
