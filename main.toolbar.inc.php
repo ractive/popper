@@ -66,6 +66,11 @@
 			}			
 			echo("><img src=\"graphics/cancelm.gif\" alt=\"".$_SESSION['strings']['l_DeleteAll']."\" title=\"".$_SESSION['strings']['l_DeleteAll']."\" border=\"0\"></a>\n");
 			echo("<img src=\"graphics/spacing.gif\" alt=\"|\">");
+         echo("<a href=\"".$_SERVER['PHP_SELF']."?action=sendandreceive&what=getall&show=yes\"");
+			if ($frame_view) {
+				echo(" target=\"maillist\"");
+			}
+			echo("><img src=\"graphics/sendandreceiveall.gif\" alt=\"".$_SESSION['strings']['l_SendReceiveAll']."\" title=\"".$_SESSION['strings']['l_SendReceiveAll']."\" border=\"0\"></a>\n");
 			echo("<a href=\"".$_SERVER['PHP_SELF']."?action=sendandreceive\"");
 			if ($frame_view) {
 				echo(" target=\"maillist\"");
