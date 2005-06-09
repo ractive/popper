@@ -37,13 +37,30 @@ class mailer extends mail {
 		}
 
 		$row = $this->db_tool->fetch_array($res);
-		$this->from_text(stripslashes($row["mail"]));
 		$this->userid = $row["user_id"];
 		$this->folder = $row["folder"];
 		$this->id = $row["id"];
 		$this->acc_id = $row["acc_id"];
+		
+		$mail = $row["mail"].$this->load_extra_packets($this->id);
+		
+		$this->from_text(stripslashes($mail));
 
 		return true;
+	}
+	
+	function load_extra_packets($id) {
+		$extra = "";
+		
+		// Check for additional packets
+		$query = "SELECT * from extended_mails WHERE mail_id = '$id' ORDER BY packet_id ASC";
+		
+		while ($res = $this->db_tool->db_query($query)) {
+			$row = $this->db_tool->fetch_array($res);
+			$extra .= $row["mail_packet"];
+		}
+		
+		return $extra;
 	}
 
 	function load_forward($id) {
@@ -158,15 +175,6 @@ class mailer extends mail {
 		else {
 			$priority = $_SESSION['NORMAL_PRIORITY'];
 		}
-		if ($this->headers->get("X-MSMail-Priority") == "High") {
-			$priority = $_SESSION['HIGH_PRIORITY'];
-		}
-		else if ($this->headers->get("X-MSMail-Priority") == "Low") {
-			$priority = $_SESSION['LOW_PRIORITY'];
-		}
-		else {
-			$priority = $_SESSION['NORMAL_PRIORITY'];
-		}
 
 		$priority_header = $this->headers->get("X-Priority");
 
@@ -193,10 +201,7 @@ class mailer extends mail {
 					$priority = $_SESSION['NORMAL_PRIORITY'];
 					break;
 			}
-			
 		}
-		
-		
 		
 		$date = $this->make_timestamp($this->headers->get("Date"));
 		if ($folder == "sent") {
@@ -211,10 +216,19 @@ class mailer extends mail {
 		if ($server_uidl != 0 && !$uidl) {
 			$uidl = $server_uidl;
 		}
-		$query = "INSERT INTO mails (tos, froms, from_name, subject, date, folder, user_id, mail, uidl, acc_id, is_mime, was_read, priority) VALUES ('$tos', '$froms', '$from_name', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl', '$this->acc_id', '$is_mime', '$was_read', '$priority')";
+		
+		$query  = "INSERT INTO mails (tos, froms, from_name, subject, date, folder, user_id, ";
+		$query .= "mail, uidl, acc_id, is_mime, was_read, priority) VALUES ('$tos', '$froms', ";
+		$query .= "'$from_name', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl'";
+		$query .= ", '$this->acc_id', '$is_mime', '$was_read', '$priority')";
 		$res = $this->db_tool->db_query($query);
-
+		
 		return $this->db_tool->insert_id();	
+	}
+
+	function store_packet($mail_id, $packet_id, $msg) {
+		$query = "INSERT INTO mail_packets (mail_id, packet_id, mail_packet) VALUES ('$mail_id', '$packet_id', '$msg')";
+		$res = $this->db_tool->db_query($query);
 	}
 
 	function start_timer($event) {
