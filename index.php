@@ -13,46 +13,52 @@ http://www.gnu.org/copyleft/gpl.html
 ==========================================================================*/
 
 /*==========================================================================
-                                   Begin Main                             */	
+                                   Begin Main                             */
+
+// blackdrake: Some users forget to create tmp/ with the right chmod-value
+// to prevent mail-viewing-errors, popper will not start anymore, if there is no tmp/
+if (decoct(fileperms('tmp/')) != 40777)
+  die('Popper needs a directory named &quot;tmp&quot; that has CHMOD 777 to work correctly.');
+
 	// Check for PHP >4.1.0
 	if (version_compare(phpversion(),'4.1.0','<')) {
 		$msg  = "<h1>Your version of PHP is not supported!</h1>\n<br />\n<br />\nInstall a version ";
 		$msg .= "of PHP >=4: <a href='http://www.php.net' title='PHP Homepage'>http://www.php.net</a>";
 		die($msg);
 	}
-	
+
 	// Set the session
 	setup_session();
-	
+
 	// Clear any prior $_SESSION['DATA']
 	if (isset($_SESSION['DATA'])) {
 		$_SESSION['DATA'] = "";
 	}
-	
+
   // Process POST last, so that those settings will take precedence
 	// Process GET variables
 	process_get_vars();
 	// Process POST variables
 	process_post_vars();
-	
+
 	$_SESSION['action'] = ($_SESSION['DATA']['action'] ? $_SESSION['DATA']['action'] : "");
-	
+
 	@set_time_limit(60);
 
 	include("class.popper.inc.php");
 	include("class.cal.inc.php");
-	
+
 	set_language();
-	
+
 	// If needed, setup the persistent session data objects.
 	if (!isset($_SESSION['popper']) || !is_object($_SESSION['popper'])) {
 		$_SESSION['popper'] = new popper;
 	}
-	
+
 	if (!isset($_SESSION['calendar']) || !is_object($_SESSION['calendar'])) {
 		$_SESSION['calendar'] = new cal;
 	}
-	
+
 	if ($_SESSION['logged_in']) {
 		process_action();
 	}
@@ -82,9 +88,9 @@ http://www.gnu.org/copyleft/gpl.html
 				break;
 		}
 	}
-	
+
 	takedown_session();
-	
+
 /*==                                End Main
 ==========================================================================*/
 
@@ -112,7 +118,7 @@ This is very insecure!  Need to validate input and screen for PHP [htmlspecialch
 and MySQL [mysql_real_escape_string()] injection attacks.
 :DevNote*/
 function process_post_vars() {
-	
+
 	foreach ( $_POST as $post => $pvar) {
 		$_SESSION['DATA'][strtolower($post)] = htmlspecialchars($pvar);
 	}
@@ -123,7 +129,7 @@ This is very insecure!  Need to validate input and screen for PHP [htmlspecialch
 and MySQL [mysql_real_escape_string()] injection attacks.
 :DevNote*/
 function process_get_vars() {
-	
+
 /*DevNote: roytoo
 As a security precaution, need to limit to a know list.
 :DevNote*/
@@ -139,37 +145,37 @@ function set_language() {
 }
 
 function process_login() {
-	
+
 	if (!isset($_SESSION['DATA']['name']) || !isset($_SESSION['DATA']['pwd'])) {
 		$msg = $_SESSION['strings']['l_FillInAll'];
 		$_SESSION['popper']->show_in_window("login", $_SESSION['strings']['l_Login'], $_SESSION['strings']['l_FillInAll']);
 		exit_popper();
 	}
-	
+
 	if (!$_SESSION['popper']->pwd_check($_SESSION['DATA']['name'], $_SESSION['DATA']['pwd'])) {
 		$_SESSION['popper']->show_in_window("login", $_SESSION['strings']['l_Login'], $_SESSION['strings']['l_LoginFail']);
 		exit_popper();
 	}
-	
+
 	if (!$_SESSION['popper']->is_activated($_SESSION['DATA']['name'])) {
-		$_SESSION['popper']->messagebox($_SESSION['strings']['l_AccActivation1'], $_SESSION['strings']['l_AccActivation2'], $_SESSION['strings']['l_AccActivation2'], $_SESSION['strings']['l_Welcome']);		
-		return;			
+		$_SESSION['popper']->messagebox($_SESSION['strings']['l_AccActivation1'], $_SESSION['strings']['l_AccActivation2'], $_SESSION['strings']['l_AccActivation2'], $_SESSION['strings']['l_Welcome']);
+		return;
 	}
-	
+
 	// The password was good and there is at least one account.
 	// Save the info to the session
 /*DevNote: roytoo
-Setting $_SESSION['logged_in'] = 1 is a security hole since it is easy to guess and gain access 
-to a valid user's accounts.  It is better to set $_SESSION['logged_in'] to a hash composed of 
-the PHPSESSID, users name and password [i.e. md5($_SESSION['PHPSESSID']+$_SESSION['DATA']['name']+$_SESSION['DATA']['pwd'])].  
+Setting $_SESSION['logged_in'] = 1 is a security hole since it is easy to guess and gain access
+to a valid user's accounts.  It is better to set $_SESSION['logged_in'] to a hash composed of
+the PHPSESSID, users name and password [i.e. md5($_SESSION['PHPSESSID']+$_SESSION['DATA']['name']+$_SESSION['DATA']['pwd'])].
 Even this is not completely secure if an attacker has access to the server's session
 save path and popper is not on an https:// server.
 
 Need to add info about this topic to INSTALL?
 :DevNote*/
-	$_SESSION['logged_in'] = 1;	
+	$_SESSION['logged_in'] = 1;
 	$_SESSION['popper']->set_user($_SESSION['DATA']['name']);
-	
+
 	if ($_COOKIE['poppercookie'] && ($_SESSION['DATA']['set_cookie'] != "on")) {
 		cookie_unset();
 	}
@@ -177,19 +183,19 @@ Need to add info about this topic to INSTALL?
 	if (isset($_SESSION['DATA']['set_cookie']) && $_SESSION['DATA']['set_cookie'] && !$_COOKIE['poppercookie']) {
 		cookie_set();
 	}
-	
+
 	if (!$_SESSION['popper']->has_account()) {
-		$_SESSION['popper']->show_in_window("newaccount", $_SESSION['strings']['l_Account'], $_SESSION['strings']['l_AccInfo']);		
+		$_SESSION['popper']->show_in_window("newaccount", $_SESSION['strings']['l_Account'], $_SESSION['strings']['l_AccInfo']);
 		return;
 	}
 	$_SESSION['popper']->show();
 }
 
 function process_new_user() {
-	
+
 	if ($_SESSION['popper']->create_user()) {
 		if ($_SESSION['DATA']['user_confirmation']) {
-			$_SESSION['popper']->messagebox($_SESSION['strings']['l_AccCreated1'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_Welcome']);		
+			$_SESSION['popper']->messagebox($_SESSION['strings']['l_AccCreated1'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_Welcome']);
 		}
 		else {
 			$_SESSION['popper']->messagebox($_SESSION['strings']['l_ConfSucc1'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_AccCreated2'], $_SESSION['strings']['l_Welcome']);
@@ -198,7 +204,7 @@ function process_new_user() {
 }
 
 function process_confirmation($code) {
-	
+
 	// The user called the confirmation link
 	if ($_SESSION['popper']->check_confirmation($code)) {
 		// The check was successful
@@ -211,13 +217,13 @@ function process_confirmation($code) {
 }
 
 function process_action() {
-	
+
 	// Remove previously created tmp-files
 	$_SESSION['popper']->unlink_tmp();
 
 /*DevNote: roytoo
 Temporarily masked out the 'ok' functionality since it now interfers with $_SESSION['action'] processing.
-Will need to be re-implemented, most likely by dynamically changing the value of $_SESSION['action'] based 
+Will need to be re-implemented, most likely by dynamically changing the value of $_SESSION['action'] based
 upon the contents of $_SESSION['last_action'].
 :DevNote*/
 	if ($_SESSION['DATA']['ok'] == "ok") {
@@ -229,9 +235,9 @@ upon the contents of $_SESSION['last_action'].
 		}
 		return;
 	}
-	
+
 	$_SESSION['popper']->pre_frame();
-	
+
 	switch($_SESSION['action']) {
 		case "showfolder":
 			$_SESSION['popper']->show($folder);
@@ -352,13 +358,13 @@ Functionalize this one.
 :DevNote*/
 			if (isset($_SESSION['DATA']['conf_submit'])) {
 				$_SESSION['popper']->store_config();
-				
+
 				$lang_file = "lang/lang.".$_SESSION['popper']->config['language'].".inc.php";
-				
+
 				include($lang_file);
-				
-				setlocale(LC_ALL, $_SESSION['locale']);	
-				
+
+				setlocale(LC_ALL, $_SESSION['locale']);
+
 				$_SESSION['popper']->show();
 			}
 			else if (isset($changepwd)) {
@@ -397,7 +403,7 @@ Functionalize this one.
 				// Mark the senders as blocked
 				$_SESSION['popper']->add_sel_addr(true);
 				// Delete the mails
-				$_SESSION['popper']->delete_blocked();					
+				$_SESSION['popper']->delete_blocked();
 			}
 			else if (isset($_SESSION['DATA']['move'])) {
 				//$_SESSION['popper']->move_to();
@@ -419,7 +425,7 @@ Functionalize this one.
 				$_SESSION['popper']->show_mail_frame();
 			}
 			else {
-				Header("Location: ".$_SERVER['PHP_SELF']."?action=showmail&mail_id=".$_SESSION['popper']->cur_message_id);				
+				Header("Location: ".$_SERVER['PHP_SELF']."?action=showmail&mail_id=".$_SESSION['popper']->cur_message_id);
 			}
 			break;
 		case "help":
@@ -432,7 +438,7 @@ Functionalize this one.
 }
 
 function cookie_set() {
-	
+
 	// Set the cookies if the user wants that and if it's not set yet.
 	setcookie("poppercookie['user']", $_SESSION['DATA']['name'], time() + 365 * 24 * 3600);
 	setcookie("poppercookie['language']", $_SESSION['popper']->config['language'], time() + 365 * 24 * 3600);
@@ -440,16 +446,16 @@ function cookie_set() {
 }
 
 function cookie_unset() {
-	
+
 	// This indicates that the user previously set the cookie, but does
 	// not want to have it anymore.  So, we delete the cookies
-	setcookie ("poppercookie['user']", "", time() - 3600);		
+	setcookie ("poppercookie['user']", "", time() - 3600);
 	setcookie ("poppercookie['language']", "", time() - 3600);
 	$_SESSION['poppercookie'] = false;
 }
 
 function language_get() {
-	
+
 	if (isset($_SESSION['poppercookie']['language'])) {
 		$langfile = "lang/lang.".$_SESSION['poppercookie']['language'].".inc.php";
 	}
@@ -461,11 +467,11 @@ function language_get() {
 			$langfile = "lang/lang.english.inc.php";
 		}
 	}
-	
+
 	if (!file_exists($langfile)) {
-		$langfile = "lang/lang.english.inc.php";	
+		$langfile = "lang/lang.english.inc.php";
 	}
-	
+
 	return $langfile;
 }
 
@@ -503,19 +509,19 @@ function takedown_session()
 	if ($_SESSION['last_action'] != $_SESSION['action']) {
 		$_SESSION['last_action'] = $_SESSION['action'];
 	}
-	
+
 	// Store the current and last URIs
 	$cururi = getenv("REQUEST_URI");
 	if ($_SESSION['uri'] != $cururi) {
 		$_SESSION['old_uri'] = $_SESSION['uri'];
 	}
 	$_SESSION['uri'] = $cururi;
-	
+
 	unserialize_session();
 }
 
 function exit_popper() {
-	takedown_session();	
+	takedown_session();
 	exit;
 }
 
