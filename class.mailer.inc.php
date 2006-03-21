@@ -41,25 +41,25 @@ class mailer extends mail {
 		$this->folder = $row["folder"];
 		$this->id = $row["id"];
 		$this->acc_id = $row["acc_id"];
-		
+
 		$mail = $row["mail"].$this->load_extra_packets($this->id);
-		
+
 		$this->from_text(stripslashes($mail));
 
 		return true;
 	}
-	
+
 	function load_extra_packets($id) {
 		$extra = "";
-		
+
 		// Check for additional packets
 		$query = "SELECT * from extended_mails WHERE mail_id = '$id' ORDER BY packet_id ASC";
-		
+
 		while ($res = $this->db_tool->db_query($query)) {
 			$row = $this->db_tool->fetch_array($res);
 			$extra .= $row["mail_packet"];
 		}
-		
+
 		return $extra;
 	}
 
@@ -111,11 +111,11 @@ class mailer extends mail {
 
 		return true;
 	}
-	
+
 	// Take a date like "Mon, 4 Sep 2000 20:20:37 +0200" and make a timestamp for use in the MYSQL DB
 	function make_timestamp($date) {
 		if (empty($date)) {
-			return "NOW()";
+			return date("YmdHis"); // blackdrake: "NOW()" isn't accepted
 		}
 		$z = ord($date)-ord("0");
 		// If the first char is a number, the date string is formed like this:
@@ -123,6 +123,11 @@ class mailer extends mail {
 		if ($z >= 0 & $z <= 9) {
 			$date = "Sun, ".$date;
 		}
+
+		// blackdrake: some mails have 2 or more spaces in the date-field. this causes fatal php errors and wrong email-dates
+		while (strpos($date, '  '))
+          $date = str_replace('  ', ' ', $date);
+
 		$date = explode(" ", $date);
 		$time = explode(":", $date[4]);
 
@@ -137,7 +142,7 @@ class mailer extends mail {
 
 		return date("YmdHis", mktime($time[0], $time[1], $time[2], $i, $date[1], $date[3]));
 	}
-	
+
 	function is_mime() {
 		$cont_type = $this->get_header("Content-Type");
 
@@ -149,7 +154,7 @@ class mailer extends mail {
 		}
 		return (strcasecmp($type, "text/plain") != 0);
 	}
-	
+
 	function store($folder, $msg = false, $server_uidl = 0) {
 		if ($msg) {
 			$this->headers->extract($msg);
@@ -202,7 +207,7 @@ class mailer extends mail {
 					break;
 			}
 		}
-		
+
 		$date = $this->make_timestamp($this->headers->get("Date"));
 		if ($folder == "sent") {
 			$was_read = $_SESSION['MAIL_READ'];
@@ -210,20 +215,20 @@ class mailer extends mail {
 		else {
 			$was_read = $_SESSION['MAIL_UNREAD'];
 		}
-		
+
 		// Some POP server list uidls on request, but don't store them in
 		// the mail as X-UIDL
 		if ($server_uidl != 0 && !$uidl) {
 			$uidl = $server_uidl;
 		}
-		
+
 		$query  = "INSERT INTO mails (tos, froms, from_name, subject, date, folder, user_id, ";
 		$query .= "mail, uidl, acc_id, is_mime, was_read, priority) VALUES ('$tos', '$froms', ";
 		$query .= "'$from_name', '$subject', $date, '$folder', '$this->user_id', '$msg', '$uidl'";
 		$query .= ", '$this->acc_id', '$is_mime', '$was_read', '$priority')";
 		$res = $this->db_tool->db_query($query);
-		
-		return $this->db_tool->insert_id();	
+
+		return $this->db_tool->insert_id();
 	}
 
 	function store_packet($mail_id, $packet_id, $msg) {
