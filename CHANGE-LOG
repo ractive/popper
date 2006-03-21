@@ -134,3 +134,11 @@ Version 1.41-r2
 ===============
 - Fix for removal of 0's (zeros) from email addresses in headers (bug #1066379).
 
+Version 1.42
+============
+- Bugfix: In related-part-emails there was a fatal error, when cid: has no end-quote
+- Bugfix: Function "make_clickable" was rewritten - no mail parsing errors at links
+- Bugfix: Some mails have 2 or more spaces in the date-field. This caused fatal PHP errors and wrong email-dates
+- Bugfix: Sent or Saved emails had a wrong date because of an error in the date-field
+- Bugfix: E-Mails e.g. from eBay have their boundary not quotet. So the un_quote() function gives out an empty string, attachments are not showed.
+- New Popper-Homepage was added
