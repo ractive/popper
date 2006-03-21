@@ -49,10 +49,10 @@ class popper {
 			// Create the db_tool object
 			$this->db_tool = new db_tool("popper.inc.php");
 		}
-		
+
 		$this->load_config();
 		$this->set_folders();
-		
+
 		// Determine the max size of a mail you can
 		// store in the DB
 		$query = "SHOW VARIABLES";
@@ -63,40 +63,40 @@ class popper {
 				break;
 			}
 		}
-		
+
 		$this->set_version();
 		$this->folder = "inbox";
 	}
 
 	function pre_frame() {
-		
+
 		if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 			return;
 		}
-		
+
 		if (!isset($_SESSION['DATA']['mail_id']) || empty($_SESSION['DATA']['mail_id'])) {
 			$_SESSION['DATA']['mail_id'] = $this->cur_message_id;
 		}
 	}
-	
+
 
 	function set_cur() {
-		
+
 		if (!isset($_SESSION['DATA']['mail_id']) || ($_SESSION['DATA']['mail_id'] == 0)) {
 			$this->cur_message_id = 0;
 			unset($this->cur_mailer);
 			$this->cur_mailer =0;
-		}		
+		}
 		else if ($_SESSION['DATA']['load'] == 1 || ($this->cur_mailer == 0 || (substr($_SESSION['DATA']['mail_id'], -3) != "att" && $this->cur_message_id != $_SESSION['DATA']['mail_id']))) {
 			unset($this->att_mailer);
-			$this->att_mailer = array();		
+			$this->att_mailer = array();
 			unset($this->cur_mailer);
 			$this->cur_mailer = new mailer($this->userid);
 			$this->cur_mailer->load($_SESSION['DATA']['mail_id']);
 			$this->cur_message_id = $_SESSION['DATA']['mail_id'];
 		}
 	}
-	
+
 
 	function unlink_tmp() {
 		foreach($this->tmp_files as $file) {
@@ -105,11 +105,11 @@ class popper {
 	}
 
 	function get_userid($name = "") {
-		
+
 		if (empty($name)) {
 			$name = $this->name;
 		}
-		
+
 		$query = "SELECT id FROM users WHERE STRCMP(name, '$name') = 0";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
@@ -139,7 +139,7 @@ class popper {
 	}
 
 	function set_user($name) {
-		
+
 		$this->name = $name;
 		$this->userid = $this->get_userid();
 		$this->load_config();
@@ -151,43 +151,43 @@ class popper {
 	}
 
 	function update_lang() {
-		
+
 		$lang_file = "lang/lang.".$this->config["language"].".inc.php";
-		
+
 		if (!file_exists($lang_file)) {
-			$lang_file = "lang/lang.english.inc.php";	
+			$lang_file = "lang/lang.english.inc.php";
 		}
-		
+
 		require($lang_file);
-		
+
 		setlocale(LC_ALL, $_SESSION["locale"]);
-		
+
 		$this->folders["inbox"]["name"] = $_SESSION['strings']['l_Inbox'];
 		$this->folders["outbox"]["name"] = $_SESSION['strings']['l_Outbox'];
 		$this->folders["sent"]["name"] = $_SESSION['strings']['l_SentMail'];
 		$this->folders["bin"]["name"] = $_SESSION['strings']['l_RecycleBin'];
-		$this->folders["drafts"]["name"] = $_SESSION['strings']['l_Drafts'];				
-		$this->folders["cal"]["name"] = $_SESSION['strings']['l_Calendar'];	
+		$this->folders["drafts"]["name"] = $_SESSION['strings']['l_Drafts'];
+		$this->folders["cal"]["name"] = $_SESSION['strings']['l_Calendar'];
 		if ($_SESSION["poppercookie"]["language"]) {
 			setcookie("poppercookie['language']", $this->config["language"], time() + 365 * 24 * 3600);
 		}
 	}
-	
+
 	function load_config() {
-		
+
 		$query = "SELECT * FROM conf WHERE user_id = '$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
 			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_UserInfoFail']);
 			return;
 		}
-		
+
 		$row = $this->db_tool->fetch_array($res);
 		$this->config["keep"]			= $row["keep"];
 		$this->config["server_del"]		= $row["server_del"];
 		$this->config["auto_check"]		= $row["auto_check"];
 		$this->config["signature"]		= $row["signature"];
-		$this->config["app_sig"]		= $row["app_sig"];								
+		$this->config["app_sig"]		= $row["app_sig"];
 		$this->config["send_direct"]	= $row["send_direct"];
 		$this->config["mails_per_page"] = $row["mails_per_page"];
 		$this->config["mail_rows"]		= $row["mail_rows"];
@@ -196,13 +196,13 @@ class popper {
 		$this->config["subject_size"]	= $row["subject_size"];
 		$this->config["address_size"]	= $row["address_size"];
 		$this->config["check_int"]		= $row["check_int"];
-		$this->config["view"]			= $row["view"];	
+		$this->config["view"]			= $row["view"];
 		$this->config["mailview"]		= $row["mailview"];
 		$this->config["folder_view_width"]		= $row["folder_view_width"];
 	}
 
 	function send_pwd() {
-		
+
 /*DevNote: roytoo
 Confirming the existence of a user account is very bad security.  A more secure scheme:
 1.  Have the user enter their user name and an associated account's email address
@@ -213,7 +213,7 @@ Confirming the existence of a user account is very bad security.  A more secure 
     you requested and should arrive soon.  Follow the instructions contained in the email."
 
 For extra security:
-1. Never send a user name and password in the same email.  Better yet, never send a password.  
+1. Never send a user name and password in the same email.  Better yet, never send a password.
    Instead, send a "change password link" like the confirmation link.
 2. The email should also state the IP that the request originated from.
 :DevNote*/
@@ -223,18 +223,18 @@ For extra security:
 			$this->show_in_window("lostpwd", $_SESSION['strings']['l_LostPwd'], $_SESSION['strings']['l_UserNotFound']);
 			return;
 		}
-	
+
 		$row = $this->db_tool->fetch_array($res);
 
 		$lang_file = "lang/lang.".$row["lang"].".inc.php";
 		if (!file_exists($lang_file)) {
-			$lang_file = "lang/lang.english.inc.php";	
+			$lang_file = "lang/lang.english.inc.php";
 		}
-	
+
 		include($lang_file);
-		
+
 		$server = getenv("SERVER_NAME");
-		
+
 		$mail = $_SESSION['strings']['l_LostPwdMail1']." ".$server;
 		$mail .= "\r\nhttp://$server".$_SERVER['PHP_SELF'];
 /*DevNote: roytoo
@@ -243,24 +243,24 @@ Masked out for better security.  See prior DevNote.
 //		$mail .= "\r\n\r\n".$_SESSION['strings']['l_UserName'].": ".$_SESSION['DATA']['user'];
 		$mail .= "\r\n".$_SESSION['strings']['l_Pwd'].": ".stripslashes($row[pwd]);
 		$mail .= "\r\n\r\n".$_SESSION['strings']['l_LostPwdMail2'];
-		
-		if (mail($row[email], $_SESSION['strings']['l_LostPwd'], $mail, "From: noreply@".$server)) {		
+
+		if (mail($row[email], $_SESSION['strings']['l_LostPwd'], $mail, "From: noreply@".$server)) {
 			$this->messagebox($_SESSION['strings']['l_LostPwdMail3'], $_SESSION['strings']['l_LostPwdMail4'], $_SESSION['strings']['l_LostPwdMail4']);
 		}
 		else {
-			$this->messagebox($_SESSION['strings']['l_LostPwdMail5'], $_SESSION['strings']['l_Error'], $_SESSION['strings']['l_Error']);			
+			$this->messagebox($_SESSION['strings']['l_LostPwdMail5'], $_SESSION['strings']['l_Error'], $_SESSION['strings']['l_Error']);
 		}
-		
+
 	}
-	
+
 
 	function show_in_window($form, $title="", $status_msg="", $msgboxtext = "", $msgboxhead="", $msgboxdata="") {
-		
+
 		if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && ($form != "config") && ($form != "changepwd") && ($form != "newmail")) {
 			$this->show_small_window($form, $title, $status_msg, $msgboxtext, $msgboxhead, $msgboxdata);
 			return;
 		}
-		
+
 		if ($form != "choose" && $_SESSION['action'] != "choosen") {
 			$this->set_cur();
 		}
@@ -271,21 +271,21 @@ Masked out for better security.  See prior DevNote.
 		include("statusbar.inc.php");
 		include($_SESSION['bottom_part']);
 	}
-	
+
 	function show_small_window($form, $title = "", $status_msg = "", $msgboxtext = "", $msgboxhead = "", $msgboxdata="") {
 
 		$this->frame_header();
 		echo("<table class=\"windowborder\" width=\"50%\" border=\"0\" align=\"center\" style=\"margin-top: 2em;\">");
 		echo("<tr class=\"titlebar\"><td>$title</td></tr>");
 		echo("<tr class=\"childwindow\"><td>");
-		if (file_exists($form.".toolbar.inc.php")) {	
+		if (file_exists($form.".toolbar.inc.php")) {
 			include($form.".toolbar.inc.php");
 		}
 		include($form.".form.inc.php");
-		echo("</td></tr></table>");					
+		echo("</td></tr></table>");
 		$this->frame_footer();
 	}
-	
+
 	function show_form($form, $status_msg = "") {
 
 		$this->set_cur();
@@ -296,7 +296,7 @@ Masked out for better security.  See prior DevNote.
 		if (isset($_SESSION['DATA']['addr_id']) && !empty($_SESSION['DATA']['addr_id'])) {
 			$this->cur_address_id = $_SESSION['DATA']['addr_id'];
 		}
-		
+
 		if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && (($form == "addressbook") || ($form == "accounts"))) {
 			$this->frame_header();
 			echo("<table class=\"windowborder\" width=\"100%\" border=\"0\" align=\"center\">");
@@ -307,7 +307,7 @@ Masked out for better security.  See prior DevNote.
 		}
 		if(file_exists($form.".toolbar.inc.php")) {
 			if ($this->folder == "cal") {
-				include("cal.toolbar.inc.php");				
+				include("cal.toolbar.inc.php");
 			}
 			else {
 				include($form.".toolbar.inc.php");
@@ -317,7 +317,7 @@ Masked out for better security.  See prior DevNote.
 		if (($this->config["mailview"] == $_SESSION['FRAME_VIEW']) && (($_SESSION['action'] == "addressbook") || ($_SESSION['action'] == "accounts"))) {
 			echo("</table></form>");
 			$this->frame_footer();
-		}		
+		}
 		else {
 			include("statusbar.inc.php");
 			include($_SESSION['bottom_part']);
@@ -325,7 +325,7 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show($folder = "", $msg = "") {
-		
+
 		if (empty($folder)) {
 			$folder = "inbox";
 		}
@@ -334,14 +334,14 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_notification_request() {
-		
+
 		if ($this->cur_mailer == 0) {
 			return;
 		}
-		
+
 		// Is there a notification header?
 		$notify = $this->cur_mailer->headers->get("Disposition-Notification-To");
-		if (!empty($notify)) {		
+		if (!empty($notify)) {
 			$query = "SELECT was_read FROM mails WHERE user_id = '$this->userid' AND id='$this->cur_message_id'";
 			$res = $this->db_tool->db_query($query);
 			if ($res != 0 && $row = $this->db_tool->fetch_array($res)) {
@@ -352,16 +352,16 @@ Masked out for better security.  See prior DevNote.
 						// Ignore the notification
 						return;
 					}
-					
+
 					echo("<tr class=\"childwindow\"><td>".$_SESSION['strings']['l_NotifyQuest']."<br>".$_SESSION['strings']['l_NotifyQuest2']."</td>\n");
 					echo("<td><form action=\"".$_SERVER['PHP_SELF']."\" method=\"GET\">\n<input type=\"submit\" name=\"submit\" value=\"".$_SESSION['strings']['l_SendNot']."\">");
 					echo("<input type=\"hidden\" name=\"action\" value=\"notification\"></form>\n</td>\n</tr>\n");
 				}
 			}
 		}
-		
+
 	}
-	
+
 	function send_notification() {
 
 		$not_mailer = new mailer($this->userid);
@@ -376,11 +376,11 @@ Masked out for better security.  See prior DevNote.
 		$msg = $_SESSION['strings']['l_NotMsg']."\r\n\r\n";
 
 		$msg .= $_SESSION['strings']['l_To'].": $from\r\n";
-	
+
 		$msg .= $_SESSION['strings']['l_SentAt'].": ".$this->cur_mailer->headers->get("Date")."\r\n";
 		$msg .= $_SESSION['strings']['l_ReadAt'].": ".strftime("%c", time())."\r\n";
 		$msg .= $_SESSION['strings']['l_Subject'].": ".$this->cur_mailer->subject()."\r\n\r\n";
-		
+
 		$not_mailer->create($notify, $from, $_SESSION['strings']['l_NotiSub'].": ".$this->cur_mailer->headers->get("Subject"), $msg);
 		$boundary = $not_mailer->create_boundary();
 		$not_mailer->headers->put("Content-Type", "multipart/report; report-type=disposition-notification;\tboundary=\"$boundary\"");
@@ -454,7 +454,7 @@ Masked out for better security.  See prior DevNote.
 			$blocked = true;
 			echo("<h3>".$_SESSION['strings']['l_Blocked']."</h3>");
 		}
-		
+
 
 		if (isset($_SESSION['DATA']['addr_id']) && !empty($_SESSION['DATA']['addr_id'])) {
 			$this->cur_address_id = $_SESSION['DATA']['addr_id'];
@@ -492,7 +492,7 @@ Masked out for better security.  See prior DevNote.
 		if (isset($_SESSION['DATA']['addr_id']) && !empty($_SESSION['DATA']['addr_id'])) {
 			$this->cur_address_id = $_SESSION['DATA']['addr_id'];
 		}
-		
+
 		$query = "SELECT * FROM addresses WHERE user_id='$this->userid' AND id='$this->cur_address_id'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
@@ -650,11 +650,11 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function get_account_name($id = "") {
-		
+
 		if(!isset($id) || empty($id)) {
 			$id = $this->cur_account_id;
 		}
-		
+
 		$query = "SELECT name FROM  accounts WHERE id=$id AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
@@ -671,11 +671,11 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function get_address_name($id = "") {
-		
+
 		if(!isset($id) || empty($id)) {
 			$id = $this->cur_address_id;
 		}
-		
+
 		$query = "SELECT name FROM  addresses WHERE id='$id' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
@@ -698,13 +698,13 @@ Masked out for better security.  See prior DevNote.
 		else {
 			$this->show_in_window("ack", $title, $status_msg);
 		}
-		
-		
+
+
 	}
-	
+
 
 	function del_address() {
-		
+
 		// First try to unblock the address
 		$query = "UPDATE addresses SET blocked=0 WHERE id = '$this->cur_address_id' AND user_id = '$this->userid' AND blocked=1";
 		$res = $this->db_tool->db_query($query);
@@ -737,15 +737,15 @@ Masked out for better security.  See prior DevNote.
 					$del_msg = $_SESSION['strings']['l_AddressDelFail'];
 				}
 			}
-	
+
 			$this->cur_address_id = 0;
 		}
-		
+
 		$this->show_form("addressbook", $del_msg);
 	}
 
 	function del_account() {
-		
+
 		$accountname = $this->get_account_name();
 		if (!isset($_SESSION['DATA']['ack']) || empty($_SESSION['DATA']['ack']) ) {
 			$this->show_ack($_SESSION['strings']['l_DelAccount']." $accountname", $_SESSION['strings']['l_DelAccountConf']);
@@ -784,14 +784,14 @@ Masked out for better security.  See prior DevNote.
 				$folder_info[$row[folder]] = $row[count];
 			}
 		}
-		
+
 		if ($this->config["view"] == $_SESSION['MIN_VIEW']) {
 			$width = "100%";
 		}
 		else {
 			$width="80%";
 		}
-		
+
 		echo("<table width=\"$width\">");
 			while(list($key, $val) = each($this->folders)) {
 				echo("<tr>\n");
@@ -823,9 +823,9 @@ Masked out for better security.  See prior DevNote.
 						if ($folder_info[$key] > 0) {
 							echo("style=\"font-weight: bolder\"");
 						}
-						
+
 						echo(">$val[name]");
-	
+
 						if ($folder_info[$key] > 0) {
 							echo(" (".$folder_info[$key].")");
 						}
@@ -840,19 +840,19 @@ Masked out for better security.  See prior DevNote.
 							echo("showfolder&folder=$key\" ");
 							echo($this->folder_selected($key));
 						}
-										
+
 						echo(">");
 						echo("<img src=\"graphics/$val[pic]\" alt=\"$val[name]\" title=\"$val[name]\" ");
 						echo("style=\"vertical-align: middle;\" border=\"0\"></a></td>");
 					}
-					
+
 				echo("</tr>\n");
 			}
 		echo("</table>");
 	}
 
 	function count_mails() {
-		
+
 		$query = "SELECT COUNT(*) FROM mails WHERE user_id='$this->userid' AND folder='$this->folder'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
@@ -869,25 +869,25 @@ Masked out for better security.  See prior DevNote.
 	}
 
 	function show_frame_list() {
-		
+
 		if (isset($_SESSION['DATA']['folder']) && !empty($_SESSION['DATA']['folder'])) {
 			$this->folder = $_SESSION['DATA']['folder'];
 		}
 		$this->frame_header();
 		echo("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\"><tr class=\"window\"><td>");
-		$this->show_list_headers();					
+		$this->show_list_headers();
 		$this->list_mails();
 		echo("</td></tr></table>");
-		$this->frame_footer();	
+		$this->frame_footer();
 	}
-	
+
 
 	function show_list_headers() {
-		
+
 		echo("<form class=\"mail\" action=\"".$_SERVER['PHP_SELF']."?action=selected\" method=\"post\">");
 		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");
 		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
-			echo("<tr class=\"windowtitle\"><td>".$this->get_foldername()."</td></tr>");		
+			echo("<tr class=\"windowtitle\"><td>".$this->get_foldername()."</td></tr>");
 		}
 		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\"><td width=\"100%\" align=\"left\">");
 		echo("<input class=\"smallbutton\" type=\"image\" name=\"delete\" value=\"delete\" src=\"graphics/del.gif\" alt=\"".$_SESSION['strings']['l_DeleteMultiple']."\" title=\"".$_SESSION['strings']['l_DeleteMultiple']."\">");
@@ -895,7 +895,7 @@ Masked out for better security.  See prior DevNote.
 		echo("<input class=\"smallbutton\" type=\"image\" name=\"block\" value=\"block\" src=\"graphics/stop.gif\" alt=\"".$_SESSION['strings']['l_Block']."\" title=\"".$_SESSION['strings']['l_Block']."\">");
 		//echo("<select name=\"move_folder\" style=\"margin: 0, 0, 0, 0; padding: 0, 0, 0, 0; border: none;\"><option>".$_SESSION['strings']['l_MoveTo']."</option><option>lajksdlkj</option></select>");
 		echo("</td></tr></table>\n");
-		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");		
+		echo("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">");
 		echo("<tr style=\"text-align: center; background-color: silver; color: inherit;\">\n");
 		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n&nbsp;</th>\n");
 		echo("<th style=\"text-align: center; border: thin outset silver; width: 15px;\">\n<a href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&order=is_mime\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Attachment']."\"><img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Attachment']."\" align=\"middle\" border=\"0\"></a>\n</th>\n");
@@ -914,9 +914,9 @@ Masked out for better security.  See prior DevNote.
 				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
 			}
 			else {
-				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");			
+				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
 			}
-		}		
+		}
 		echo("</a></th><th style=\"text-align: left; border: thin outset silver;\" width=\"40%\">\n");
 		echo("<a style=\"font-weight: bolder;\" href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&order=subject\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Subject']."\">".$_SESSION['strings']['l_Subject']);
 		if ($_SESSION['order'] == "subject") {
@@ -924,9 +924,9 @@ Masked out for better security.  See prior DevNote.
 				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
 			}
 			else {
-				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");			
+				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
 			}
-		}			
+		}
 		echo("</a></th>\n");
 		echo("<th style=\"text-align: left; border: thin outset silver;\"><a style=\"font-weight: bolder;\" href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&order=date\" title=\"".$_SESSION['strings']['l_Order']." ".$_SESSION['strings']['l_Date']."\">".$_SESSION['strings']['l_Date']);
 		if ($_SESSION['order'] == "date") {
@@ -934,20 +934,20 @@ Masked out for better security.  See prior DevNote.
 				echo(" <img src=\"graphics/sort_desc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
 			}
 			else {
-				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");			
+				echo(" <img src=\"graphics/sort_nodesc.gif\" alt=\"\" border=\"0\" style=\"margin-left: 30px;\">");
 			}
-		}			
-		echo("</a></th></tr>\n");		
-		
+		}
+		echo("</a></th></tr>\n");
+
 	}
-	
+
 	function list_mails() {
 //		global $page;
-		
+
 		if (empty($this->folder)) {
 			$this->folder = "inbox";
 		}
-		
+
 		if (isset($_SESSION['order']) && empty($this->order)) {
 			$desc = false;
 			$this->order = $_SESSION['order'];
@@ -961,8 +961,8 @@ Masked out for better security.  See prior DevNote.
 				$this->order = $_SESSION['order']." DESC";
 				$desc = true;
 			}
-			
-			
+
+
 			if (!empty($this->order) && !strstr($_SESSION['order'], "date")) {
 				// The second order options is always the date
 				$this->order .= ", date DESC";
@@ -971,14 +971,14 @@ Masked out for better security.  See prior DevNote.
 			{
 				$this->order .= " date DESC";
 			}
-				
+
 		}
-		
+
 		// Make sure we have an order expression
 		if (empty($this->order)) {
 			$this->order = "date DESC";
 		}
-		
+
 		while(1) {
 			$mails = ($this->config["mails_per_page"] ? $this->config["mails_per_page"] : 25);
 			$pageno = $this->get_pageno() * $mails;
@@ -989,7 +989,7 @@ Masked out for better security.  See prior DevNote.
 			if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 				$query .= " LIMIT $pageno, $mails";
 			}
-			
+
 			$res = $this->db_tool->db_query($query);
 
 			if ($res === false) {
@@ -1016,7 +1016,7 @@ echo "mails_per_page1: ".$this->config["mails_per_page"];
 
 			break;
 		}
-						
+
 		// Now fill in the mails
 		while ($row = $this->db_tool->fetch_array($res)) {
 			echo("<tr");
@@ -1036,54 +1036,54 @@ echo "mails_per_page1: ".$this->config["mails_per_page"];
 					$img = "forwarded_mail.gif";
 					break;
 			}
-				
+
 			echo(">\n");
 
 			echo("<td style=\"width: 10px; text-align: center;\"><input type=\"checkbox\" name=\"del[]\" value=\"$row[id]\"></td>");
 			echo("<td style=\"width: 20px; text-align: center;\">\n");
 			if ($row[is_mime]) {
-				echo("<img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION['strings']['l_Attachment']."\" align=\"middle\" border=\"0\" style=\"vertical-align: middle;\">\n");				
+				echo("<img src=\"graphics/attachment_small.gif\" alt=\"".$_SESSION['strings']['l_Attachment']."\" align=\"middle\" border=\"0\" style=\"vertical-align: middle;\">\n");
 			}
 			echo("</td><td align=\"center\" style=\"vertical-align: middle\">");
-			
+
 			switch ($row["priority"]) {
 				case $_SESSION['LOWEST_PRIORITY']:
-					echo("<img src=\"graphics/lowest.gif\" alt=\"lowest\" title=\"".$_SESSION['strings']['l_LowestPriority']."\">");			
+					echo("<img src=\"graphics/lowest.gif\" alt=\"lowest\" title=\"".$_SESSION['strings']['l_LowestPriority']."\">");
 					break;
-				case $_SESSION['LOW_PRIORITY']:					
-					echo("<img src=\"graphics/low.gif\" alt=\"low\" title=\"".$_SESSION['strings']['l_LowPriority']."\">");	
-					break;					
-				case $_SESSION['HIGH_PRIORITY']:					
-					echo("<img src=\"graphics/high.gif\" alt=\"high\" title=\"".$_SESSION['strings']['l_HighPriority']."\">");	
+				case $_SESSION['LOW_PRIORITY']:
+					echo("<img src=\"graphics/low.gif\" alt=\"low\" title=\"".$_SESSION['strings']['l_LowPriority']."\">");
 					break;
-				case $_SESSION['HIGHEST_PRIORITY']:					
-					echo("<img src=\"graphics/highest.gif\" alt=\"highest\" title=\"".$_SESSION['strings']['l_HighestPriority']."\">");	
+				case $_SESSION['HIGH_PRIORITY']:
+					echo("<img src=\"graphics/high.gif\" alt=\"high\" title=\"".$_SESSION['strings']['l_HighPriority']."\">");
+					break;
+				case $_SESSION['HIGHEST_PRIORITY']:
+					echo("<img src=\"graphics/highest.gif\" alt=\"highest\" title=\"".$_SESSION['strings']['l_HighestPriority']."\">");
 					break;
 				default:
 					echo("&nbsp;");
-					break;				
+					break;
 			}
-						
+
 			echo("</td><td>\n<img src=\"graphics/$img\" alt=\"\" style=\"float: left;\">");
 			if ($this->config["mailview"] == $_SESSION['IN_VIEW']) {
 				echo("<a href=\"".$_SERVER['PHP_SELF']."?action=showfolder&folder=".$this->folder."&mail_id=".$row['id']."\"");
 			}
 			else if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
-				echo("<a href=\"".$_SERVER['PHP_SELF']."?action=mail_cont&mail_id=".$row['id']."\" target=\"mail\" ");			
+				echo("<a href=\"".$_SERVER['PHP_SELF']."?action=mail_cont&mail_id=".$row['id']."\" target=\"mail\" ");
 			}
 			else {
-				echo("<a href=\"".$_SERVER['PHP_SELF']."?action=showmail&mail_id=".$row['id']."\"");				
+				echo("<a href=\"".$_SERVER['PHP_SELF']."?action=showmail&mail_id=".$row['id']."\"");
 				if ($this->config["mailview"] == $_SESSION['POPUP_VIEW']) {
 					echo(" target=\"_blank\" ");
 				}
-				
+
 			}
-			
+
 			// Don't highlight a mail in FrameView
 			if ($this->config["mailview"] != $_SESSION['FRAME_VIEW']) {
 				$this->mail_selected($row[id]);
 			}
-			
+
 			// If the mail was not read, display it bold (also the link)
 			if ($row["was_read"] == $_SESSION['MAIL_UNREAD']) {
 				echo(" style=\"font-weight: bolder;\"");
@@ -1107,12 +1107,12 @@ echo "mails_per_page1: ".$this->config["mails_per_page"];
 				$out = substr($out, 0, $this->config["subject_size"])."...";
 			}
 			echo($out."</a></td>");
-			
-			$subject = $mailer->charset_decode($row["subject"]);	
+
+			$subject = $mailer->charset_decode($row["subject"]);
 			// Look that the string isn't too long
 			if (strlen($subject) > $this->config["subject_size"]) {
 				$subject = substr($subject, 0, $this->config["subject_size"])."...";
-			}				
+			}
 
 			echo("<td>".htmlspecialchars($subject));
 			$date = mktime(substr($row[date], 8, 2), substr($row[date], 10, 2), substr($row[date], 12, 2), substr($row[date], 4, 2), substr($row[date], 6, 2), substr($row[date], 0, 4));
@@ -1127,9 +1127,9 @@ echo "mails_per_page1: ".$this->config["mails_per_page"];
 		if (($this->config["mailview"] != $_SESSION['FRAME_VIEW']) && ($count < $this->config["mails_per_page"])) {
 			echo(str_repeat("<br>", $this->config["mails_per_page"] - $count));
 echo "mails_per_page2: ".$this->config["mails_per_page"];
-		}	
+		}
 	}
-	
+
 	function frame_header() {
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
@@ -1142,21 +1142,21 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 </style>
 </head>
 <body>
-<?php		
+<?php
 	}
-	
+
 	function frame_footer() {
-		echo("</body></html>");	
+		echo("</body></html>");
 	}
-	
+
 	function show_folder_content() {
 		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 			$height = $this->config['mails_per_page'];
 			echo("<iframe name=\"maillist\" src=\"".$_SERVER['PHP_SELF']."?action=list\" width=\"100%\" style=\"height: ".$height."em;\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\"></iframe>");
 		}
 		else {
-			$this->show_list_headers();	
-			$count = $this->list_mails();		
+			$this->show_list_headers();
+			$count = $this->list_mails();
 		}
 	}
 
@@ -1167,7 +1167,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		$mail = new mailer(0);
 		// Decode the charset
 		$cont = $mail->charset_decode($name);
-		
+
 		// Strip out header comments
 		$cont = $mail->strip_comment($cont, $comment);
 
@@ -1196,7 +1196,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		if ($mailer == 0) {
 			$mailer = $this->cur_mailer;
 		}
-		
+
 
 		if ($this->cur_message_id == 0 || $this->cur_mailer == 0) {
 			$content = "\r\n\r\n  ======== ".$_SESSION['strings']['l_NoMsgSelected']." ========";
@@ -1206,7 +1206,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 				return $content;
 			}
-			
+
 			echo($content);
 			return;
 		}
@@ -1228,7 +1228,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$content = $m->headers->generate_str(true)."\r\n";
 				$content .= $m->body;
 			}
-			
+
 		}
 
 		if (empty($content)) {
@@ -1245,7 +1245,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		// If we are here, the mail has been read, we tell that the DB
 		if ($_SESSION['action'] != "printmail" ) {
 			$this->set_mail_read($this->cur_message_id);
-		}		
+		}
 
 		$content = stripslashes($content);
 
@@ -1259,31 +1259,31 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		if ($_SESSION['action'] == "showsources") {
 			Header("Content-Type: text/plain");
 		}
-		
+
 
 		echo $content;
 	}
-	
+
 	function split_html($content) {
 		if (preg_match("|(.*<body.*>)(.*?)|Usi", $content, $matches)) {
 			return array($matches[1], $matches[2]);
 		}
-		
+
 		return array("", $content);
-		
+
 	}
 
-	
+
 	function show_mail_frame() {
-		
+
 		$this->set_cur();
-		
+
 		$content = $this->show_mail_content();
-		
+
 		if ($_SESSION['action'] == "showsources") {
 			Header("Content-Type: text/plain");
 			echo $content;
-		}		
+		}
 		if (is_array($content)) {
 			// It's a HTML mail
 			$content = $content[0];
@@ -1297,22 +1297,22 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		else {
 			$this->frame_header();
 			$this->show_frame_head();
-			echo("<span style=\"font-family: monospace\">");			
+			echo("<span style=\"font-family: monospace\">");
 			$content = nl2br($content);
 
 			// Convert http:// entries to hyperlinks
-			$this->make_clickable($content);			
-			
+			$this->make_clickable($content);
+
 			echo $content;
-			
+
 			echo("</span>");
-			$this->frame_footer();							
+			$this->frame_footer();
 		}
 
 		// If we are here, the mail has been read, we tell that the DB
 		$this->set_mail_read($this->cur_message_id);
 	}
-	
+
 	function show_frame_head() {
 		//echo("<div ");
 		echo("<table width=\"100%\" border=\"0\" cellpadding=\"4\" cellspacing=\"0\" class=\"windowtitle\" style=\"color: white; background-color: gray; font-weight: bold; font-family : Arial, Helvetica, sans-serif; margin-left: 0 !important;\">");
@@ -1325,15 +1325,15 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		echo("</table>\n");
 		//echo("</div>");
 	}
-	
-	
+
+
 	function next_prev() {
 
 		// Make sure that the parameter is useful
 		if (!isset($_SESSION['DATA']['goto']) || empty($_SESSION['DATA']['goto'])) {
 			return;
 		}
-		
+
 		if (!($_SESSION['DATA']['goto'] == "prev" || $_SESSION['DATA']['goto'] == "next")) {
 			return;
 		}
@@ -1343,11 +1343,11 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
 			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
-			exit;	
+			exit;
 		}
 
 		$old = 0;
-		
+
 		// Look for the current id
 		while($row = $this->db_tool->fetch_row($res)) {
 
@@ -1372,23 +1372,23 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			$old = $row[0];
 		}
 	}
-	
+
 	function show_popup_mail($show_att_mail = false) {
-		
+
 		$this->next_prev();
-		
-		
+
+
 		if ($show_att_mail === false) {
 			$this->set_cur();
 		}
-		
+
 		if (isset($this->att_mailer[$_SESSION['DATA']['mail_id']]) && !empty($this->att_mailer[$_SESSION['DATA']['mail_id']])) {
 			$mailer = $this->att_mailer[$_SESSION['DATA']['mail_id']];
 		}
 		else {
 			$mailer = $this->cur_mailer;
 		}
-				
+
 		$style_sheet = (($_SESSION['action'] == "printmail") ? "print.css" : "style.css");
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
@@ -1407,7 +1407,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			include("popup.toolbar.inc.php");
 			echo("<tr class=\"window\" height=\"200%\"><td>");
 		}
-		
+
 		// Display the headers
 		echo("<div class=\"header\">");
 		echo("<table cellspacing=\"0\">\n");
@@ -1422,7 +1422,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		//$subject = $mailer->headers->get_decoded("Subject");
 		echo("<tr><td><b>".$_SESSION['strings']['l_Subject'].":</b></td><td>".htmlspecialchars($subject)."</td></tr>");
 		$priority = $mailer->headers->get("X-Priority");
-		$priority = $priority[0];		
+		$priority = $priority[0];
 		if (!empty($priority) && $priority != $_SESSION['NORMAL_PRIORITY']) {
 			echo("<tr><td><b>".$_SESSION['strings']['l_Priority'].":</b></td><td>");
 			if ($priority == $_SESSION['HIGHEST_PRIORITY']) {
@@ -1430,22 +1430,22 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			}
 			if ($priority == $_SESSION['HIGH_PRIORITY']) {
 				echo("<span style=\"background-color: #ff6666;\">".$_SESSION['strings']['l_HighPriority']."</span>");
-			}			
+			}
 			else if ($priority == $_SESSION['LOW_PRIORITY']) {
 				echo("<span style=\"background-color: #9999ff; color: white;\">".$_SESSION['strings']['l_LowPriority']."</span>");
 			}
 			else if ($priority == $_SESSION['LOWEST_PRIORITY']) {
 				echo("<span style=\"background-color: #4444ff; color: white;\">".$_SESSION['strings']['l_LowestPriority']."</span>");
-			}			
+			}
 			echo("</td></tr>");
-		}	
+		}
 		if ($_SESSION['action'] == "printmail") {
 			// If the mail should be printed we display the names of the attachments
 			$bShown = false;
 			$i = 1;
 			while($mailer->extract_part($i)) {
 				$type = $mailer->get_attachment_type($i);
-				$name = $mailer->charset_decode($mailer->get_attachment_name($i));			
+				$name = $mailer->charset_decode($mailer->get_attachment_name($i));
 				echo("<tr><td><b>");
 				if (!$bShown) {
 					echo($_SESSION['strings']['l_Attachment'].":");
@@ -1474,25 +1474,30 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 
 		$this->show_notification_request();
 		echo("</table><br>\n");
-		
+
 		if ($show_att_mail) {
 			echo $this->show_mail_content($mailer);
 		}
 		else {
 			echo $this->show_mail_content();
 		}
-		
+
 		if ($_SESSION['action'] == "showmail") {
 			echo("</tr></td></table>");
 		}
-		echo("</div></body></html>");	
+		echo("</div></body></html>");
 	}
 
 	function make_clickable(&$content) {
-		$content = preg_replace("|(\s+)(http://.*)(\s+)|U", "\\1<a href=\"\\2\" target=\"_blank\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2</a>\\3", $content);
-		$content = preg_replace("|(\s*)([a-zA-Z0-9.-_]*@[a-zA-Z0-9.-_]*)(\s+)|U", "\\1<a href=\"".$_SERVER['PHP_SELF']."?action=newmail&addr=\\2\" target=\"_parent\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2</a>\\3", $content);
+		// This code don't work
+		// $content = preg_replace("|(\s+)(http://.*)(\s+)|U", "\\1<a href=\"\\2\" target=\"_blank\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2</a>\\3", $content);
+		// $content = preg_replace("|(\s*)([a-zA-Z0-9.-_]*@[a-zA-Z0-9.-_]*)(\s+)|U", "\\1<a href=\"".$_SERVER['PHP_SELF']."?action=newmail&addr=\\2\" target=\"_parent\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2</a>\\3", $content);
+
+		$content = preg_replace("#([\t\r\n ])([a-z0-9]+?){1}://([\w\-]+\.([\w\-]+\.)*[\w]+(:[0-9]+)?(/[^ \"\n\r\t<]*)?)#i", '\1<a href="\2://\3" target="_blank" style="width: auto; color: blue; text-decoration: underline;">\2://\3</a>', $content);
+		$content = preg_replace("#([\t\r\n ])(www|ftp)\.(([\w\-]+\.)*[\w]+(:[0-9]+)?(/[^ \"\n\r\t<]*)?)#i", '\1<a href="http://\2.\3" target="_blank" style="width: auto; color: blue; text-decoration: underline;">\2.\3</a>', $content);
+        $content = preg_replace("#([\n ])([a-z0-9\-_.]+?)@([\w\-]+\.([\w\-\.]+\.)*[\w]+)#i", "\\1<a href=\"$GLOBALS[PHP_SELF]?action=newmail&addr=\\2@\\3\" style=\"width: auto; color: blue; text-decoration: underline;\">\\2@\\3</a>", $content);
 	}
-	
+
 
 	function set_mail_read($m_id) {
 		$query = "UPDATE mails SET was_read='".$_SESSION['MAIL_READ']."' WHERE id='$m_id' AND user_id='$this->userid' AND was_read='".$_SESSION['MAIL_UNREAD']."'";
@@ -1505,7 +1510,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 	}
 
 	function pwd_check($name, $pwd) {
-		
+
 		// Check if we were called with mailaddress and password to really login.
 
 		if (!empty($name) && !empty($pwd)) {
@@ -1574,13 +1579,13 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			}
 		}
 		$this->userid = $this->db_tool->insert_id();
-		
+
 		$query = "INSERT INTO conf (user_id, keep) VALUES ('$this->userid', 1)";
-		
+
 		$res = $this->db_tool->db_query($query);
 		$this->load_config();
 		$this->set_user($_SESSION['DATA']['name']);
-		
+
 		if ($_SESSION['user_confirmation']) {
 			$this->send_confirmation_mail($_SESSION['DATA']['name'], $_SESSION['DATA']['email']);
 		}
@@ -1589,7 +1594,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 	}
 
 	function send_confirmation_mail($name, $email) {
-		
+
 		srand((double)microtime()*1000000);
 		$confirm_code = md5(rand());
 		$server = "http://".getenv("SERVER_NAME");
@@ -1607,10 +1612,10 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		$mailer = new mailer($this->userid);
 		$mailer->to($email);
 		$mailer->subject($_SESSION['strings']['l_ConfSubject']);
-		$mailer->from("webmaster@".getenv("SERVER_NAME"));		
+		$mailer->from("webmaster@".getenv("SERVER_NAME"));
 		$mail_text = $_SESSION['strings']['l_ConfMail']." $server\r\n\r\n".$_SESSION['strings']['l_ConfMail2']."\r\n$href\r\n\r\n".$_SESSION['strings']['l_ConfMail3'];
 		$mailer->body = $mail_text;
-		
+
 		if (!$mailer->send()) {
 			$this->report_error($_SESSION['strings']['l_ConfMailFail'], $_SESSION['strings']['l_MailFail']);
 			return;
@@ -1618,7 +1623,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 	}
 
 	function check_confirmation($confirm_code) {
-		
+
 		$query = "SELECT user_id FROM confirmations WHERE confirm_code='$confirm_code'";
 		$res = $this->db_tool->db_query($query);
 		$row = $this->db_tool->fetch_array($res);
@@ -1626,7 +1631,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		if ($res != 0 && $ret != 0) {
 			$query = "UPDATE users SET activated=1 WHERE id='$row[user_id]'";
 			$ret &= $this->db_tool->db_query($query);
-			
+
 			if ($ret != 0) {
 				$query = "DELETE FROM confirmations WHERE confirm_code='$confirm_code'";
 				$ret = $this->db_tool->db_query($query);
@@ -1635,14 +1640,14 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			if ($ret === false) {
 				$this->report_error($_SESSION['strings']['l_AccActivation2'], $_SESSION['strings']['l_DBError'], $query);
 				exit;
-			}			
+			}
 		}
-		
+
 		return $ret;
 	}
 
 	function is_activated($name) {
-		
+
 		$id = $this->get_userid($name);
 		$query = "SELECT activated FROM users WHERE id='$id'";
 
@@ -1652,9 +1657,9 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			exit;
 		}
 		$row = $this->db_tool->fetch_array($res);
-		
+
 		return $row["activated"];
-		
+
 	}
 
 	function messagebox($msgtext, $msgtitle = "", $msghead = "", $msgstatus = "", $msgdata = "") {
@@ -1694,16 +1699,16 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		}
 		if (isset($_SESSION['DATA']['bccs']) && !empty($_SESSION['DATA']['bccs'])) {
 			$mailer->bcc($_SESSION['DATA']['bccs']);
-		}	
+		}
 		if (isset($_SESSION['DATA']['notification']) && $_SESSION['DATA']['notification'] == "on") {
 			$mailer->headers->put("Disposition-Notification-To",  $reply);
 		}
-		
+
 		if (isset($_SESSION['DATA']['priority']) && $_SESSION['DATA']['priority'] != $_SESSION['NORMAL_PRIORITY']) {
 			$mailer->headers->put("X-Priority", $_SESSION['DATA']['priority']);
 		}
-		
-		
+
+
 		if (isset($_SESSION['DATA']['attachment']) && !empty($_SESSION['DATA']['attachment']) && $_SESSION['DATA']['attachment'] != "none") {
 			$mailer->attach_file($_SESSION['DATA']['attachment'], $_SESSION['DATA']['attachment_name'], $_SESSION['DATA']['attachment_type'], "", "", "");
 		}
@@ -1716,13 +1721,13 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			}
 			else if (isset($_SESSION['DATA']['cc_x'])) {
 				$_SESSION['DATA']['field'] = "CC";
-			}	
+			}
 			else if (isset($_SESSION['DATA']['bcc_x'])) {
 				$_SESSION['DATA']['field'] = "BCC";
-			}						
+			}
 			$this->cur_mailer = $mailer;
 
-			$this->show_in_window("choose", $_SESSION['DATA']['field'].": ".$_SESSION['strings']['l_ChooseRec']);			
+			$this->show_in_window("choose", $_SESSION['DATA']['field'].": ".$_SESSION['strings']['l_ChooseRec']);
 			exit;
 		}
 		else {
@@ -1736,7 +1741,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 					// The mail could not be sent, keep it in the outbox folder
 					$folder = "outbox";
 				}
-				
+
 			}
 			if ($mailer->store($folder)) {
 				return $_SESSION['strings']['l_FolderMove'].": ".$this->folders[$folder][name];
@@ -1746,13 +1751,13 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			}
 		}
 	}
-	
+
 	function pic_from_type ($type) {
 		switch (strtolower($type)) {
 			case "image/gif":
 			case "image/jpeg":
-			case "image/png":			
-			case "image/tiff":			
+			case "image/png":
+			case "image/tiff":
 			case "image/pjpeg":
 			case "image/bmp":
 			case "image/x-icon":
@@ -1763,8 +1768,8 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$type_pic = "movie.gif";
 				break;
 			case "application/x-zip-compressed":
-			case "application/x-gzip-compressed":				
-			case "application/zip":			
+			case "application/x-gzip-compressed":
+			case "application/zip":
 				$type_pic = "zip.gif";
 				break;
 			case "message/disposition-notification":
@@ -1791,12 +1796,12 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$type_pic = "sound.gif";
 				break;
 			default:
-				$type_pic = "unknown.gif";	
+				$type_pic = "unknown.gif";
 		}
-		
+
 		return $type_pic;
 	}
-	
+
 	function pic_from_ending($ending) {
 		switch(strtolower($ending)) {
 			case "zip":
@@ -1806,7 +1811,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			case "ace":
 			case "rar":
 			case "zoo":
-			case "uha":				
+			case "uha":
 				$type_pic = "zip.gif";
 				break;
 			case "doc":
@@ -1817,7 +1822,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			case "txt":
 			case "diz":
 				$type_pic = "text.gif";
-				break;						
+				break;
 			case "html":
 			case "htm":
 			case "php":
@@ -1832,7 +1837,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			case "wmv":
 			case "mov":
 				$type_pic = "movie.gif";
-				break;	
+				break;
 			case "exe":
 			case "vbs":
 			case "sh":
@@ -1846,15 +1851,15 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$type_pic = "sound.gif";
 				break;
 			default:
-				$type_pic = "unknown.gif";						
+				$type_pic = "unknown.gif";
 		}
-		
+
 		return $type_pic;
 	}
-		
-	
+
+
 	function show_attachments($of_part = 0, $att_path = 0, $level = 1) {
-		
+
 		if (!isset($_SESSION['DATA']['mail_id'])) {
 			$_SESSION['DATA']['mail_id'] = $this->cur_message_id;
 		}
@@ -1862,11 +1867,11 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		if ($this->cur_message_id == 0) {
 			return;
 		}
-		
+
 		if ($of_part != 0) {
 			$mailer = $of_part;
 		}
-		else if ($this->cur_mailer == 0 || $this->cur_mailer->id != $_SESSION['DATA']['mail_id']) {		
+		else if ($this->cur_mailer == 0 || $this->cur_mailer->id != $_SESSION['DATA']['mail_id']) {
 			$this->cur_mailer = new mailer($this->userid);
 			$this->cur_mailer->load($this->cur_message_id);
 			$mailer = $this->cur_mailer;
@@ -1874,9 +1879,9 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		else {
 			$mailer = $this->cur_mailer;
 		}
-		
+
 		$i = 1;
-				
+
 		if ($op_part == 0) {
 			$c_type = $mailer->get_header("Content-Type");
 			$type = strtoupper($c_type["CONTENT-TYPE"]);
@@ -1887,18 +1892,18 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$fake = true;
 			}
 		}
-		
+
 		if ($att_path == 0) {
 			unset($att_path);
 			$att_path = array();
 			$att_path[1] = 1;
 		}
-		
 
-		
+
+
 		//echo "BODY:<br><br>".nl2br($mailer->body)."<br><br>";
 		while($fake === true || $mailer->extract_part($i)) {
-	
+
 			if (!$fake && sizeof($mailer->mimeparts[$i]->mimeparts) > 0) {
 				$att_path[$level] = $i;
 				$this->show_attachments($mailer->mimeparts[$i], $att_path, $level + 1);
@@ -1907,7 +1912,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$i++;
 				continue;
 			}
-			
+
 			$type = $mailer->get_attachment_type($i);
 			$type_pic = $this->pic_from_type($type);
 
@@ -1922,20 +1927,20 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$att_name .= "\r\n";
 			}
 			$att_name .= "$type";
-			
+
 			$att_path[$level] = $i;
 			if ($fake) {
-				$att_path[$level] = 0;		
+				$att_path[$level] = 0;
 			}
-			
+
 			echo("<a href=\"".$_SERVER['PHP_SELF']."?action=getattachment&mail_id=");
-			
+
 			echo($_SESSION['DATA']['mail_id']);
-			
+
 			foreach($att_path as $key => $att_pid) {
 				echo("&att$key=$att_pid");
 			}
-			
+
 			echo("\" title=\"$att_name\"");
 			// Open attachments in a new window in $_SESSION['IN_VIEW'] AND $_SESSION['POPUP_VIEW']
 			if ($this->config["mailview"] != $_SESSION['SEP_VIEW']) {
@@ -1943,13 +1948,13 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			}
 			echo(" style=\"width: auto;\"><img src=\"graphics/$type_pic\" border=\"0\" alt=\"$att_name\" style=\"vertical-align: top; margin: 0, 0, 0, 0;\"></a>\n");
 			$i++;
-			
-			$fake = false;			
+
+			$fake = false;
 		}
 	}
-	
+
 	function show_head() {
-		
+
 		if ($this->cur_message_id == 0) {
 			return;
 		}
@@ -1968,9 +1973,9 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		//$subject = $this->cur_mailer->headers->get_decoded("Subject");
 		echo("<br><b>".$_SESSION['strings']['l_Subject'].":</b> ".htmlspecialchars($subject));
 	}
-	
+
 	function get_attachment() {
-		
+
 		$this->set_cur();
 
 		if (isset($this->att_mailer[$_SESSION['DATA']['mail_id']]) && !empty($this->att_mailer[$_SESSION['DATA']['mail_id']])) {
@@ -1992,9 +1997,9 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			$this->report_error($_SESSION['strings']['l_AttFail'], $_SESSION['strings']['l_Error']);
 			exit;
 		}
-		
+
 		$part = $mailer->get_attachment($att_path);
-		
+
 		$disp = "Content-Disposition: ".str_replace("\r\n\t", " ", $part->headers->get("Content-Disposition"));
 		$c_type = $part->get_header("Content-Type");
 		$type = $c_type["CONTENT-TYPE"];
@@ -2006,7 +2011,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		else {
 			$type = "Content-Type: ".str_replace("\r\n\t", " ", $part->headers->get("Content-Type"));
 		}
-		
+
 		$disp = str_replace("attachment;", "inline;", $disp);
 
 		// Check for multipart/related inbound elements
@@ -2017,7 +2022,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		if (preg_match("|message/rfc822|i", $type)) {
 			// Generate a fake mail_id for the attached mail
 			/*srand((double)microtime()*1000000);
-			$rand = md5(rand());			
+			$rand = md5(rand());
 			$_SESSION['DATA']['mail_id'] = substr($rand, 0, 4)."att";	*/
 			$_SESSION['DATA']['mail_id'] = $_SESSION['DATA']['mail_id']."att";
 			if (!isset($this->att_mailer[$_SESSION['DATA']['mail_id']])) {
@@ -2031,7 +2036,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 
 		/*echo "DISP: $disp<br>";
 		echo "TYPE: $type<br>";*/
-		
+
 		Header($disp);
 		Header($type);
 
@@ -2042,20 +2047,20 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 
 	function handle_related_part ($type, &$data, $mailer) {
 
-		if ($type == "TEXT/HTML" && preg_match_all("/cid:(.[^\">]*)/", $data, $matches)) {
+		if ($type == "TEXT/HTML" && preg_match_all("/cid:(.[^\"> \r\n]*)/", $data, $matches)) {
 
 			foreach($matches[1] as $cid) {
 
 				// Create for each inbound element a temporary file
-				
+
 				// Get the data of the object
 				$cid_data = base64_decode($mailer->get_cid_body($cid));
 				$cid_type = $mailer->get_cid_type($cid);
-				
+
 				// Create a uniqe filename
 				srand((double)microtime()*1000000);
 				$rand = md5(rand());
-				
+
 				$tmp_name = "tmp/tmp_".substr($rand, 0, 5);
 
 				// Add a suitalbe extension if possible
@@ -2067,7 +2072,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				}
 				else if (preg_match("|image/png|", $cid_type)) {
 					$tmp_name .= ".png";
-				}				
+				}
 				else {
 					$tmp_name .= ".tmp";
 				}
@@ -2077,11 +2082,11 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				// Create the temporary file with the object data
 				$fp = @fopen($tmp_name, "w");
 				@fwrite($fp, $cid_data);
-				
+
 				// Replace the occurence of the object reference with the location
 				// of the newly created temp-file
 				$data = str_replace("cid:$cid", $tmp_name, $data);
-				
+
 				// Outlook express sometimes ads a <BASE file:path> tag
 				// What for? It messes everything up.
 				// We just remove it...
@@ -2090,10 +2095,10 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			}
 		}
 	}
-	
+
 
 	function delete_mail() {
-		
+
 		if ($this->cur_message_id == 0) {
 			$this->show_form("main", $_SESSION['strings']['l_Select']);
 			return 0;
@@ -2136,7 +2141,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			else {
 				$del_msg = $_SESSION['strings']['l_FolderMoveFail'].": ".$_SESSION['strings']['l_RecycleBin'];
 			}
-			
+
 			// The selected mail is not delete. Cleare the "reference" to it
 			$this->cur_message_id = 0;
 			$this->cur_mailer = 0;
@@ -2151,11 +2156,11 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 	}
 
 	function delete_mails($pass_del = 0) {
-		
+
 		if (is_array($_SESSION['DATA']['del'])) {
 			reset($_SESSION['DATA']['del']);
 		}
-		
+
 		if ($pass_del != 0) {
 			$this->del = $pass_del;
 		}
@@ -2192,7 +2197,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		}
 		else if (count($this->del) > 0) {
 			$all_succ = $this->move_to_bin($this->del);
-			
+
 			if ($all_succ) {
 				$del_msg = $_SESSION['strings']['l_FolderMove'].": ".$_SESSION['strings']['l_RecycleBin'];
 			}
@@ -2208,9 +2213,9 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			$this->show_form("main", $del_msg);
 		}
 	}
-	
+
 	function add_sel_addr($block = false) {
-		
+
 		if (is_array($_SESSION['DATA']['del'])) {
 			$query = "SELECT froms FROM mails WHERE id IN (";
 			foreach($_SESSION['DATA']['del'] as $in) {
@@ -2224,13 +2229,13 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		if ($res === false) {
 			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 		}
-		
+
 		while ($row = $this->db_tool->fetch_array($res)) {
 			// Add the addresses to the DB
 			$this->add_address($row['froms'], $block);
 		}
 	}
-	
+
 	function delete_blocked() {
 		// Delete all mails that contain blocked senders
 		$query = "SELECT email FROM addresses WHERE user_id='$this->userid' AND blocked=1";
@@ -2238,7 +2243,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		if ($res === false) {
 			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 		}
-		
+
 		// Build the WHERE part for th query
 		while ($row = $this->db_tool->fetch_array($res)) {
 			$where .= " froms LIKE '%$row[email]%' OR";
@@ -2247,7 +2252,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			// Remove the last OR
 			$where = substr($where, 0, strlen($where) - 3);
 		}
-		
+
 		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='$this->folder' AND ".$where;
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
@@ -2259,9 +2264,9 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			$del[] = $row[id];
 		}
 
-		$this->delete_mails($del);		
+		$this->delete_mails($del);
 	}
-		
+
 	function delete_all() {
 		// We build an array with all mail ids and pass that to $this->delete_mails()
 		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='$this->folder'";
@@ -2270,7 +2275,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_AllDelFail']);
 			exit;
 		}
-		
+
 		while($row = $this->db_tool->fetch_array($res)) {
 			$del[] = $row[id];
 		}
@@ -2304,7 +2309,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		if (!is_array($id)) {
 			$tmp = $id;
 			$id = array();
-			$id[] = $tmp;	
+			$id[] = $tmp;
 		}
 		// Get the account information about the mails
 		$query = "SELECT accounts.*, mails.uidl AS uidl FROM accounts LEFT JOIN mails ON mails.acc_id = accounts.id WHERE mails.id IN (";
@@ -2317,11 +2322,11 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		$res = $this->db_tool->db_query($query);
 
 		$row = 0;
-		
+
 		if ($res != 0) {
 			$cur_account = 0;
 			$pop_login = false;
-			
+
 			while($this->config["server_del"] == 1 && $row = $this->db_tool->fetch_array($res)) {
 				// When we come to a different account and if the settings say to delete the mail,
 				// we connect to this server
@@ -2331,7 +2336,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 					if (is_object($pop3) && $pop_login) {
 						$pop3->quit();
 					}
-					
+
 					$pop3 = new pop3("$row[popserver]");
 					$pop_login = true;
 
@@ -2343,7 +2348,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 						$pop3->quit();
 						$pop_login = false;
 					}
-					
+
 					// Get the mail uidls on the POP-server
 					$server_uidls = $pop3->uidl(0, $own_uidl);
 				}
@@ -2359,35 +2364,35 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 							break;
 						}
 					}
-					
+
 					// We got the mail id
 					if ($del_id != 0) {
 						// Now, delete the mail
 						$pop3->delete($del_id);
 					}
-				}				
+				}
 			}
 		}
-		
+
 		// Close the connection to the previous server
 		if (is_object($pop3) && $pop_login) {
 			$pop3->quit();
 		}
-		
+
 		// Delete the mail from the database
 		$query = "DELETE FROM mails WHERE id IN (";
 		foreach($id as $in) {
 			$query .= $in.", ";
 		}
 		// Remove the last comma
-		$query = substr($query, 0, strlen($query) - 2);		
+		$query = substr($query, 0, strlen($query) - 2);
 		$query .= ") AND user_id = '$this->userid' AND folder='bin'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
 			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return false;
 		}
-		
+
 		$this->cur_message_id = 0;
 		$this->cur_mailer = 0;
 
@@ -2395,7 +2400,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 	}
 
 	function show_recipients() {
-		
+
 		$query = "SELECT id, email, name FROM addresses WHERE user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 		if ($res === false) {
@@ -2415,7 +2420,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 
 	// List all mails in the current folder
 	function show_del_mails() {
-		
+
 		$decoder = new mimepart;
 		$query = "SELECT id, tos, froms, subject, date FROM mails WHERE folder='$this->folder' AND user_id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
@@ -2440,7 +2445,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		if (!isset($_SESSION['what']) || empty($_SESSION['what'])) {
 			$this->show($this->folder);
 		}
-		
+
 		switch($_SESSION['what']) {
 			case "sendonly":
 				$this->send_outbox();
@@ -2458,13 +2463,13 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				// Only get the mails from a specified account
 				$this->get_mails($_SESSION['what']);
 		}
-		
+
 		if ($_SESSION['DATA']['show'] == "no") {
 			Header("Location: ".$_SERVER['PHP_SELF']."?action=checkrep");
 			exit;
 		}
 		if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
-			$this->show_frame_list();		
+			$this->show_frame_list();
 		}
 		else {
 			$this->show($this->folder, $msg);
@@ -2472,7 +2477,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 	}
 
 	function check_repetitive() {
-		
+
 		$interval = $this->config["check_int"] * 60;
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
@@ -2488,11 +2493,11 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 </body>
 </html>
 <?php
-		exit;	
+		exit;
 	}
 
 	function get_mails($account = "") {
-		
+
 		// Make an array with all UIDLs we already have
 		$query = "SELECT uidl FROM mails WHERE user_id = '$this->userid' AND folder != 'outbox' AND folder != 'sent'";
 		$res = $this->db_tool->db_query($query);
@@ -2532,27 +2537,27 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 
 			// Get the UIDLs from the server
 			$server_uidls = $pop3->uidl(0, $own_uidl);
-			
-			array_shift($server_uidls);		
-			
+
+			array_shift($server_uidls);
+
 			/*echo("<h3>SERVER_UIDLS ARRAY</h3>");
 			foreach($server_uidls as $key => $val) {
 				echo("$key -> $val<br>");
-			}	
+			}
 			echo("<h3>UIDLS ARRAY</h3>");
 			foreach($uidls as $key => $val) {
 				echo("$key -> $val<br>");
 			}*/
-						
+
 			// Get the difference between the UIDLS on the server and in the DB
-			$get = array_diff($server_uidls, $uidls);			
-			
+			$get = array_diff($server_uidls, $uidls);
+
 			/*echo("<h3>GET ARRAY</h3>");
 
 			foreach($get as $key => $val) {
 				echo("$key -> $val<br>");
 			}*/
-			
+
 			$mailer = new mailer($this->userid, $row[id]);
 			reset($get);
 
@@ -2564,14 +2569,14 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				if(empty($mail)) {
 					continue;
 				}
-				
+
 				$store_folder = "inbox";
-				
+
 				// Do we have blocked senders?
 				$query = "SELECT count(*) as counter FROM addresses WHERE blocked=1 AND user_id='$this->userid'";
-				$block_res = $this->db_tool->db_query($query);			
+				$block_res = $this->db_tool->db_query($query);
 				if ($this->db_tool->affected_rows($block_res) > 0) {
-					// Yes, the user defined blocked senders					
+					// Yes, the user defined blocked senders
 					// Check if the mail is form a blocked sender
 					// This slows things down, because it has to analy
 					$from = $mailer->quick_from($mail);
@@ -2584,10 +2589,10 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 							// Store it in the bin folder;
 							$store_folder = "bin";
 						}
-						
+
 					}
 				}
-								
+
 				// Try to store the mail in the DB
 				if (($insert_id = $mailer->store($store_folder, $mail, $server_uidls[$num])) == 0) {
 					$this->report_error($mailer->db_tool->db_error(), $_SESSION['strings']['l_MailStoreFail']);
@@ -2608,7 +2613,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 					$this->add_address($mailer);
 				}
 			}
-	
+
 			$pop3->quit();
 		}
 	}
@@ -2622,9 +2627,9 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			$from = $mailer;
 			$mailer = new mailer($this->userid);
 		}
-		
+
 		$add = $mailer->get_address($from);
-		
+
 		if (!empty($add["address"])) {
 			$name = addslashes($add[name]);
 			$addr = addslashes($add[address]);
@@ -2638,20 +2643,20 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$_SESSION['DATA']['blocked'] = $block ? 1: 0;
 				$this->store_address();
 			}
-			
+
 			if ($block) {
 				// Mark any other entries with the same e-mail address as blocked, too
 				// This is needed if an entry which should be blocked already exists
 				$query = "UPDATE addresses SET blocked=1 WHERE user_id='$this->userid' AND email='$addr'";
-				$res = $this->db_tool->db_query($query);				
+				$res = $this->db_tool->db_query($query);
 			}
-			
+
 		}
-		
+
 	}
 
 	function delete_user() {
-		
+
 		// If $_SESSION['DATA']['ack'] is not set, we pop-up the confirmation window
 		if (!isset($_SESSION['DATA']['ack']) || empty($_SESSION['DATA']['ack']) ) {
 			$this->show_ack($_SESSION['strings']['l_DelUser'], $_SESSION['strings']['l_DelUserQuest']);
@@ -2669,7 +2674,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
-			
+
 			// We remove the user...
 			$query = "DELETE FROM conf WHERE user_id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
@@ -2677,7 +2682,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
-			
+
 			// We remove the user...
 			$query = "DELETE FROM accounts WHERE user_id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
@@ -2685,7 +2690,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
-			
+
 			// We remove the user...
 			$query = "DELETE FROM addresses WHERE user_id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
@@ -2693,23 +2698,23 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
-					
+
 			$query = "DELETE FROM users WHERE id='$this->userid'";
 			$res = $this->db_tool->db_query($query);
 			if ($res === false) {
 				$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 				return false;
 			}
-			
+
 			session_destroy();
 			$this->messagebox($_SESSION['strings']['l_UserDeleted2'], $_SESSION['strings']['l_UserDeleted1'], $_SESSION['strings']['l_UserDeleted1']);
 			exit;
-		}	
+		}
 	}
-	
+
 
 	function show_config() {
-		
+
 		echo($_SESSION['strings']['l_Language'].": <select name=\"language\">");
 		$dirhandle = opendir("./lang");
 		while ($filename = readdir($dirhandle)) {
@@ -2720,48 +2725,48 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 				}
 				echo(">$match[1]</option>");
 			}
-		}		
+		}
 		closedir($dirhandle);
-		
+
 		echo("</select>\n<br><br><hr>");
 		echo("<center><input type=\"submit\" name=\"changepwd\" value=\"".$_SESSION['strings']['l_ChangePwd']."\">&nbsp;");
 		echo("<input type=\"submit\" name=\"deluser\" value=\"".$_SESSION['strings']['l_DelUser']."\"></center>");
 		echo("<br><fieldset>");
-	
+
 			echo('<input type="checkbox" name="keep" value="1"');
 			if ($this->config["keep"] == 1) {
 				echo(' checked');
 			}
 			echo("> ".$_SESSION['strings']['l_Keep']."<br>");
-			
+
 			echo('<input type="checkbox" name="server_del" value="1"');
 			if ($this->config["server_del"]) {
 				echo(' checked');
-			}		
+			}
 			echo("> ".$_SESSION['strings']['l_RemoveDel']."<br>");
-			
+
 			echo('<input type="checkbox" name="auto_check" value="1"');
 			if ($this->config["auto_check"]) {
 				echo(' checked');
-			}			
+			}
 			echo("> ".$_SESSION['strings']['l_CheckMails']."<br>");
-			
-			echo('<input type="checkbox" name="send_direct" value="1"');		
+
+			echo('<input type="checkbox" name="send_direct" value="1"');
 			if ($this->config[send_direct]) {
 				echo(' checked');
-			}			
-			echo("> ".$_SESSION['strings']['l_SendDirect']."<br>");		
-	
-			echo('<input type="checkbox" name="add_address" value="1"');		
+			}
+			echo("> ".$_SESSION['strings']['l_SendDirect']."<br>");
+
+			echo('<input type="checkbox" name="add_address" value="1"');
 			if ($this->config[add_address]) {
 				echo(' checked');
-			}			
+			}
 			echo("> ".$_SESSION['strings']['l_AddAddress']."<br><hr>");
 			echo($_SESSION['strings']['l_CheckRep'].' <input name="check_int" value="'.$this->config["check_int"].'" size="2"> '.$_SESSION['strings']['l_Minutes'].'<br><br>');
-			
+
 			echo("</fieldset>\n<br><fieldset><legend><b>".$_SESSION['strings']['l_View']."</b></legend>\n");
-			echo('<table cellspacing="2" cellpadding="2" width="100%">');	
-	
+			echo('<table cellspacing="2" cellpadding="2" width="100%">');
+
 			echo("\n<tr><td style=\"width: 35%;\"><input type=\"radio\" name=\"view\" value=\"".$_SESSION['FULL_VIEW']."\"");
 			if ($this->config["view"] == $_SESSION['FULL_VIEW']) {
 				echo(" checked");
@@ -2770,51 +2775,51 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			echo("\n<input type=\"radio\" name=\"mailview\" value=\"".$_SESSION['IN_VIEW']."\"");
 			if ($this->config["mailview"] == $_SESSION['IN_VIEW']) {
 				echo(" checked");
-			}		
-			echo("> ".$_SESSION['strings']['l_InView']."</td></tr><tr>\n");		
-	
+			}
+			echo("> ".$_SESSION['strings']['l_InView']."</td></tr><tr>\n");
+
 			echo("<td><input type=\"radio\" name=\"view\" value=\"".$_SESSION['MID_VIEW']."\"");
 			if ($this->config["view"] == $_SESSION['MID_VIEW']) {
 				echo(" checked");
-			}		
+			}
 			echo("> ".$_SESSION['strings']['l_MidView']."</td><td>\n");
-			
+
 			echo("\n<input type=\"radio\" name=\"mailview\" value=\"".$_SESSION['SEP_VIEW']."\"");
 			if ($this->config["mailview"] == $_SESSION['SEP_VIEW']) {
 				echo(" checked");
-			}		
+			}
 			echo("> ".$_SESSION['strings']['l_SepView']."</td></tr><tr>\n");
-			
+
 			echo("<td><input type=\"radio\" name=\"view\" value=\"".$_SESSION['MIN_VIEW']."\"");
 			if ($this->config["view"] == $_SESSION['MIN_VIEW']) {
 				echo(" checked");
-			}		
+			}
 			echo("> ".$_SESSION['strings']['l_MinView']."</td>\n");
 			echo("<td><input type=\"radio\" name=\"mailview\" value=\"".$_SESSION['POPUP_VIEW']."\"");
 			if ($this->config["mailview"] == $_SESSION['POPUP_VIEW']) {
 				echo(" checked");
-			}		
+			}
 			echo("> ".$_SESSION['strings']['l_PopupView']."</td></tr>\n");
-			
+
 			echo("<tr><td>&nbsp;</td>");
 			echo("<td><input type=\"radio\" name=\"mailview\" value=\"".$_SESSION['FRAME_VIEW']."\"");
 			if ($this->config["mailview"] == $_SESSION['FRAME_VIEW']) {
 				echo(" checked");
-			}		
+			}
 			echo("> ".$_SESSION['strings']['l_FrameView']."</td></tr>");
-				
+
 			echo("</table><br><table width=\"100%\">");
-		
+
 			echo('<tr><td width="50%">'.$_SESSION['strings']['l_Show'].' <input name="mails_per_page" value="'.$this->config["mails_per_page"].'" size="2"> '.$_SESSION['strings']['l_MailsPerPage'].'</td>');
 			echo('<td>'.$_SESSION['strings']['l_Show'].' <input name="mail_rows" value="'.$this->config["mail_rows"].'" size="2"> '.$_SESSION['strings']["l_Lines"].'</td>');
 			echo('</tr><tr>');
 			echo('<td>'.$_SESSION['strings']['l_Show'].' <input name="subject_size" value="'.$this->config["subject_size"].'" size="2"> '.$_SESSION['strings']['l_SubjectSize'].'</td>');
 			echo('<td>'.$_SESSION['strings']['l_Show'].' <input name="address_size" value="'.$this->config["address_size"].'" size="2"> '.$_SESSION['strings']['l_AddressSize'].'</td>');
-			
+
 			echo('</tr><tr>');
 			echo('<td>'.$_SESSION['strings']['l_Show'].' <input name="folder_view_width" value="'.$this->config["folder_view_width"].'" size="2"> '.$_SESSION['strings']['l_FolderViewWidth'].'</td>');
-			echo('<td>&nbsp;</td>');		
-			
+			echo('<td>&nbsp;</td>');
+
 			echo('</tr></table>');
 		echo("</fieldset><br><fieldset>");
 			echo("<legend><b>".$_SESSION['strings']['l_Singature']."</b></legend>");
@@ -2824,10 +2829,10 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			echo('<input type="checkbox" name="app_sig" value="1"');
 			if ($this->config[app_sig]) {
 				echo(' checked');
-			}			
+			}
 			echo('> '.$_SESSION['strings']['l_AppSig'].'<br><br>');
 		echo("</fieldset>");
-		
+
 	}
 
 	function store_config() {
@@ -2840,7 +2845,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			$query .= "address_size='".$_SESSION['DATA']['address_size']."', view='".$_SESSION['DATA']['view']."', mailview='".$_SESSION['DATA']['mailview']."', ";
 			$query .= "folder_view_width='".$_SESSION['DATA']['folder_view_width']."'  WHERE user_id = '".$this->userid."'";
 			$res = $this->db_tool->db_query($query);
-			
+
 			if ($res != 0) {
 				$this->config["keep"] = $_SESSION['DATA']['keep'];
 				$this->config["server_del"] = $_SESSION['DATA']['server_del'];
@@ -2867,7 +2872,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 	}
 
 	function change_pwd() {
-		
+
 		if (empty($_SESSION['DATA']['pwd'])) {
 			$this->show_in_window("changepwd", $_SESSION['strings']['l_EmptyPwd1'], $_SESSION['strings']['l_EmptyPwd2']);
 			return;
@@ -2876,7 +2881,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			$this->show_in_window("changepwd", $_SESSION['strings']['l_PwdMismatch1'], $_SESSION['strings']['l_PwdMismatch2']);
 			return;
 		}
-		
+
 		$query = "UPDATE users SET pwd='".$_SESSION['DATA']['pwd']."' WHERE id='$this->userid'";
 		$res = $this->db_tool->db_query($query);
 
@@ -2884,13 +2889,13 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 			$this->report_error($this->db_tool->db_error(), $_SESSION['strings']['l_DBError'], $query);
 			return false;
 		}
-		
+
 		$this->show_form("main", $_SESSION['strings']['l_PwdChanged']);
 	}
-	
+
 
 	function start_timer($event) {
-		
+
 		printf("timer: %s\n", $event);
 		list($low, $high) = split(" ", microtime());
 		$t = $high + $low;
@@ -2900,7 +2905,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
  	}
 
 	function next_timer($start, $event) {
-		
+
 		list($low, $high) = split(" ", microtime());
 		$t    = $high + $low;
     	$used = $t - $start;
@@ -2911,7 +2916,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 	}
 
 	function send_outbox() {
-		
+
 		$query = "SELECT id FROM mails WHERE user_id='$this->userid' AND folder='outbox'";
 
 		$res = $this->db_tool->db_query($query);
@@ -2921,7 +2926,7 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 		}
 
 		$count = $this->db_tool->affected_rows();
-		
+
 		// Commented the progress stuff out...
 		/*$width = 110; //500/$count;
 		$send_counter = 0;
@@ -2964,20 +2969,20 @@ echo "mails_per_page2: ".$this->config["mails_per_page"];
 
 		$msg = $_SESSION['strings']['l_MailSentSucc'].": $send_counter. $errors ".$_SESSION['strings']['l_Error'];
 	}
-	
+
 	function set_version() {
 		$this->version = ($_SESSION['POPPER_VERSION'] ? $_SESSION['POPPER_VERSION'] : "??.??");
 	}
-	
+
 	function get_version() {
 		return $this->version;
 	}
-	
+
 	function set_folders() {
 /*DevNote: roytoo
-Functionalized in preparation for eventual ability to create custom folders.  
-Next step is to move the hard-coded information for the default folders into 
-the database (as `default_folders`:).  Final step will be to add `user_folders` 
+Functionalized in preparation for eventual ability to create custom folders.
+Next step is to move the hard-coded information for the default folders into
+the database (as `default_folders`:).  Final step will be to add `user_folders`
 table to the database with a N:1 cardinality with `users`.`id`.
 `default_folders`: `folder_id`, `icon`
 `user_folders`: `folder_id`, `fkuser_id`, `label`, `parent_id`
