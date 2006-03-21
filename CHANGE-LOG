@@ -136,6 +136,7 @@ Version 1.41-r2
 
 Version 1.42
 ============
+- Bugfix: The functions db_query() and print_array() were defined two times
 - Bugfix: In related-part-emails there was a fatal error, when cid: has no end-quote
 - Bugfix: Function "make_clickable" was rewritten - no mail parsing errors at links
 - Bugfix: Some mails have 2 or more spaces in the date-field. This caused fatal PHP errors and wrong email-dates
