@@ -142,3 +142,4 @@ Version 1.42
 - Bugfix: Sent or Saved emails had a wrong date because of an error in the date-field
 - Bugfix: E-Mails e.g. from eBay have their boundary not quotet. So the un_quote() function gives out an empty string, attachments are not showed.
 - New Popper-Homepage was added
+- German-Language: Error in special chars fixed
