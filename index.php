@@ -17,7 +17,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 // blackdrake: Some users forget to create tmp/ with the right chmod-value
 // to prevent mail-viewing-errors, popper will not start anymore, if there is no tmp/
-if (decoct(fileperms('tmp/')) != 40777)
+if (@decoct(@fileperms('tmp/')) != 40777)
   die('Popper needs a directory named &quot;tmp&quot; that has CHMOD 777 to work correctly.');
 
 	// Check for PHP >4.1.0
