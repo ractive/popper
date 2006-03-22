@@ -193,7 +193,7 @@ Additionally you can press the "Read mail" button <img src="graphics/read.gif" a
 to display the mail in a separate window.<br />
 <br />
 If there's a clip <img src="graphics/attachment_small.gif" alt="Clip image"> in front of a mail entry, the mail contains an attachment.<br />
-The attachments are shown in the header of the mails. Clicking on an attachment opens it in a new browser window. 
+The attachments are shown in the header of the mails. Clicking on an attachment opens it in a new browser window.
 You also can right-click and choose "Save target as..." to save the attachment.<br />
 
 <h3><a name="address">Addressbook</a></h3>
@@ -245,7 +245,7 @@ You can configure the behaviour some parts of this mail-client. Press the config
 <center><p><img src="graphics/help_config_en.jpg" alt="Configuration dialg image"></p></center>
 <dl>
 	<dt>Language:</dt>
-	<dd>Choose your preferred language</dd>	
+	<dd>Choose your preferred language</dd>
 	<dt>Keep mails on server:</dt>
 	<dd>This option decides if the mails should be delete from the server after they have been received.<br />
 	If the mails are deleted, there's no possibility to get them with another client. I'd toggle this setting on</dd>
@@ -261,7 +261,7 @@ You can configure the behaviour some parts of this mail-client. Press the config
 	<dd>Only if this option is turned on, your signature that you entered above is insertet at the end of
 	every new message</dd>
 	<dt>Add e-mail addresses of incoming e-mails to the address-book:</dt>
-	<dd>If you choose this option, every new E-Mail address or incoming mails is stored in the address-book</dd>	
+	<dd>If you choose this option, every new E-Mail address or incoming mails is stored in the address-book</dd>
 	<dt>Check for new mails every X minutes:</dt>
 	<dd>If you open the auto-fetch window with <img src="graphics/get_rep.gif" alt="Send and receive image">, your account are checked for new mail ever X minutes</dd>
 	<dt>View</dt>
@@ -314,7 +314,7 @@ Jean-Pierre Bergamin<br />
 <br />
 E-Mail: <a href="mailto:james@ractive.ch">james@ractive.ch</a><br />
 <br />
-Homepage: <a href="http://www.ractive.ch/gpl/popper.html">http://www.ractive.ch/gpl/popper.html</a>
+Homepage: <a href="http://popper.ractive.ch/popper/">http://popper.ractive.ch/popper/</a>
 <p>&nbsp;</p>
 	</td>
 	<td>
