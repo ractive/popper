@@ -83,23 +83,39 @@ directory. The file shipped here contains placeholder credentials only.
 
 ## History of this repository
 
-The commits were recovered from the project's original version control:
+The commits were recovered from the project's own version control plus one
+machine backup:
 
-1. January and February 2001: CVS of the SourceForge project **hpcomm**
-   (Popper started as a side project next to the HPComm Palm/PC tool), which
-   produced the first commits on 9 and 26 January 2001.
-2. 2001 to 2006: the SourceForge project **popper**
-   (<http://sourceforge.net/projects/popper>), whose CVS repository was later
-   converted to Subversion with cvs2svn; that history was imported into git.
-3. One commit from 2026 restored images that had been damaged by CR to LF
-   conversion during the 2001 CVS import, and the final commit added this
-   README and the licence files.
+1. **November 2000**: the root commit is a working copy of Popper from a
+   backup of the author's machine, two months before the first CVS commit.
+2. **January to February 2001**: the `popper` module of the SourceForge
+   project **hpcomm** (Popper started as a side project next to the HPComm
+   calculator software), converted from the CVS repository with
+   cvs-fast-export. Ten commits.
+3. **February 2001 to March 2006**: the CVS repository of the SourceForge
+   project **popper** (<https://sourceforge.net/projects/popper/>), converted
+   directly from the CVS snapshot SourceForge still offers. Its first commit is
+   grafted onto the last hpcomm commit, 30 minutes earlier. All eleven release
+   tags (`V1_31` to `V1_41-r2`) and the 2005 bugfix branch
+   `popper-V1_41-bugfixes-branch` come from there.
+4. Four branches named `backup-2001/*` hold work from that same 2001 backup
+   that never reached CVS, each as one snapshot commit grafted onto the closest
+   mainline commit: `popper-neu` (5 Feb 2001, first mail-folder experiment),
+   `popper-folder` (13 Feb 2001, the folder experiment continued),
+   `popperleo` (27 Feb 2001, a restructured fork by contributor Leo based on
+   1.32) and `popper-sourceforge-2001-04` (12 Apr 2001, uncommitted 1.5
+   development: themes, window classes, `install.php`).
+5. The last two commits add this README, the licence file and `.gitignore`.
+
+Line endings and binaries are stored exactly as CVS held them. Real
+credentials found in the backup copies (a POP3 test login, MySQL settings and
+a contributor's database dump) were replaced by placeholders or left out.
 
 Contributors as recorded in the log (`git shortlog -sne`):
 
 | Author | Commits | Period |
 |---|---|---|
-| Jean-Pierre Bergamin (SourceForge `jbergamin`) <james@ractive.ch> | 64 + 2 archive commits | January to February 2001 |
+| Jean-Pierre Bergamin (SourceForge `jbergamin`) <james@ractive.ch> | 68 | November 2000 to February 2001, plus the archive commits |
 | roytoo <roytoo@users.sourceforge.net> | 30 | February to August 2005 |
 | blackdrake <blackdrake@users.sourceforge.net> | 14 | March 2006 |
 | thesaur <thesaur@users.sourceforge.net> | 1 | July 2003 |
