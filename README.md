@@ -108,3 +108,17 @@ Contributors as recorded in the log (`git shortlog -sne`):
 
 GNU General Public License, version 2 (see `LICENSE`, identical to the
 original `gpl.txt`).
+
+## Where it was published
+
+- SourceForge project `popper`, registered 22 November 2000:
+  <https://sourceforge.net/projects/popper/>. Releases: 1.2beta (8 Jan 2001),
+  1.21beta (5 Feb 2001), 1.32 (14 Feb 2001), 1.4b6 (17 Feb 2001), 1.4 and
+  1.41 (24 Feb 2001), 1.41-p1/r1/r2 (February 2005, by the later maintainers).
+  Tarballs: <https://sourceforge.net/projects/popper/files/>.
+- Project site at the time: <http://popper.ractive.ch> (the ractive.ch
+  mailing-list page of February 2001 counted 78 subscribers, the largest of
+  all @ractive projects).
+- Listed in the FSF Free Software Directory: <https://directory.fsf.org/wiki/Popper>.
+- Security advisory: CVE-2005-1870, a remote file inclusion in
+  `childwindow.inc.php` of Popper 1.41. One more reason not to run this code.
