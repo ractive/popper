@@ -89,7 +89,7 @@ The history was assembled from every surviving source, oldest first:
    from a machine backup of 2001, before any version control.
 2. January and February 2001: the CVS module `popper` of the SourceForge
    project **hpcomm** (Popper started as a side project next to the HPComm
-   Palm/PC tool), converted directly from the CVS files.
+   calculator software), converted directly from the CVS files.
 3. February 2001 to March 2006: the CVS repository of the SourceForge project
    **popper** (<http://sourceforge.net/projects/popper>), converted directly
    from the original `,v` files with cvs-fast-export, including the eleven
@@ -98,6 +98,10 @@ The history was assembled from every surviving source, oldest first:
    line endings and damaged every image by CR to LF conversion; the CVS files
    themselves hold the images intact.
 4. The final commits add this README and the licence files.
+
+Line endings and binaries are stored exactly as CVS held them. Real
+credentials found in the backup copies (a POP3 test login, MySQL settings and
+a contributor's database dump) were replaced by placeholders or left out.
 
 Four branches named `backup-2001/*` hold working copies from the same 2001
 backup that never reached CVS, each as a single commit on top of the closest
