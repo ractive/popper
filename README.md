@@ -83,39 +83,42 @@ directory. The file shipped here contains placeholder credentials only.
 
 ## History of this repository
 
-The commits were recovered from the project's own version control plus one
-machine backup:
+The history was assembled from every surviving source, oldest first:
 
-1. **November 2000**: the root commit is a working copy of Popper from a
-   backup of the author's machine, two months before the first CVS commit.
-2. **January to February 2001**: the `popper` module of the SourceForge
+1. The root commit is the author's working copy of 20 November 2000, recovered
+   from a machine backup of 2001, before any version control.
+2. January and February 2001: the CVS module `popper` of the SourceForge
    project **hpcomm** (Popper started as a side project next to the HPComm
-   calculator software), converted from the CVS repository with
-   cvs-fast-export. Ten commits.
-3. **February 2001 to March 2006**: the CVS repository of the SourceForge
-   project **popper** (<https://sourceforge.net/projects/popper/>), converted
-   directly from the CVS snapshot SourceForge still offers. Its first commit is
-   grafted onto the last hpcomm commit, 30 minutes earlier. All eleven release
-   tags (`V1_31` to `V1_41-r2`) and the 2005 bugfix branch
-   `popper-V1_41-bugfixes-branch` come from there.
-4. Four branches named `backup-2001/*` hold work from that same 2001 backup
-   that never reached CVS, each as one snapshot commit grafted onto the closest
-   mainline commit: `popper-neu` (5 Feb 2001, first mail-folder experiment),
-   `popper-folder` (13 Feb 2001, the folder experiment continued),
-   `popperleo` (27 Feb 2001, a restructured fork by contributor Leo based on
-   1.32) and `popper-sourceforge-2001-04` (12 Apr 2001, uncommitted 1.5
-   development: themes, window classes, `install.php`).
-5. The last two commits add this README, the licence file and `.gitignore`.
+   Palm/PC tool), converted directly from the CVS files.
+3. February 2001 to March 2006: the CVS repository of the SourceForge project
+   **popper** (<http://sourceforge.net/projects/popper>), converted directly
+   from the original `,v` files with cvs-fast-export, including the eleven
+   release tags and the `popper-V1_41-bugfixes-branch`. The earlier git-svn
+   conversion of the cvs2svn mirror was discarded because it had flattened
+   line endings and damaged every image by CR to LF conversion; the CVS files
+   themselves hold the images intact.
+4. The final commits add this README and the licence files.
 
-Line endings and binaries are stored exactly as CVS held them. Real
-credentials found in the backup copies (a POP3 test login, MySQL settings and
-a contributor's database dump) were replaced by placeholders or left out.
+Four branches named `backup-2001/*` hold working copies from the same 2001
+backup that never reached CVS, each as a single commit on top of the closest
+mainline commit:
+
+- `backup-2001/popper-neu` (5 February 2001): the first mail-folder experiment
+  (`newfolder.form.inc.php`, folder graphics).
+- `backup-2001/popper-folder` (13 February 2001): the folder experiment
+  continued (`move.form.inc.php`, `newfolder.form.inc.php`) plus the MIME
+  torture-test mailbox.
+- `backup-2001/popperleo` (27 February 2001): a restructured fork of version
+  1.32 by a contributor named Leo (themes, `css/`, `lib/cls.panel.php`).
+- `backup-2001/popper-sourceforge-2001-04` (12 April 2001): the SourceForge
+  working copy with uncommitted work towards version 1.5 (`class.gui`,
+  `class.window`, `install.php`, themes, `update15.mysql`).
 
 Contributors as recorded in the log (`git shortlog -sne`):
 
 | Author | Commits | Period |
 |---|---|---|
-| Jean-Pierre Bergamin (SourceForge `jbergamin`) <james@ractive.ch> | 68 | November 2000 to February 2001, plus the archive commits |
+| Jean-Pierre Bergamin (SourceForge `jbergamin`) <james@ractive.ch> | 66 + 2 archive commits | November 2000 to February 2001 |
 | roytoo <roytoo@users.sourceforge.net> | 30 | February to August 2005 |
 | blackdrake <blackdrake@users.sourceforge.net> | 14 | March 2006 |
 | thesaur <thesaur@users.sourceforge.net> | 1 | July 2003 |
